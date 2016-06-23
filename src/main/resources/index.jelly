@@ -1,0 +1,2 @@
+<?jelly escape-by-default='true'?>
+<div>Jenkins plugin to populate environment variables from secrets stored in HashiCorp's <a href="http://vaultproject.io/">Vault</a></div>

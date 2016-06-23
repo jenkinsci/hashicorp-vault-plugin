@@ -1,0 +1,23 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    
+  <f:entry title="Path" field="path">
+    <f:textbox />
+  </f:entry>
+  
+  <f:entry title="Secret" field="secret">
+    <f:textbox />
+  </f:entry>
+  
+  <f:entry title="Environment Variable" field="envVar">
+    <f:textbox />
+  </f:entry>
+  
+  
+  <f:entry title="">
+    <div align="right">
+      <f:repeatableDeleteButton />
+    </div>
+  </f:entry>
+  
+</j:jelly>
