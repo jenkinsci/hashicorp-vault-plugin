@@ -33,11 +33,14 @@ public class VaultBuildWrapperTest {
   public JenkinsRule j = new JenkinsRule();
 
   @BeforeClass
-  public static void setUp() throws IOException, VaultException {
+  public static void setUp() throws IOException, VaultException, InterruptedException {
     VaultBuildWrapperTest.vaultServer = new VaultDevServer("testToken");
     VaultBuildWrapperTest.vaultServer.startServer();
     Vault vault =
         new Vault(new VaultConfig("http://127.0.0.1:8200", "testToken"));
+
+    // Sleep here to allow the vault server to start up
+    Thread.sleep(4000);
 
     Map<String, String> secrets = new HashMap<String, String>();
     secrets.put("value", "test");
