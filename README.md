@@ -36,6 +36,7 @@ node {
 
 ## TODO
 
+* Refactor **VaultSecret** so it truly reflects a secret in vault.
 * Add a [BuildStep](http://javadoc.jenkins-ci.org/hudson/tasks/BuildStep.html) for use as an alternative to the Build Wrapper.
 
 [global_configuration]: docs/images/global_configuration.png
