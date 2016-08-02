@@ -49,11 +49,6 @@
 		<developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}.git</developerConnection>
 		<url>http://github.com/jenkinsci/${project.artifactId}</url>
 	</scm>
-	<scm>
-		<connection>scm:git:</connection>
-		<developerConnection>scm:git:git@github.com/jenkinsci/${project.artifactId}.git</developerConnection>
-		<url>http://github.com/jenkinsci/${project.artifactId}</url>
-	</scm>
 	<repositories>
 		<repository>
 			<id>repo.jenkins-ci.org</id>
