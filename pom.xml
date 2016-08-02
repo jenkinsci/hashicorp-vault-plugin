@@ -22,7 +22,7 @@
 
 	<name>HashiCorp Vault Plugin</name>
 	<description>Build Wrapper for reading secrets in a HashiCorp Vault</description>
-	<url>https://github.com/jenkinsci/hashicorp-vault-plugin</url>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/HashiCorp+Vault+Plugin</url>
 
 	<organization>
 		<name>Datapipe, Inc.</name>
