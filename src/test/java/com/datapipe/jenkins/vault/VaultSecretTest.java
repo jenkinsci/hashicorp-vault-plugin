@@ -23,7 +23,11 @@
  */
 package com.datapipe.jenkins.vault;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,6 +35,7 @@ import org.junit.Test;
 public class VaultSecretTest {
 
   private static VaultSecret secret;
+  private static List<VaultSecretValue> values;
 
   /**
    * Setup our SUT before any tests are run
@@ -39,7 +44,9 @@ public class VaultSecretTest {
    */
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    VaultSecretTest.secret = new VaultSecret("path", "secret", "envVar"); // SUT
+    VaultSecretTest.values = new ArrayList<VaultSecretValue>();
+    VaultSecretTest.values.add(new VaultSecretValue("envVar", "vaultKey"));
+    VaultSecretTest.secret = new VaultSecret("path", VaultSecretTest.values); // SUT
   }
 
   /**
@@ -50,8 +57,11 @@ public class VaultSecretTest {
   @Test
   public void testConstructor() {
     assertEquals("path", VaultSecretTest.secret.getPath());
-    assertEquals("secret", VaultSecretTest.secret.getSecret());
-    assertEquals("envVar", VaultSecretTest.secret.getEnvVar());
+    VaultSecretValue value = VaultSecretTest.secret.getSecretValues().get(0);
+    assertEquals("envVar", value.getEnvVar());
+    assertEquals("vaultKey", value.getVaultKey());
+    assertThat(VaultSecretTest.values,
+        is(VaultSecretTest.secret.getSecretValues()));
   }
 
   /**
@@ -66,15 +76,8 @@ public class VaultSecretTest {
    * Test method for {@link com.datapipe.jenkins.vault.VaultSecret#getSecret()}.
    */
   @Test
-  public void testGetSecret() {
-    assertEquals("secret", VaultSecretTest.secret.getSecret());
-  }
-
-  /**
-   * Test method for {@link com.datapipe.jenkins.vault.VaultSecret#getEnvVar()}.
-   */
-  @Test
-  public void testGetEnvVar() {
-    assertEquals("envVar", VaultSecretTest.secret.getEnvVar());
+  public void testGetSecretValues() {
+    assertThat(VaultSecretTest.values,
+        is(VaultSecretTest.secret.getSecretValues()));
   }
 }

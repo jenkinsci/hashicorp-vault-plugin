@@ -23,8 +23,6 @@
  */
 package com.datapipe.jenkins.vault;
 
-import java.util.List;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.Extension;
@@ -32,37 +30,36 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 
 /**
- * Represents a Vault secret.
- * 
  * @author Peter Tierno {@literal <}ptierno{@literal @}datapipe.com{@literal >}
  */
-public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
+public class VaultSecretValue
+    extends AbstractDescribableImpl<VaultSecretValue> {
 
-  private String path;
-  private List<VaultSecretValue> secretValues;
+  private String envVar;
+  private String vaultKey;
 
   @DataBoundConstructor
-  public VaultSecret(String path, List<VaultSecretValue> secretValues) {
-    this.path = path;
-    this.secretValues = secretValues;
+  public VaultSecretValue(String envVar, String vaultKey) {
+    this.envVar = envVar;
+    this.vaultKey = vaultKey;
   }
 
-  public String getPath() {
-    return this.path;
+  public String getEnvVar() {
+    return this.envVar;
   }
 
-  public List<VaultSecretValue> getSecretValues() {
-    return this.secretValues;
+  public String getVaultKey() {
+    return this.vaultKey;
   }
 
   @Extension
-  public static final class DescriptorImpl extends Descriptor<VaultSecret> {
+  public static final class DescriptorImpl
+      extends Descriptor<VaultSecretValue> {
 
     @Override
     public String getDisplayName() {
-      return "Vault Secret";
+      return "Environment variable/vault secret value pair";
     }
-
   }
 
 }
