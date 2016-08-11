@@ -26,30 +26,34 @@ package com.datapipe.jenkins.vault;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Map;
+
 import javax.annotation.CheckForNull;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.StaplerRequest;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapper;
-import jenkins.tasks.SimpleBuildWrapper;
 import hudson.util.Secret;
-
+import jenkins.tasks.SimpleBuildWrapper;
 import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Sample {@link BuildWrapper}.
@@ -143,19 +147,22 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     String token = Secret.toString(getToken());
 
     for (VaultSecret vaultSecret : vaultSecrets) {
+
       try {
         VaultConfig vaultConfig = new VaultConfig(url, token).build();
 
         Vault vault = new Vault(vaultConfig);
 
-        String value = vault.logical().read(vaultSecret.getPath()).getData()
-            .get(vaultSecret.getSecret());
+        Map<String, String> values =
+            vault.logical().read(vaultSecret.getPath()).getData();
 
-        context.env(vaultSecret.getEnvVar(), value);
+        for (VaultSecretValue value : vaultSecret.getSecretValues()) {
+          context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+        }
 
       } catch (VaultException e) {
         e.printStackTrace(logger);
-        throw new InterruptedException(e.getMessage());
+        throw new AbortException(e.getMessage());
       }
     }
   }

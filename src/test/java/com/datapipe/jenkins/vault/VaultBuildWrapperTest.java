@@ -95,7 +95,10 @@ public class VaultBuildWrapperTest {
       throws ExecutionException, InterruptedException, IOException {
 
     List<VaultSecret> secrets = new ArrayList<VaultSecret>();
-    secrets.add(new VaultSecret("secret/path1", "key1", "envVar1"));
+    VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
+    List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
+    secretValues.add(secretValue);
+    secrets.add(new VaultSecret("secret/path1", secretValues));
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
     vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
@@ -124,7 +127,11 @@ public class VaultBuildWrapperTest {
     List<VaultSecret> secrets = new ArrayList<VaultSecret>();
 
     for (int i = 1; i <= 10; i++) {
-      secrets.add(new VaultSecret("secret/path" + i, "key" + i, "envVar" + i));
+      VaultSecretValue secretValue =
+          new VaultSecretValue("envVar" + i, "key" + i);
+      List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
+      secretValues.add(secretValue);
+      secrets.add(new VaultSecret("secret/path" + i, secretValues));
     }
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
