@@ -52,6 +52,7 @@ node {
 
 ## CHANGELOG
 
+* **2016/08/15** - Re-release due to failed maven release - 1.2
 * **2016/08/11** - Bugfix release - 1.1
   * Refactor to allow getting multiple vault keys in a single API call [JENKINS-37151](https://issues.jenkins-ci.org/browse/JENKINS-37151)
 * **2016/08/02** - Initial release - 1.0
