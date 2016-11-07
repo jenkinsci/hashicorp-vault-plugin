@@ -164,6 +164,24 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     }
   }
 
+  @Override
+  public ConsoleLogFilter createLoggerDecorator(@Nonnull final Run<?, ?> build) {
+    return new ConsoleLogFilter() {
+      @Override
+      public OutputStream decorateLogger(AbstractBuild abstractBuild, final OutputStream logger) throws IOException, InterruptedException {
+        return new LineTransformationOutputStream() {
+          @Override protected void eol(byte[] b, int len) throws IOException {
+            String logEntry = new String(b, 0, len, build.getCharset().name());
+            for (String value : valuesToMask) {
+             logEntry.replace(value, "****");
+            }
+            logger.write(logEntry.getBytes(build.getCharset().name()));
+          }
+        };
+      }
+    };
+  }
+
   /**
    * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public so
    * that it can be accessed from views.
