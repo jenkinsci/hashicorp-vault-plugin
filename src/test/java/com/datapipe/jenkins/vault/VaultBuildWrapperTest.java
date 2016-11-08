@@ -2,18 +2,21 @@ package com.datapipe.jenkins.vault;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.CoreMatchers.is;
 
-import java.util.List;
+import java.io.Serializable;
+import java.util.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 
+import hudson.Launcher;
+import hudson.tasks.Builder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.model.*;
@@ -108,14 +111,17 @@ public class VaultBuildWrapperTest {
     this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
     FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+
     String log = FileUtils.readFileToString(build.getLogFile());
 
-    assertThat(log, containsString("+ echo value1"));
+    assertThat(log, containsString("+ echo ****"));
+    assertThat(log, not(containsString("+ echo value1")));
+
   }
 
   /**
    * Tests the {@link VaultBuildWrapper} against multiple {@link VaultSecret}'s
-   * 
+   *
    * @throws ExecutionException
    * @throws InterruptedException
    * @throws IOException
@@ -148,13 +154,16 @@ public class VaultBuildWrapperTest {
     String log = FileUtils.readFileToString(build.getLogFile());
 
     for (int i = 1; i <= 10; i++) {
-      assertThat(log, containsString("+ echo value" + i));
+      assertThat(log, not(containsString("echo value"+i)));
     }
+    //count number of occurences as of http://stackoverflow.com/a/770069
+    assertThat(log.split("\\+ echo \\*\\*\\*\\*", -1).length-1, is(10));
+
   }
 
   /**
    * Utility method to create the test secrets in the vault.
-   * 
+   *
    * @throws VaultException
    */
   private static void writeTestSecrets() throws VaultException {
