@@ -173,7 +173,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
           @Override protected void eol(byte[] b, int len) throws IOException {
             String logEntry = new String(b, 0, len, build.getCharset().name());
             for (String value : valuesToMask) {
-             logEntry.replace(value, "****");
+             logEntry = logEntry.replace(value, "****");
             }
             logger.write(logEntry.getBytes(build.getCharset().name()));
           }
