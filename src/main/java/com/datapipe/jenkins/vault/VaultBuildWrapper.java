@@ -166,20 +166,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   @Override
   public ConsoleLogFilter createLoggerDecorator(@Nonnull final Run<?, ?> build) {
-    return new ConsoleLogFilter() {
-      @Override
-      public OutputStream decorateLogger(AbstractBuild abstractBuild, final OutputStream logger) throws IOException, InterruptedException {
-        return new LineTransformationOutputStream() {
-          @Override protected void eol(byte[] b, int len) throws IOException {
-            String logEntry = new String(b, 0, len, build.getCharset().name());
-            for (String value : valuesToMask) {
-             logEntry = logEntry.replace(value, "****");
-            }
-            logger.write(logEntry.getBytes(build.getCharset().name()));
-          }
-        };
-      }
-    };
+    return new MaskingConsoleLogFilter(build, valuesToMask);
   }
 
   /**
