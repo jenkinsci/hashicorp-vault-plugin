@@ -23,37 +23,28 @@
  */
 package com.datapipe.jenkins.vault;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.CheckForNull;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
-
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
-
-import hudson.AbortException;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.*;
+import hudson.console.ConsoleLogFilter;
+import hudson.model.*;
 import hudson.tasks.BuildWrapper;
 import hudson.util.Secret;
 import jenkins.tasks.SimpleBuildWrapper;
 import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.StaplerRequest;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Sample {@link BuildWrapper}.
@@ -77,6 +68,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   private String vaultUrl;
   private Secret authToken;
   private List<VaultSecret> vaultSecrets;
+  private List<String> valuesToMask = new ArrayList<>();
 
   // Possibly add these later
   // private final int openTimeout;
@@ -157,6 +149,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             vault.logical().read(vaultSecret.getPath()).getData();
 
         for (VaultSecretValue value : vaultSecret.getSecretValues()) {
+          valuesToMask.add(values.get(value.getVaultKey()));
           context.env(value.getEnvVar(), values.get(value.getVaultKey()));
         }
 
@@ -165,6 +158,11 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         throw new AbortException(e.getMessage());
       }
     }
+  }
+
+  @Override
+  public ConsoleLogFilter createLoggerDecorator(@Nonnull final Run<?, ?> build) {
+    return new MaskingConsoleLogFilter(build.getCharset().name(), valuesToMask);
   }
 
   /**
