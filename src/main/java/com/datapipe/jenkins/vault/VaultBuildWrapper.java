@@ -162,7 +162,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   @Override
   public ConsoleLogFilter createLoggerDecorator(@Nonnull final Run<?, ?> build) {
-    return new MaskingConsoleLogFilter(build, valuesToMask);
+    return new MaskingConsoleLogFilter(build.getCharset().name(), valuesToMask);
   }
 
   /**
