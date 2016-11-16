@@ -28,7 +28,6 @@ import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import hudson.*;
 import hudson.console.ConsoleLogFilter;
-import hudson.console.LineTransformationOutputStream;
 import hudson.model.*;
 import hudson.tasks.BuildWrapper;
 import hudson.util.Secret;
@@ -42,13 +41,10 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Sample {@link BuildWrapper}.
