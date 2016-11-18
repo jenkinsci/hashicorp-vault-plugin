@@ -10,7 +10,7 @@
 
 	<groupId>com.datapipe.jenkins.plugins</groupId>
 	<artifactId>hashicorp-vault-plugin</artifactId>
-	<version>1.3-SNAPSHOT</version>
+	<version>1.3</version>
 	<packaging>hpi</packaging>
 
 	<properties>
@@ -47,7 +47,7 @@
 		<connection>scm:git:git://github.com/jenkinsci/${project.artifactId}.git</connection>
 		<developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}.git</developerConnection>
 		<url>http://github.com/jenkinsci/${project.artifactId}</url>
-	  <tag>HEAD</tag>
+	  <tag>hashicorp-vault-plugin-1.3</tag>
   </scm>
 	<repositories>
 		<repository>
