@@ -5,18 +5,14 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.CoreMatchers.is;
 
-import java.io.Serializable;
 import java.util.*;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Pattern;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 
-import hudson.Launcher;
-import hudson.tasks.Builder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.model.*;
@@ -154,10 +150,10 @@ public class VaultBuildWrapperTest {
     String log = FileUtils.readFileToString(build.getLogFile());
 
     for (int i = 1; i <= 10; i++) {
-      assertThat(log, not(containsString("echo value"+i)));
+      assertThat(log, not(containsString("echo value" + i)));
     }
-    //count number of occurences as of http://stackoverflow.com/a/770069
-    assertThat(log.split("\\+ echo \\*\\*\\*\\*", -1).length-1, is(10));
+    // count number of occurences as of http://stackoverflow.com/a/770069
+    assertThat(log.split("\\+ echo \\*\\*\\*\\*", -1).length - 1, is(10));
 
   }
 

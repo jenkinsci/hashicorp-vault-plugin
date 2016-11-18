@@ -80,6 +80,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     this.vaultSecrets = vaultSecrets;
 
     // Defaults to null to allow using global configuration
+    // I am not sure this is necessary.
     this.vaultUrl = null;
     this.authToken = null;
   }
@@ -161,7 +162,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   }
 
   @Override
-  public ConsoleLogFilter createLoggerDecorator(@Nonnull final Run<?, ?> build) {
+  public ConsoleLogFilter createLoggerDecorator(
+      @Nonnull final Run<?, ?> build) {
     return new MaskingConsoleLogFilter(build.getCharset().name(), valuesToMask);
   }
 
