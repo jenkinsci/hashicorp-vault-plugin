@@ -9,7 +9,7 @@
           </f:entry>
         </f:optionalBlock>
         <f:optionalBlock name="roleIdOverride" title="Override Credentials?">
-          <f:entry title="Authentication Token Credential ID" field="authTokenCredentialId">
+          <f:entry title="App Role Credential" field="appRoleCredentialId">
             <c:select />
           </f:entry>
         </f:optionalBlock>

@@ -6,7 +6,7 @@
       <f:textbox />
     </f:entry>
     
-    <f:entry title="Authentication Token Credential ID" field="authTokenCredentialId">
+    <f:entry title="App Role Credential" field="appRoleCredentialId">
       <c:select />
     </f:entry>
 
