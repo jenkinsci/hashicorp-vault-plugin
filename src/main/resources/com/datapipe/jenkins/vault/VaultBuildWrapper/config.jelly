@@ -1,7 +1,6 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
   <f:section title="Vault Plugin">
-
     <f:block>
       <table>
         <f:optionalBlock name="urlOverride" title="Override Vault URL?">
@@ -9,9 +8,9 @@
             <f:textbox />
           </f:entry>
         </f:optionalBlock>
-        <f:optionalBlock name="tokenOverride" title="Override Authentication Token?">
-          <f:entry title="Authentication Token" field="authToken">
-            <f:password />
+        <f:optionalBlock name="roleIdOverride" title="Override Credentials?">
+          <f:entry title="App Role Credential" field="appRoleCredentialId">
+            <c:select />
           </f:entry>
         </f:optionalBlock>
       </table>
