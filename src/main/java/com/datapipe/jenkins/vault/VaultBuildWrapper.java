@@ -98,7 +98,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   @DataBoundSetter
   public void setSecretId(String secretId) {
-      this.secretId = Secret.fromString(secretId);
+    this.secretId = Secret.fromString(secretId);
   }
 
   private Secret getSecretId() {
@@ -231,21 +231,21 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       Object secretId = formData.getString("secretId");
 
       if (!JSONNull.getInstance().equals(vaultUrl)) {
-          this.vaultUrl = (String) vaultUrl;
+        this.vaultUrl = (String) vaultUrl;
       } else {
-          this.vaultUrl = null;
+        this.vaultUrl = null;
       }
 
       if (!JSONNull.getInstance().equals(roleId)) {
-          this.roleId = (String) roleId;
+        this.roleId = (String) roleId;
       } else {
-          this.roleId = null;
+        this.roleId = null;
       }
 
       if (!JSONNull.getInstance().equals(secretId)) {
-          this.secretId = Secret.fromString((String) secretId);
+        this.secretId = Secret.fromString((String) secretId);
       } else {
-          this.secretId = null;
+        this.secretId = null;
       }
 
       save();
