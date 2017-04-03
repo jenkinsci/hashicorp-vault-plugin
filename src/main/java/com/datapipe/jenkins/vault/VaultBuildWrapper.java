@@ -26,11 +26,21 @@ package com.datapipe.jenkins.vault;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.matchers.IdMatcher;
+import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import hudson.*;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.*;
+import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
+import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
@@ -43,6 +53,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -66,8 +77,7 @@ import java.util.Map;
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   private String vaultUrl;
-  private String roleId;
-  private Secret secretId;
+  private String appRoleCredentialId;
   private List<VaultSecret> vaultSecrets;
   private List<String> valuesToMask = new ArrayList<>();
 
@@ -83,8 +93,16 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     // Defaults to null to allow using global configuration
     // I am not sure this is necessary.
     this.vaultUrl = null;
-    this.roleId = null;
-    this.secretId = null;
+    this.appRoleCredentialId = null;
+  }
+
+  @DataBoundSetter
+  public void setAppRoleCredentialId(String appRoleCredentialId) {
+      this.appRoleCredentialId = appRoleCredentialId;
+  }
+
+  public String getAppRoleCredentialId() {
+      return this.appRoleCredentialId;
   }
 
   @DataBoundSetter
@@ -96,25 +114,24 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     return this.vaultUrl;
   }
 
-  @DataBoundSetter
-  public void setSecretId(String secretId) {
-    this.secretId = Secret.fromString(secretId);
+  private String getSecretId() {
+     String id = appRoleCredentialId;
+     if (id == null || id.isEmpty()) {
+         id = getDescriptor().getAppRoleCredentialId();
+     }
+     List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+     VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
+     return credential == null ? null : Secret.toString(credential.getSecretId());
   }
 
-  private Secret getSecretId() {
-      if (this.secretId == null || Secret.toString(this.secretId).isEmpty()) {
-          return getDescriptor().getSecretId();
-      }
-      return this.secretId;
-  }
-
-  @DataBoundSetter
-  public void setRoleId(String roleId) {
-      this.roleId = roleId;
-  }
-
-  public String getRoleId() {
-      return this.roleId;
+  private String getRoleId() {
+     String id = appRoleCredentialId;
+     if (id == null || id.isEmpty()) {
+         id = getDescriptor().getAppRoleCredentialId();
+     }
+     List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+     VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
+     return credential == null ? null : credential.getRoleId();
   }
 
   public List<VaultSecret> getVaultSecrets() {
@@ -127,8 +144,6 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     }
     return this.vaultUrl;
   }
-
-
 
   // Overridden for better type safety.
   // If your plugin doesn't really define any property on Descriptor
@@ -147,7 +162,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     String url = getUrl();
     String roleId = getRoleId();
-    String secretId = Secret.toString(getSecretId());
+    String secretId = getSecretId();
 
     for (VaultSecret vaultSecret : vaultSecrets) {
 
@@ -196,6 +211,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
      * If you don't want fields to be persisted, use <tt>transient</tt>.
      */
     private String vaultUrl;
+    private String appRoleCredentialId;
     private String roleId;
     private Secret secretId;
 
@@ -229,6 +245,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       Object vaultUrl = formData.getString("vaultUrl");
       Object roleId = formData.getString("roleId");
       Object secretId = formData.getString("secretId");
+      Object appRoleCredentialId = formData.getString("appRoleCredentialId");
 
       if (!JSONNull.getInstance().equals(vaultUrl)) {
         this.vaultUrl = (String) vaultUrl;
@@ -236,16 +253,10 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         this.vaultUrl = null;
       }
 
-      if (!JSONNull.getInstance().equals(roleId)) {
-        this.roleId = (String) roleId;
+      if (!JSONNull.getInstance().equals(appRoleCredentialId)) {
+          this.appRoleCredentialId = (String) appRoleCredentialId;
       } else {
-        this.roleId = null;
-      }
-
-      if (!JSONNull.getInstance().equals(secretId)) {
-        this.secretId = Secret.fromString((String) secretId);
-      } else {
-        this.secretId = null;
+          this.roleId = null;
       }
 
       save();
@@ -256,25 +267,26 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       return this.vaultUrl;
     }
 
-    public String getRoleId() {
-        return this.roleId;
-    }
-
-    public Secret getSecretId() {
-      return this.secretId;
-    }
-
     // Required by external plugins (according to Articfactory plugin)
     public void setVaultUrl(String vaultUrl) {
       this.vaultUrl = vaultUrl;
     }
 
-    public void setSecretId(String secretId) {
-      this.secretId = Secret.fromString(secretId);
+    public String getAppRoleCredentialId() {
+        return appRoleCredentialId;
     }
 
-    public void setRoleId(String roleId) {
-        this.roleId = roleId;
+    public void setAppRoleCredentialId(String appRoleCredentialId) {
+        this.appRoleCredentialId = appRoleCredentialId;
+    }
+
+    public ListBoxModel doFillAuthTokenCredentialIdItems(){
+      if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+          return new ListBoxModel();
+      }
+
+      AbstractIdCredentialsListBoxModel model = new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, Jenkins.getInstance(), VaultTokenCredential.class);
+      return model;
     }
   }
 

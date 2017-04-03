@@ -1,5 +1,12 @@
 package com.datapipe.jenkins.vault;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsDescriptor;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
+import com.datapipe.jenkins.vault.credentials.VaultTokenCredentialImpl;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.util.Secret;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.not;
@@ -7,6 +14,8 @@ import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +32,8 @@ import org.jvnet.hudson.test.JenkinsRule;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.domains.Domain;
 
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -39,17 +50,19 @@ public class VaultBuildWrapperTest {
   /**
    * The URL to the vault server (eg. <code>http://127.0.0.1:8200</code>)
    */
-  private static final String VAULT_ADDR = System.getenv("VAULT_ADDR");
+  private static final String VAULT_ADDR = "http://127.0.0.1:8200";
 
   /**
    * The role ID used for authenticating against Vault.
    */
-  private static final String ROLE_ID = System.getenv("VAULT_ROLE_ID");
+  private static final String ROLE_ID = "24bce073-52ca-5ac7-086a-8461e54bbb45";
 
   /**
    * The secret ID used for authenticating against Vault.
    */
-  private static final String SECRET_ID = System.getenv("VAULT_SECRET_ID");
+  private static final String SECRET_ID = "21503351-37d2-d326-7bbe-cefee7ad2cc3";
+
+  private static final String VAULT_TOKEN_CREDENTIAL_ID = "token-credential";
 
   private static Vault vault;
 
@@ -82,15 +95,48 @@ public class VaultBuildWrapperTest {
     deleteTestSecrets();
   }
 
-  /**
-   * Creates the test project in Jenkins.
-   *
-   * @throws Exception
-   */
-  @Before
-  public void setUp() throws Exception {
-    this.project = jenkins.createFreeStyleProject("test");
-  }
+    @Before
+    public void setupCredentials() throws IOException {
+        this.project = jenkins.createFreeStyleProject("test");
+
+        SystemCredentialsProvider.getInstance().save();
+        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), createTokenCredential()));
+    }
+
+    private static List<Credentials> createTokenCredential(){
+        return Arrays.asList(new Credentials[]{new VaultTokenCredential() {
+            @Override
+            public String getRoleId() {
+                return ROLE_ID;
+            }
+
+            @Override
+            public Secret getSecretId() {
+                return Secret.fromString(SECRET_ID);
+            }
+
+            @Override
+            public String getDescription() {
+                return "description";
+            }
+
+            @Override
+            public String getId() {
+                return VAULT_TOKEN_CREDENTIAL_ID;
+            }
+
+            @Override
+            public CredentialsScope getScope() {
+                return CredentialsScope.SYSTEM;
+            }
+
+            @Override
+            public CredentialsDescriptor getDescriptor() {
+                return new VaultTokenCredentialImpl.DescriptorImpl();
+            }
+        }});
+    };
+
 
   /**
    * Tests the {@link VaultBuildWrapper} against a single {@link VaultSecret}
@@ -111,8 +157,7 @@ public class VaultBuildWrapperTest {
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
     vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setRoleId(VaultBuildWrapperTest.ROLE_ID);
-    vaultBuildWrapper.setSecretId(VaultBuildWrapperTest.SECRET_ID);
+    vaultBuildWrapper.setAppRoleCredentialId(VAULT_TOKEN_CREDENTIAL_ID);
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
     this.project.getBuildersList().add(new Shell("echo $envVar1"));
@@ -149,8 +194,7 @@ public class VaultBuildWrapperTest {
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
     vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setRoleId(ROLE_ID);
-    vaultBuildWrapper.setSecretId(SECRET_ID);
+    vaultBuildWrapper.setAppRoleCredentialId(VAULT_TOKEN_CREDENTIAL_ID);
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
 
