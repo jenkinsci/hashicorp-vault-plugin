@@ -39,12 +39,12 @@ public class VaultBuildWrapperTest {
   /**
    * The URL to the vault server (eg. <code>http://127.0.0.1:8200</code>)
    */
-  private static final String VAULT_ADDR = "http://localhost:8200";//System.getenv("VAULT_ADDR");
+  private static final String VAULT_ADDR = System.getenv("VAULT_ADDR");
 
   /**
    * The authentication token to authenticate against the vault server with.
    */
-  private static final String VAULT_TOKEN = "175eeefb-ba14-d187-bc53-ac64fb9c17e0";//System.getenv("VAULT_TOKEN");
+  private static final String VAULT_TOKEN = System.getenv("VAULT_TOKEN");
 
   private static final String VAULT_TOKEN_CREDENTIAL_ID = "token-credential";
 
