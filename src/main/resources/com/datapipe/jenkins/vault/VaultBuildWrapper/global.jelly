@@ -6,7 +6,11 @@
       <f:textbox />
     </f:entry>
     
-    <f:entry title="Authentication token" field="authToken">
+    <f:entry title="App-Role: Role-ID" field="roleId">
+      <f:textbox />
+    </f:entry>
+
+     <f:entry title="App-Role: Secret-ID" field="secretId">
       <f:password />
     </f:entry>
 

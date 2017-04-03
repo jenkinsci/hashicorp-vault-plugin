@@ -1,22 +1,16 @@
 package com.datapipe.jenkins.vault;
 
-import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertThat;
 
-import java.util.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-
-import org.jvnet.hudson.test.JenkinsRule;
-
-import hudson.model.*;
-import hudson.tasks.Shell;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
@@ -24,11 +18,20 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.VaultException;
+
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.tasks.Shell;
 
 /**
  * These test cases make use of the Jenkins test harness. It requires the VAULT_ADDR and VAULT_TOKEN
  * environment variables be set with a vault server listening on VAULT_ADDR
- * 
+ *
  * @author Peter Tierno
  */
 public class VaultBuildWrapperTest {
@@ -39,9 +42,14 @@ public class VaultBuildWrapperTest {
   private static final String VAULT_ADDR = System.getenv("VAULT_ADDR");
 
   /**
-   * The authentication token to authenticate against the vault server with.
+   * The role ID used for authenticating against Vault.
    */
-  private static final String VAULT_TOKEN = System.getenv("VAULT_TOKEN");
+  private static final String ROLE_ID = System.getenv("VAULT_ROLE_ID");
+
+  /**
+   * The secret ID used for authenticating against Vault.
+   */
+  private static final String SECRET_ID = System.getenv("VAULT_SECRET_ID");
 
   private static Vault vault;
 
@@ -53,18 +61,20 @@ public class VaultBuildWrapperTest {
   /**
    * Creates the static {@link com.bettercloud.vault.Vault} client and writes the test secrets
    * before any test cases are ran.
-   * 
+   *
    * @throws VaultException
    */
   @BeforeClass
   public static void init() throws VaultException {
-    vault = new Vault(new VaultConfig(VAULT_ADDR, VAULT_TOKEN));
+    vault = new Vault(new VaultConfig(VAULT_ADDR));
+    String token = vault.auth().loginByAppRole("approle", ROLE_ID, SECRET_ID).getAuthClientToken();
+    vault = new Vault(new VaultConfig(VAULT_ADDR, token));
     writeTestSecrets();
   }
 
   /**
    * Deletes the vault secrets after all test cases are ran.
-   * 
+   *
    * @throws VaultException
    */
   @AfterClass
@@ -74,7 +84,7 @@ public class VaultBuildWrapperTest {
 
   /**
    * Creates the test project in Jenkins.
-   * 
+   *
    * @throws Exception
    */
   @Before
@@ -84,7 +94,7 @@ public class VaultBuildWrapperTest {
 
   /**
    * Tests the {@link VaultBuildWrapper} against a single {@link VaultSecret}
-   * 
+   *
    * @throws ExecutionException
    * @throws InterruptedException
    * @throws IOException
@@ -101,7 +111,8 @@ public class VaultBuildWrapperTest {
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
     vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setAuthToken(VaultBuildWrapperTest.VAULT_TOKEN);
+    vaultBuildWrapper.setRoleId(VaultBuildWrapperTest.ROLE_ID);
+    vaultBuildWrapper.setSecretId(VaultBuildWrapperTest.SECRET_ID);
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
     this.project.getBuildersList().add(new Shell("echo $envVar1"));
@@ -138,7 +149,8 @@ public class VaultBuildWrapperTest {
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
     vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setAuthToken(VaultBuildWrapperTest.VAULT_TOKEN);
+    vaultBuildWrapper.setRoleId(ROLE_ID);
+    vaultBuildWrapper.setSecretId(SECRET_ID);
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
 
@@ -172,7 +184,7 @@ public class VaultBuildWrapperTest {
 
   /**
    * Utility method to delete the test secrets in the vault.
-   * 
+   *
    * @throws VaultException
    */
   private static void deleteTestSecrets() throws VaultException {

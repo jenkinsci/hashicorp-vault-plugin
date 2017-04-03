@@ -66,7 +66,8 @@ import java.util.Map;
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   private String vaultUrl;
-  private Secret authToken;
+  private String roleId;
+  private Secret secretId;
   private List<VaultSecret> vaultSecrets;
   private List<String> valuesToMask = new ArrayList<>();
 
@@ -82,7 +83,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     // Defaults to null to allow using global configuration
     // I am not sure this is necessary.
     this.vaultUrl = null;
-    this.authToken = null;
+    this.roleId = null;
+    this.secretId = null;
   }
 
   @DataBoundSetter
@@ -95,12 +97,24 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   }
 
   @DataBoundSetter
-  public void setAuthToken(String authToken) {
-    this.authToken = Secret.fromString(authToken);
+  public void setSecretId(String secretId) {
+      this.secretId = Secret.fromString(secretId);
   }
 
-  public Secret getAuthToken() {
-    return this.authToken;
+  private Secret getSecretId() {
+      if (this.secretId == null || Secret.toString(this.secretId).isEmpty()) {
+          return getDescriptor().getSecretId();
+      }
+      return this.secretId;
+  }
+
+  @DataBoundSetter
+  public void setRoleId(String roleId) {
+      this.roleId = roleId;
+  }
+
+  public String getRoleId() {
+      return this.roleId;
   }
 
   public List<VaultSecret> getVaultSecrets() {
@@ -114,12 +128,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     return this.vaultUrl;
   }
 
-  private Secret getToken() {
-    if (this.authToken == null || Secret.toString(this.authToken).isEmpty()) {
-      return getDescriptor().getAuthToken();
-    }
-    return this.authToken;
-  }
+
 
   // Overridden for better type safety.
   // If your plugin doesn't really define any property on Descriptor
@@ -137,15 +146,17 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     PrintStream logger = listener.getLogger();
 
     String url = getUrl();
-    String token = Secret.toString(getToken());
+    String roleId = getRoleId();
+    String secretId = Secret.toString(getSecretId());
 
     for (VaultSecret vaultSecret : vaultSecrets) {
 
       try {
-        VaultConfig vaultConfig = new VaultConfig(url, token).build();
+        VaultConfig vaultConfig = new VaultConfig(url).build();
 
         Vault vault = new Vault(vaultConfig);
-
+        String token = vault.auth().loginByAppRole("approle", roleId, secretId).getAuthClientToken();
+        vault = new Vault(vaultConfig.token(token));
         Map<String, String> values =
             vault.logical().read(vaultSecret.getPath()).getData();
 
@@ -170,7 +181,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   /**
    * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public so
    * that it can be accessed from views.
-   * 
+   *
    * <p>
    * See <tt>src/main/resources/com/datapipe/jenkins/vault/VaultBuildWrapper/*.jelly</tt> for the
    * actual HTML fragment for the configuration screen.
@@ -180,12 +191,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     /**
      * To persist global configuration information, simply store it in a field and call save().
-     * 
+     *
      * <p>
      * If you don't want fields to be persisted, use <tt>transient</tt>.
      */
     private String vaultUrl;
-    private Secret authToken;
+    private String roleId;
+    private Secret secretId;
 
     /**
      * In order to load the persisted global configuration, you have to call load() in the
@@ -215,18 +227,25 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       // To persist global configuration information,
       // set that to properties and call save().
       Object vaultUrl = formData.getString("vaultUrl");
-      Object authToken = formData.getString("authToken");
+      Object roleId = formData.getString("roleId");
+      Object secretId = formData.getString("secretId");
 
       if (!JSONNull.getInstance().equals(vaultUrl)) {
-        this.vaultUrl = (String) vaultUrl;
+          this.vaultUrl = (String) vaultUrl;
       } else {
-        this.vaultUrl = null;
+          this.vaultUrl = null;
       }
 
-      if (!JSONNull.getInstance().equals(authToken)) {
-        this.authToken = Secret.fromString((String) authToken);
+      if (!JSONNull.getInstance().equals(roleId)) {
+          this.roleId = (String) roleId;
       } else {
-        this.authToken = null;
+          this.roleId = null;
+      }
+
+      if (!JSONNull.getInstance().equals(secretId)) {
+          this.secretId = Secret.fromString((String) secretId);
+      } else {
+          this.secretId = null;
       }
 
       save();
@@ -237,8 +256,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       return this.vaultUrl;
     }
 
-    public Secret getAuthToken() {
-      return this.authToken;
+    public String getRoleId() {
+        return this.roleId;
+    }
+
+    public Secret getSecretId() {
+      return this.secretId;
     }
 
     // Required by external plugins (according to Articfactory plugin)
@@ -246,8 +269,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       this.vaultUrl = vaultUrl;
     }
 
-    public void setAuthToken(String authToken) {
-      this.authToken = Secret.fromString(authToken);
+    public void setSecretId(String secretId) {
+      this.secretId = Secret.fromString(secretId);
+    }
+
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
     }
   }
 
