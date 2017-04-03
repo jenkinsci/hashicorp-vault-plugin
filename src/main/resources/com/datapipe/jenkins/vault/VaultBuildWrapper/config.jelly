@@ -10,7 +10,7 @@
           </f:entry>
         </f:optionalBlock>
         <f:optionalBlock name="tokenOverride" title="Override Authentication Token?">
-          <f:entry title="Authentication Token Credential ID" field="authTokenCredentialId">
+          <f:entry title="Authentication Token Credential" field="authTokenCredentialId">
             <c:select />
           </f:entry>
         </f:optionalBlock>
