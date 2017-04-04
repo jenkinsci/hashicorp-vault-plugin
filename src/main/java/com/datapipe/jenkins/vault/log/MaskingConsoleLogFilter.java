@@ -7,34 +7,70 @@ import hudson.model.Run;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+/*The logic in this class is borrowed from https://github.com/jenkinsci/credentials-binding-plugin/*/
 public class MaskingConsoleLogFilter extends ConsoleLogFilter
-    implements Serializable {
-  private static final long serialVersionUID = 1L;
+        implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-  private final String charsetName;
-  private List<String> valuesToMask;
+    private final String charsetName;
+    private List<String> valuesToMask;
 
 
-  public MaskingConsoleLogFilter(final String charsetName,
-      List<String> valuesToMask) {
-    this.charsetName = charsetName;
-    this.valuesToMask = valuesToMask;
-  }
+    public MaskingConsoleLogFilter(final String charsetName,
+                                   List<String> valuesToMask) {
+        this.charsetName = charsetName;
+        this.valuesToMask = valuesToMask;
+    }
 
-  @Override
-  public OutputStream decorateLogger(Run run,
-      final OutputStream logger) throws IOException, InterruptedException {
-    return new LineTransformationOutputStream() {
-      @Override
-      protected void eol(byte[] b, int len) throws IOException {
-        String logEntry = new String(b, 0, len, charsetName);
-        for (String value : valuesToMask) {
-          logEntry = logEntry.replace(value, "****");
+    @Override
+    public OutputStream decorateLogger(Run run,
+                                       final OutputStream logger) throws IOException, InterruptedException {
+        return new LineTransformationOutputStream() {
+            Pattern p;
+
+            @Override
+            protected void eol(byte[] b, int len) throws IOException {
+                if (p == null) {
+                    p = Pattern.compile(getPatternStringForSecrets(valuesToMask));
+                }
+                Matcher m = p.matcher(new String(b, 0, len, charsetName));
+                if (m.find()) {
+                    logger.write(m.replaceAll("****").getBytes(charsetName));
+                } else {
+                    // Avoid byte → char → byte conversion unless we are actually doing something.
+                    logger.write(b, 0, len);
+                }
+            }
+        };
+    }
+
+    /**
+     * Utility method for turning a collection of secret strings into a single {@link String} for pattern compilation.
+     *
+     * @param secrets A collection of secret strings
+     * @return A {@link String} generated from that collection.
+     */
+    public static String getPatternStringForSecrets(Collection<String> secrets) {
+        StringBuilder b = new StringBuilder();
+        List<String> sortedByLength = new ArrayList<String>(secrets);
+        Collections.sort(sortedByLength, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o2.length() - o1.length();
+            }
+        });
+
+        for (String secret : sortedByLength) {
+            if (b.length() > 0) {
+                b.append('|');
+            }
+            b.append(Pattern.quote(secret));
         }
-        logger.write(logEntry.getBytes(charsetName));
-      }
-    };
-  }
+        return b.toString();
+    }
+
 }
