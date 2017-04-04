@@ -92,13 +92,12 @@
             <artifactId>cloudbees-folder</artifactId>
             <version>6.0.3</version>
         </dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-all</artifactId>
-			<version>1.10.19</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.7.21</version>
+        </dependency>
+    </dependencies>
 	<reporting>
 		<plugins>
 			<plugin>
