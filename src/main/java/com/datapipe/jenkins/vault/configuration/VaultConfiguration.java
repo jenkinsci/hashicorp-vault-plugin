@@ -70,10 +70,6 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultTokenCredentialId = vaultTokenCredentialId;
     }
 
-    public boolean isEmpty() {
-        return StringUtils.isBlank(getVaultUrl()) && StringUtils.isBlank(getVaultTokenCredentialId());
-    }
-
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
         @Override

@@ -6,9 +6,7 @@ import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
-import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -32,12 +30,6 @@ public class FolderVaultConfiguration extends AbstractFolderProperty<AbstractFol
 
     @Extension
     public static class DescriptorImpl extends AbstractFolderPropertyDescriptor {
-
-        @Override
-        public AbstractFolderProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            FolderVaultConfiguration config = (FolderVaultConfiguration) super.newInstance(req, formData);
-            return config.getConfiguration().isEmpty() ? null : config;
-        }
     }
 
     @Extension(ordinal = 100)
