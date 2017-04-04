@@ -23,8 +23,6 @@
  */
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -38,6 +36,7 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
+import com.google.common.annotations.VisibleForTesting;
 import hudson.*;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
@@ -65,6 +64,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     private VaultConfiguration configuration;
     private List<VaultSecret> vaultSecrets;
     private List<String> valuesToMask = new ArrayList<>();
+    private VaultAccessor vaultAccessor = new VaultAccessor();
 
     @DataBoundConstructor
     public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
@@ -100,19 +100,21 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         return this.configuration;
     }
 
+    @VisibleForTesting
+    public void setVaultAccessor(VaultAccessor vaultAccessor) {
+        this.vaultAccessor = vaultAccessor;
+    }
+
+
     private void provideEnvironmentVariablesFromVault(Context context) throws VaultException {
         String url = getConfiguration().getVaultUrl();
         String roleId = retrieveVaultCredentials().getRoleId();
-        String secretId = Secret.toString(retrieveVaultCredentials().getSecretId());
+        Secret secretId = retrieveVaultCredentials().getSecretId();
 
+        vaultAccessor.init(url);
         for (VaultSecret vaultSecret : vaultSecrets) {
-            VaultConfig vaultConfig = new VaultConfig(url).build();
-
-            Vault vault = new Vault(vaultConfig);
-            String token = vault.auth().loginByAppRole("approle", roleId, secretId).getAuthClientToken();
-            vault = new Vault(vaultConfig.token(token));
-            Map<String, String> values =
-                    vault.logical().read(vaultSecret.getPath()).getData();
+            vaultAccessor.auth(roleId, secretId);
+            Map<String, String> values = vaultAccessor.read(vaultSecret.getPath());
 
             for (VaultSecretValue value : vaultSecret.getSecretValues()) {
                 valuesToMask.add(values.get(value.getVaultKey()));
