@@ -26,6 +26,7 @@ package com.datapipe.jenkins.vault;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
+import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
@@ -35,6 +36,7 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
+import com.datapipe.jenkins.vault.folder.FolderLevelConfiguration;
 import hudson.*;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.*;
@@ -117,15 +119,34 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   }
 
   private VaultTokenCredential getVaultTokenCredential() {
+     // Credential-ID is passed in Jenkinsfile
      String id = appRoleCredentialId;
-     if (id == null || id.isEmpty()) {
-         id = getDescriptor().getAppRoleCredentialId();
+
+     List<VaultTokenCredential> credentials = Collections.emptyList();
+     // Credential-ID is configured in folder level
+     if(id == null || id.isEmpty()) {
+         System.out.println("id is still null for folder");
+         FolderLevelConfiguration.DescriptorImpl folderDescriptor = (FolderLevelConfiguration.DescriptorImpl) Jenkins.getInstance().getDescriptor(FolderLevelConfiguration.class);
+         System.out.println("fetched descriptor");
+         if(folderDescriptor.getFolderLevelConfiguration() != null) {
+             System.out.println("descriptor is not null");
+             id = folderDescriptor.getFolderLevelConfiguration().getAppRoleCredentialId();
+             credentials = FolderCredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+         }
      }
 
+     // Credential-ID is configured      globally
+     if (id == null || id.isEmpty()) {
+         System.out.println("id is still null for global");
+         id = getDescriptor().getAppRoleCredentialId();
+         credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), Jenkins.getAuthentication(), Collections.<DomainRequirement>emptyList());
+         System.out.println("found " + credentials.size() + " credentials");
+     }
+
+     // Credential-ID is configured nowhere
      if(id == null || id.isEmpty()) {
         throw new VaultPluginException("The credential id was not set - neither in the global config nor in the job config.");
      }
-     List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), Jenkins.getAuthentication(), Collections.<DomainRequirement>emptyList());
      VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
 
      if(credential == null) {
