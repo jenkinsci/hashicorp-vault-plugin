@@ -23,14 +23,14 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String vaultTokenCredentialId;
 
+    public VaultConfiguration(){
+        // no args constructor
+    }
+
     @DataBoundConstructor
     public VaultConfiguration(String vaultUrl, String vaultTokenCredentialId) {
         this.vaultUrl = vaultUrl;
         this.vaultTokenCredentialId = vaultTokenCredentialId;
-    }
-
-    public VaultConfiguration(){
-        //no args constructor
     }
 
     public VaultConfiguration(VaultConfiguration toCopy){
@@ -70,14 +70,12 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultTokenCredentialId = vaultTokenCredentialId;
     }
 
-
     public boolean isEmpty() {
         return StringUtils.isBlank(getVaultUrl()) && StringUtils.isBlank(getVaultTokenCredentialId());
     }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
-
         @Override
         public String getDisplayName() {
             return "Vault Configuration";

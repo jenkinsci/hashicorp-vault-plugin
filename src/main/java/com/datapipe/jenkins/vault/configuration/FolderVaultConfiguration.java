@@ -14,15 +14,15 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FolderLevelVaultConfiguration extends AbstractFolderProperty<AbstractFolder<?>> {
+public class FolderVaultConfiguration extends AbstractFolderProperty<AbstractFolder<?>> {
     private final VaultConfiguration configuration;
 
-    public FolderLevelVaultConfiguration() {
+    public FolderVaultConfiguration() {
         this.configuration = null;
     }
 
     @DataBoundConstructor
-    public FolderLevelVaultConfiguration(VaultConfiguration configuration) {
+    public FolderVaultConfiguration(VaultConfiguration configuration) {
         this.configuration = configuration;
     }
 
@@ -35,7 +35,7 @@ public class FolderLevelVaultConfiguration extends AbstractFolderProperty<Abstra
 
         @Override
         public AbstractFolderProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            FolderLevelVaultConfiguration config = (FolderLevelVaultConfiguration) super.newInstance(req, formData);
+            FolderVaultConfiguration config = (FolderVaultConfiguration) super.newInstance(req, formData);
             return config.getConfiguration().isEmpty() ? null : config;
         }
     }
@@ -48,7 +48,7 @@ public class FolderLevelVaultConfiguration extends AbstractFolderProperty<Abstra
             VaultConfiguration resultingConfig = null;
             List<VaultConfiguration> libraries = new ArrayList<>();
             for (ItemGroup g = job.getParent(); g instanceof AbstractFolder; g = ((AbstractFolder) g).getParent()) {
-                FolderLevelVaultConfiguration folderProperty = ((AbstractFolder<?>) g).getProperties().get(FolderLevelVaultConfiguration.class);
+                FolderVaultConfiguration folderProperty = ((AbstractFolder<?>) g).getProperties().get(FolderVaultConfiguration.class);
                 if (folderProperty==null){
                     continue;
                 }

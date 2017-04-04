@@ -3,8 +3,11 @@ package com.datapipe.jenkins.vault;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsDescriptor;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredentialImpl;
+import com.datapipe.jenkins.vault.model.VaultSecret;
+import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import hudson.util.Secret;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -155,8 +158,7 @@ public class VaultBuildWrapperTest {
     secrets.add(new VaultSecret("secret/path1", secretValues));
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-    vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setAppRoleCredentialId(VAULT_TOKEN_CREDENTIAL_ID);
+    vaultBuildWrapper.setConfiguration(new VaultConfiguration(VAULT_ADDR, VAULT_TOKEN_CREDENTIAL_ID));
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
     this.project.getBuildersList().add(new Shell("echo $envVar1"));
@@ -192,8 +194,7 @@ public class VaultBuildWrapperTest {
     }
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-    vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setAppRoleCredentialId(VAULT_TOKEN_CREDENTIAL_ID);
+    vaultBuildWrapper.setConfiguration(new VaultConfiguration(VAULT_ADDR, VAULT_TOKEN_CREDENTIAL_ID));
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
 

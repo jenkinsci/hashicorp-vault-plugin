@@ -1,8 +1,8 @@
-package com.datapipe.jenkins.vault;
+package com.datapipe.jenkins.vault.log;
 
 import hudson.console.ConsoleLogFilter;
 import hudson.console.LineTransformationOutputStream;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,8 +24,7 @@ public class MaskingConsoleLogFilter extends ConsoleLogFilter
   }
 
   @Override
-  @SuppressWarnings("rawtypes")
-  public OutputStream decorateLogger(AbstractBuild abstractBuild,
+  public OutputStream decorateLogger(Run run,
       final OutputStream logger) throws IOException, InterruptedException {
     return new LineTransformationOutputStream() {
       @Override

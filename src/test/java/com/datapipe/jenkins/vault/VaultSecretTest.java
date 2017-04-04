@@ -29,6 +29,8 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.datapipe.jenkins.vault.model.VaultSecret;
+import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -51,7 +53,7 @@ public class VaultSecretTest {
 
   /**
    * Test method for
-   * {@link com.datapipe.jenkins.vault.VaultSecret#VaultSecret(java.lang.String, java.lang.String, java.lang.String)}
+   * {@link VaultSecret#VaultSecret(java.lang.String, java.lang.String, java.lang.String)}
    * .
    */
   @Test
@@ -65,7 +67,7 @@ public class VaultSecretTest {
   }
 
   /**
-   * Test method for {@link com.datapipe.jenkins.vault.VaultSecret#getPath()}.
+   * Test method for {@link VaultSecret#getPath()}.
    */
   @Test
   public void testGetPath() {
@@ -73,7 +75,7 @@ public class VaultSecretTest {
   }
 
   /**
-   * Test method for {@link com.datapipe.jenkins.vault.VaultSecret#getSecret()}.
+   * Test method for {@link VaultSecret#getSecret()}.
    */
   @Test
   public void testGetSecretValues() {

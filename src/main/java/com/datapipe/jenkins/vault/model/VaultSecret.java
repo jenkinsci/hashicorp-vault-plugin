@@ -21,45 +21,47 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.datapipe.jenkins.vault;
-
-import org.kohsuke.stapler.DataBoundConstructor;
+package com.datapipe.jenkins.vault.model;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.util.List;
 
 /**
+ * Represents a Vault secret.
+ * 
  * @author Peter Tierno {@literal <}ptierno{@literal @}datapipe.com{@literal >}
  */
-public class VaultSecretValue
-    extends AbstractDescribableImpl<VaultSecretValue> {
+public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
-  private String envVar;
-  private String vaultKey;
+  private String path;
+  private List<VaultSecretValue> secretValues;
 
   @DataBoundConstructor
-  public VaultSecretValue(String envVar, String vaultKey) {
-    this.envVar = envVar;
-    this.vaultKey = vaultKey;
+  public VaultSecret(String path, List<VaultSecretValue> secretValues) {
+    this.path = path;
+    this.secretValues = secretValues;
   }
 
-  public String getEnvVar() {
-    return this.envVar;
+  public String getPath() {
+    return this.path;
   }
 
-  public String getVaultKey() {
-    return this.vaultKey;
+  public List<VaultSecretValue> getSecretValues() {
+    return this.secretValues;
   }
 
   @Extension
-  public static final class DescriptorImpl
-      extends Descriptor<VaultSecretValue> {
+  public static final class DescriptorImpl extends Descriptor<VaultSecret> {
 
     @Override
     public String getDisplayName() {
-      return "Environment variable/vault secret value pair";
+      return "Vault Secret";
     }
+
   }
 
 }
