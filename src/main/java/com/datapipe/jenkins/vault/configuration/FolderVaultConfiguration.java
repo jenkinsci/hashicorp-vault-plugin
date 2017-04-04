@@ -9,8 +9,6 @@ import hudson.model.ItemGroup;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FolderVaultConfiguration extends AbstractFolderProperty<AbstractFolder<?>> {
     private final VaultConfiguration configuration;
@@ -38,7 +36,6 @@ public class FolderVaultConfiguration extends AbstractFolderProperty<AbstractFol
         @Override
         public VaultConfiguration forJob(@Nonnull Item job) {
             VaultConfiguration resultingConfig = null;
-            List<VaultConfiguration> libraries = new ArrayList<>();
             for (ItemGroup g = job.getParent(); g instanceof AbstractFolder; g = ((AbstractFolder) g).getParent()) {
                 FolderVaultConfiguration folderProperty = ((AbstractFolder<?>) g).getProperties().get(FolderVaultConfiguration.class);
                 if (folderProperty==null){
