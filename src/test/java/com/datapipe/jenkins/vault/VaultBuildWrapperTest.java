@@ -5,7 +5,6 @@ import com.cloudbees.plugins.credentials.CredentialsDescriptor;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredentialImpl;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.util.Secret;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -139,7 +138,7 @@ public class VaultBuildWrapperTest {
 
 
   /**
-   * Tests the {@link VaultBuildWrapper} against a single {@link VaultSecret}
+   * Tests the {@link VaultBuildWrapperOld} against a single {@link VaultSecret}
    *
    * @throws ExecutionException
    * @throws InterruptedException
@@ -172,7 +171,7 @@ public class VaultBuildWrapperTest {
   }
 
   /**
-   * Tests the {@link VaultBuildWrapper} against multiple {@link VaultSecret}'s
+   * Tests the {@link VaultBuildWrapperOld} against multiple {@link VaultSecret}'s
    *
    * @throws ExecutionException
    * @throws InterruptedException
