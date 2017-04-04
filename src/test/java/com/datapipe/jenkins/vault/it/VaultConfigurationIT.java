@@ -40,7 +40,7 @@ import hudson.tasks.Shell;
 import hudson.util.Secret;
 import jenkins.model.GlobalConfiguration;
 
-public class FreeStyleJobIT {
+public class VaultConfigurationIT {
    @Rule
    public JenkinsRule jenkins = new JenkinsRule();
 
@@ -52,15 +52,13 @@ public class FreeStyleJobIT {
    @Before
    public void setupJenkins() throws IOException {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://vault-url.com", GLOBAL_CREDENTIALS_ID_1));
+      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1));
 
       globalConfig.save();
 
       SystemCredentialsProvider.getInstance().save();
-      SystemCredentialsProvider.getInstance().setDomainCredentialsMap(
-            Collections.singletonMap(Domain.global(), Arrays.asList(
-                    createTokenCredential(GLOBAL_CREDENTIALS_ID_1),
-                    createTokenCredential(GLOBAL_CREDENTIALS_ID_2))));
+      SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays
+            .asList(createTokenCredential(GLOBAL_CREDENTIALS_ID_1), createTokenCredential(GLOBAL_CREDENTIALS_ID_2))));
       this.project = jenkins.createFreeStyleProject("test");
    }
 
@@ -88,13 +86,38 @@ public class FreeStyleJobIT {
       this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
-      assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://vault-url.com"));
+      assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://global-vault-url.com"));
       assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_1));
 
       jenkins.assertLogContains("echo ****", build);
       verify(mockAccessor, times(1)).auth("role-id", Secret.fromString("secret-id"));
       verify(mockAccessor, times(1)).read("secret/path1");
    }
+
+    @Test
+    public void shouldUseJobConfiguration() throws Exception {
+        List<VaultSecret> secrets = new ArrayList<VaultSecret>();
+        VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
+        List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
+        secretValues.add(secretValue);
+
+        secrets.add(new VaultSecret("secret/path1", secretValues));
+        VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+        VaultAccessor mockAccessor = mockVaultAccessor();
+        vaultBuildWrapper.setVaultAccessor(mockAccessor);
+
+        this.project.getBuildWrappersList().add(vaultBuildWrapper);
+        this.project.getBuildersList().add(new Shell("echo $envVar1"));
+        // TODO configure the job SOMEHOW
+
+        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://job-vault-url.com"));
+        assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
+
+        verify(mockAccessor, times(1)).auth("role-id", Secret.fromString("secret-id"));
+        verify(mockAccessor, times(1)).read("secret/path1");
+        jenkins.assertLogContains("echo ****", build);
+    }
 
    @Test
    public void shouldUseJenkinsfileConfiguration() throws Exception {
@@ -110,13 +133,13 @@ public class FreeStyleJobIT {
       // that's the interesting part:
       // this is as if one was setting the confgiuration directly in the
       // Jenkinsfile
-      vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://other-vault-url.com", GLOBAL_CREDENTIALS_ID_2));
+      vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://jenkinsfile-vault-url.com", GLOBAL_CREDENTIALS_ID_2));
 
       this.project.getBuildWrappersList().add(vaultBuildWrapper);
       this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
-      assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://other-vault-url.com"));
+      assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://jenkinsfile-vault-url.com"));
       assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
 
       verify(mockAccessor, times(1)).auth("role-id", Secret.fromString("secret-id"));
