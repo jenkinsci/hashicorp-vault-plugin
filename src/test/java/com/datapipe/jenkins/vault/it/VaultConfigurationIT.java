@@ -1,25 +1,5 @@
 package com.datapipe.jenkins.vault.it;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsDescriptor;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -33,19 +13,35 @@ import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredentialImpl;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
-
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Result;
 import hudson.tasks.Shell;
 import hudson.util.Secret;
 import jenkins.model.GlobalConfiguration;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import java.io.IOException;
+import java.util.*;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.*;
 
 public class VaultConfigurationIT {
    @Rule
    public JenkinsRule jenkins = new JenkinsRule();
 
-   private static final String GLOBAL_CREDENTIALS_ID_1 = "global-1";
-   private static final String GLOBAL_CREDENTIALS_ID_2 = "global-2";
+   public static final String GLOBAL_CREDENTIALS_ID_1 = "global-1";
+   public static final String GLOBAL_CREDENTIALS_ID_2 = "global-2";
+
+   public static final String JENKINSFILE_URL = "http://jenkinsfile-vault-url.com";
 
    private FreeStyleProject project;
 
@@ -70,14 +66,19 @@ public class VaultConfigurationIT {
       return vaultAccessor;
    }
 
-   @Test
-   public void shouldUseGlobalConfiguration() throws Exception {
+   private List<VaultSecret> standardSecrets(){
       List<VaultSecret> secrets = new ArrayList<VaultSecret>();
       VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
       List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
       secretValues.add(secretValue);
-
       secrets.add(new VaultSecret("secret/path1", secretValues));
+      return secrets;
+   }
+
+   @Test
+   public void shouldUseGlobalConfiguration() throws Exception {
+      List<VaultSecret> secrets = standardSecrets();
+
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
       VaultAccessor mockAccessor = mockVaultAccessor();
       vaultBuildWrapper.setVaultAccessor(mockAccessor);
@@ -89,61 +90,62 @@ public class VaultConfigurationIT {
       assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://global-vault-url.com"));
       assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_1));
 
+      jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
-      verify(mockAccessor, times(1)).auth("role-id", Secret.fromString("secret-id"));
+       verify(mockAccessor, times(1)).init("http://global-vault-url.com");
+      verify(mockAccessor, times(1)).auth("role-id-"+GLOBAL_CREDENTIALS_ID_1, Secret.fromString("secret-id-"+GLOBAL_CREDENTIALS_ID_1));
       verify(mockAccessor, times(1)).read("secret/path1");
    }
 
     @Test
     public void shouldUseJobConfiguration() throws Exception {
-        List<VaultSecret> secrets = new ArrayList<VaultSecret>();
-        VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
-        List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
-        secretValues.add(secretValue);
+       List<VaultSecret> secrets = standardSecrets();
 
-        secrets.add(new VaultSecret("secret/path1", secretValues));
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
+        vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", GLOBAL_CREDENTIALS_ID_2));
         this.project.getBuildersList().add(new Shell("echo $envVar1"));
-        // TODO configure the job SOMEHOW
 
         FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://job-vault-url.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
 
-        verify(mockAccessor, times(1)).auth("role-id", Secret.fromString("secret-id"));
+        jenkins.assertBuildStatus(Result.SUCCESS, build);
+        verify(mockAccessor, times(1)).init("http://job-vault-url.com");
+        verify(mockAccessor, times(1)).auth("role-id-"+GLOBAL_CREDENTIALS_ID_2, Secret.fromString("secret-id-"+GLOBAL_CREDENTIALS_ID_2));
         verify(mockAccessor, times(1)).read("secret/path1");
         jenkins.assertLogContains("echo ****", build);
     }
 
    @Test
    public void shouldUseJenkinsfileConfiguration() throws Exception {
-      List<VaultSecret> secrets = new ArrayList<VaultSecret>();
-      VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
-      List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
-      secretValues.add(secretValue);
+      List<VaultSecret> secrets = standardSecrets();
 
-      secrets.add(new VaultSecret("secret/path1", secretValues));
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
       VaultAccessor mockAccessor = mockVaultAccessor();
       vaultBuildWrapper.setVaultAccessor(mockAccessor);
-      // that's the interesting part:
-      // this is as if one was setting the confgiuration directly in the
-      // Jenkinsfile
-      vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://jenkinsfile-vault-url.com", GLOBAL_CREDENTIALS_ID_2));
+      vaultBuildWrapper.setConfiguration(new VaultConfiguration("", GLOBAL_CREDENTIALS_ID_2));
 
-      this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+      WorkflowJob pipeline = jenkins.createProject(WorkflowJob.class, "Pipeline");
+      pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
+              "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
+              "                   configuration: [$class: 'VaultConfiguration', \n" +
+              "                             vaultTokenCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
+              "                             vaultUrl: '"+JENKINSFILE_URL+"'], \n" +
+              "                   vaultSecrets: [\n" +
+              "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: [\n" +
+              "                            [$class: 'VaultSecretValue', envVar: 'envVar1', vaultKey: 'key1']]]]]) {\n" +
+              "            sh \"echo ${env.envVar1}\"\n" +
+              "      }\n" +
+              "}", true));
 
-      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
-      assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://jenkinsfile-vault-url.com"));
-      assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
+      WorkflowRun build = pipeline.scheduleBuild2(0).get();
 
-      verify(mockAccessor, times(1)).auth("role-id", Secret.fromString("secret-id"));
-      verify(mockAccessor, times(1)).read("secret/path1");
+      jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
    }
 
@@ -151,12 +153,12 @@ public class VaultConfigurationIT {
       return new VaultTokenCredential() {
          @Override
          public String getRoleId() {
-            return "role-id";
+            return "role-id-"+credentialId;
          }
 
          @Override
          public Secret getSecretId() {
-            return Secret.fromString("secret-id");
+            return Secret.fromString("secret-id-"+credentialId);
          }
 
          @Override
@@ -180,5 +182,4 @@ public class VaultConfigurationIT {
          }
       };
    }
-
 }
