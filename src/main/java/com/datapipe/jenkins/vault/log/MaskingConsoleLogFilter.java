@@ -18,7 +18,7 @@ public class MaskingConsoleLogFilter extends ConsoleLogFilter
 
 
     public MaskingConsoleLogFilter(final String charsetName,
-                                   List<String> valuesToMasak) {
+                                   List<String> valuesToMask) {
         this.charsetName = charsetName;
         this.valuesToMask = valuesToMask;
     }
