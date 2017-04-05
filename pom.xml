@@ -1,40 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project 
+	xmlns="http://maven.apache.org/POM/4.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>2.17</version>
+		<version>2.25</version>
 		<relativePath />
 	</parent>
-
 	<groupId>com.datapipe.jenkins.plugins</groupId>
 	<artifactId>hashicorp-vault-plugin</artifactId>
 	<version>1.4-SNAPSHOT</version>
 	<packaging>hpi</packaging>
-
 	<properties>
 		<jenkins.version>2.46.1</jenkins.version>
 		<java.level>7</java.level>
 		<jenkins-test-harness.version>2.19</jenkins-test-harness.version>
 	</properties>
-
 	<name>HashiCorp Vault Plugin</name>
 	<description>Build Wrapper for reading secrets in a HashiCorp Vault</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/HashiCorp+Vault+Plugin</url>
-
+	<url>https://wiki.jenkins-ci.org/display/JENKINS/HashiCorp+Vault+Plugin</url>
 	<organization>
 		<name>Datapipe, Inc.</name>
 		<url>https://www.datapipe.com</url>
 	</organization>
-
 	<licenses>
 		<license>
 			<name>MIT License</name>
 			<url>http://opensource.org/licenses/MIT</url>
 		</license>
 	</licenses>
-
 	<developers>
 		<developer>
 			<id>ptierno</id>
@@ -42,28 +38,15 @@
 			<email>ptierno@datapipe.com</email>
 		</developer>
 	</developers>
-
 	<scm>
 		<connection>scm:git:git://github.com/jenkinsci/${project.artifactId}.git</connection>
 		<developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}.git</developerConnection>
 		<url>http://github.com/jenkinsci/${project.artifactId}</url>
-	  <tag>hashicorp-vault-plugin-1.3</tag>
-  </scm>
-
-
-  <!--
-  <distributionManagement>
-    <repository>
-      <id>maven.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/releases/</url>
-    </repository>
-    <snapshotRepository>
-      <id>maven.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
+		<tag>hashicorp-vault-plugin-1.3</tag>
+	</scm>
+	<!--
+  <distributionManagement><repository><id>maven.jenkins-ci.org</id><url>https://repo.jenkins-ci.org/releases/</url></repository><snapshotRepository><id>maven.jenkins-ci.org</id><url>https://repo.jenkins-ci.org/snapshots/</url></snapshotRepository></distributionManagement>
   -->
-
 	<repositories>
 		<repository>
 			<id>repo.jenkins-ci.org</id>
@@ -76,6 +59,23 @@
 			<url>https://repo.jenkins-ci.org/public/</url>
 		</pluginRepository>
 	</pluginRepositories>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.19.1</version>
+					<configuration>
+						<includes>
+							<include>**/*Spec.java</include>
+							<include>**/*IT.java</include>
+						</includes>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 	<dependencies>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -83,7 +83,8 @@
 			<version>2.3</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency> <!-- FilePathUtils -->
+		<dependency>
+			<!-- FilePathUtils -->
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-api</artifactId>
 			<version>2.1</version>
@@ -118,14 +119,16 @@
 			<version>2.4</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency> <!-- StepConfigTester -->
+		<dependency>
+			<!-- StepConfigTester -->
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-step-api</artifactId>
 			<version>2.3</version>
 			<classifier>tests</classifier>
 			<scope>test</scope>
 		</dependency>
-		<dependency> <!-- SemaphoreStep -->
+		<dependency>
+			<!-- SemaphoreStep -->
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
 			<artifactId>workflow-support</artifactId>
 			<version>2.1</version>
@@ -133,30 +136,29 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-		    <groupId>org.jenkins-ci.plugins</groupId>
+			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>credentials</artifactId>
-            <version>2.1.13</version>
+			<version>2.1.13</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bettercloud</groupId>
 			<artifactId>vault-java-driver</artifactId>
 			<version>2.0.0</version>
 		</dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>cloudbees-folder</artifactId>
-            <version>6.0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>2.7.21</version>
-        </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins</groupId>
+			<artifactId>cloudbees-folder</artifactId>
+			<version>6.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>2.7.21</version>
+		</dependency>
+	</dependencies>
 	<reporting>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-report-plugin</artifactId>
 				<version>2.19.1</version>
 			</plugin>
