@@ -1,24 +1,33 @@
 package com.datapipe.jenkins.vault.configuration;
 
-import com.cloudbees.hudson.plugins.folder.Folder;
+import com.cloudbees.hudson.plugins.folder.AbstractFolder;
+import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
+import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
+import hudson.model.ItemGroup;
 import hudson.model.Job;
+import hudson.model.Run;
+import hudson.model.TopLevelItem;
+import hudson.util.DescribableList;
 import jenkins.model.Jenkins;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.annotation.Nonnull;
+import java.util.SortedMap;
+
+import static com.datapipe.jenkins.vault.configuration.VaultConfigurationSpec.completeTestConfig;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FolderVaultConfigurationSpec {
 
     private FolderVaultConfiguration completeTestConfigFolder(String identifier) {
-        return new FolderVaultConfiguration(VaultConfigurationSpec.completeTestConfig(identifier));
+        return new FolderVaultConfiguration(completeTestConfig(identifier));
     }
 
     @Test
@@ -34,39 +43,88 @@ public class FolderVaultConfigurationSpec {
 
     @Test
     public void resolverShouldCorrectlyMerge() {
-        VaultConfigResolver folderResolver = new FolderVaultConfiguration.ForJob();
-        Job job = mock(Job.class);
-        Folder firstParent = mock(Folder.class, Mockito.RETURNS_DEEP_STUBS);
-        Folder secondParent = mock(Folder.class, Mockito.RETURNS_DEEP_STUBS);
-        when(job.getParent()).thenReturn(firstParent);
-        when(firstParent.getParent()).thenReturn(secondParent);
-        when(firstParent.getProperties().get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent"));
-        when(secondParent.getProperties().get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("secondParent"));
+        final DescribableList firstFolderProperties = mock(DescribableList.class);
+        when(firstFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent"));
 
-        VaultConfiguration result = folderResolver.forJob(job);
+        final DescribableList secondFolderProperties = mock(DescribableList.class);
+        when(secondFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("secondParent"));
 
-        VaultConfiguration expected = VaultConfigurationSpec.completeTestConfig("firstParent").mergeWithParent(VaultConfigurationSpec.completeTestConfig("secondParent"));
+        final AbstractFolder secondParent = generateMockFolder(secondFolderProperties, null);
+
+        final AbstractFolder firstParent = generateMockFolder(firstFolderProperties, secondParent);
+
+        final Job job = generateMockJob(firstParent);
+
+        VaultConfiguration result = new FolderVaultConfiguration.ForJob().forJob(job);
+
+        VaultConfiguration expected = completeTestConfig("firstParent").mergeWithParent(completeTestConfig("secondParent"));
 
         assertThat(result.getVaultTokenCredentialId(), is(expected.getVaultTokenCredentialId()));
         assertThat(result.getVaultUrl(), is(expected.getVaultUrl()));
     }
 
+
     @Test
     public void resolverShouldHandleAbsentConfigurationOnFolders() {
-        VaultConfigResolver folderResolver = new FolderVaultConfiguration.ForJob();
-        Job job = mock(Job.class);
-        Folder firstParent = mock(Folder.class, Mockito.RETURNS_DEEP_STUBS);
-        Folder secondParent = mock(Folder.class, Mockito.RETURNS_DEEP_STUBS);
-        when(job.getParent()).thenReturn(firstParent);
-        when(firstParent.getParent()).thenReturn(secondParent);
-        when(firstParent.getProperties().get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent"));
-        when(secondParent.getProperties().get(FolderVaultConfiguration.class)).thenReturn(null);
 
-        VaultConfiguration result = folderResolver.forJob(job);
+        final DescribableList firstFolderProperties = mock(DescribableList.class);
+        when(firstFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent"));
 
-        VaultConfiguration expected = VaultConfigurationSpec.completeTestConfig("firstParent").mergeWithParent(null);
+        final DescribableList secondFolderProperties = mock(DescribableList.class);
+        when(secondFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(null);
+
+        final AbstractFolder secondParent = generateMockFolder(secondFolderProperties, null);
+
+        final AbstractFolder firstParent = generateMockFolder(firstFolderProperties, secondParent);
+
+        final Job job = generateMockJob(firstParent);
+
+
+        VaultConfiguration result = new FolderVaultConfiguration.ForJob().forJob(job);
+
+        VaultConfiguration expected = completeTestConfig("firstParent").mergeWithParent(null);
 
         assertThat(result.getVaultTokenCredentialId(), is(expected.getVaultTokenCredentialId()));
         assertThat(result.getVaultUrl(), is(expected.getVaultUrl()));
+    }
+
+    private Job generateMockJob(final AbstractFolder firstParent) {
+        return new Job(firstParent, "test-job") {
+                @Override
+                public boolean isBuildable() {
+                    return true;
+                }
+
+                @Override
+                protected SortedMap _getRuns() {
+                    return null;
+                }
+
+                @Override
+                protected void removeRun(Run run) {
+
+                }
+
+                @Nonnull
+                @Override
+                public ItemGroup getParent() {
+                    return firstParent;
+                }
+            };
+    }
+
+    private AbstractFolder generateMockFolder(final DescribableList firstFolderProperties, final AbstractFolder parentToReturn) {
+        return new AbstractFolder<TopLevelItem>(null, null) {
+                @Nonnull
+                @Override
+                public ItemGroup getParent() {
+                    return parentToReturn;
+                }
+
+                @Override
+                public DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> getProperties() {
+                    return firstFolderProperties;
+                }
+            };
     }
 }
