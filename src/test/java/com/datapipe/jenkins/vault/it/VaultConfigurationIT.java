@@ -92,7 +92,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
-       verify(mockAccessor, times(1)).init("http://global-vault-url.com");
+      verify(mockAccessor, times(1)).init("http://global-vault-url.com");
       verify(mockAccessor, times(1)).auth("role-id-"+GLOBAL_CREDENTIALS_ID_1, Secret.fromString("secret-id-"+GLOBAL_CREDENTIALS_ID_1));
       verify(mockAccessor, times(1)).read("secret/path1");
    }
@@ -140,6 +140,81 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
+   }
+
+   @Test
+   public void shouldFailIfCredentialsNotConfigured() throws Exception {
+      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", null));
+
+      globalConfig.save();
+
+      List<VaultSecret> secrets = standardSecrets();
+
+      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+      VaultAccessor mockAccessor = mockVaultAccessor();
+      vaultBuildWrapper.setVaultAccessor(mockAccessor);
+
+      this.project.getBuildWrappersList().add(vaultBuildWrapper);
+      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+
+      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+
+      jenkins.assertBuildStatus(Result.FAILURE, build);
+      verify(mockAccessor, times(0)).init(anyString());
+      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).read(anyString());
+      jenkins.assertLogContains("The credential id was not configured - please specify the credentials to use.", build);
+   }
+
+   @Test
+   public void shouldFailIfUrlNotConfigured() throws Exception {
+      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      globalConfig.setConfiguration(new VaultConfiguration(null, GLOBAL_CREDENTIALS_ID_2));
+
+      globalConfig.save();
+
+      List<VaultSecret> secrets = standardSecrets();
+
+      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+      VaultAccessor mockAccessor = mockVaultAccessor();
+      vaultBuildWrapper.setVaultAccessor(mockAccessor);
+
+      this.project.getBuildWrappersList().add(vaultBuildWrapper);
+      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+
+      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+
+      jenkins.assertBuildStatus(Result.FAILURE, build);
+      verify(mockAccessor, times(0)).init(anyString());
+      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).read(anyString());
+      jenkins.assertLogContains("The vault url was not configured - please specify the vault url to use.", build);
+   }
+
+   @Test
+   public void shouldFailIfCredentialsDoNotExist() throws Exception {
+      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      globalConfig.setConfiguration(new VaultConfiguration("http://example.com", "some-made-up-ID"));
+
+      globalConfig.save();
+
+      List<VaultSecret> secrets = standardSecrets();
+
+      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+      VaultAccessor mockAccessor = mockVaultAccessor();
+      vaultBuildWrapper.setVaultAccessor(mockAccessor);
+
+      this.project.getBuildWrappersList().add(vaultBuildWrapper);
+      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+
+      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+
+      jenkins.assertBuildStatus(Result.FAILURE, build);
+      verify(mockAccessor, times(0)).init(anyString());
+      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).read(anyString());
+      jenkins.assertLogContains("CredentialsUnavailableException", build);
    }
 
    public static Credentials createTokenCredential(final String credentialId) {

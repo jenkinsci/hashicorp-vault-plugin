@@ -108,6 +108,11 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     private void provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
         String url = getConfiguration().getVaultUrl();
+
+        if (StringUtils.isBlank(url)){
+            throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
+        }
+
         VaultTokenCredential creds = retrieveVaultCredentials(build);
         String roleId = creds.getRoleId();
         Secret secretId = creds.getSecretId();
@@ -127,7 +132,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     private VaultTokenCredential retrieveVaultCredentials(Run build) {
         String id = getConfiguration().getVaultTokenCredentialId();
         if (StringUtils.isBlank(id)) {
-            throw new VaultPluginException("The credential id was not set - neither in the global config nor in the job config.");
+            throw new VaultPluginException("The credential id was not configured - please specify the credentials to use.");
         }
         List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, build.getParent(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
         VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
