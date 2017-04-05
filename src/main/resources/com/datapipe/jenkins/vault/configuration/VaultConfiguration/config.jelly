@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler" xmlns:c="/lib/credentials">
     <f:entry title="Vault URL">
         <f:textbox field="vaultUrl" name="vaultUrl"/>
