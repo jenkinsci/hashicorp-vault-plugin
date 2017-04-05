@@ -1,9 +1,9 @@
 # Jenkins Vault Plugin
 
-This plugin adds a build wrapper to set environment variables from a HashiCorp [Vault](https://www.vaultproject.io/) secret. Secrets are generally masked in the build log, so you can't see them.
+This plugin adds a build wrapper to set environment variables from a HashiCorp [Vault](https://www.vaultproject.io/) secret. Secrets are generally masked in the build log, so you can't accidentally print them.
 
 # Vault Authentication Backends
-This plugin only allows authenticating against Vault using the AppRole authentication backend. Hashicorp recommends using AppRole for Servers (like Jenkins) and using Tokens (default mechanism, Github Token, ...) for every developer's machine.  
+This plugin only allows authenticating against Vault using the AppRole authentication backend. Hashicorp recommends using AppRole for Servers / automated workflows (like Jenkins) and using Tokens (default mechanism, Github Token, ...) for every developer's machine.  
 
 ### How does AppRole work?
 In short: you register an approle auth backend using a self-chosen name (e.g. Jenkins). This approle is identified by a `role-id` and secured with a `secret_id`. If you have both of those values you can ask Vault for a token that can be used to access vault.  
@@ -58,8 +58,10 @@ node {
   ]
   
   // optional configuration, if you do not provide this the next higher configuration
-  // (e.g. folder or global) will be sued
-  def configuration = [$class: 'VaultConfiguration', vaultUrl: 'http://my-very-other-vault-url.com', vaultTokenCredentialId: 'my-vault-cred-id']
+  // (e.g. folder or global) will be used
+  def configuration = [$class: 'VaultConfiguration', 
+                       vaultUrl: 'http://my-very-other-vault-url.com', 
+                       vaultTokenCredentialId: 'my-vault-cred-id']
   
   // inside this block your credentials will be available as env variables
   wrap([$class: 'VaultBuildWrapper', configuration: configuration, vaultSecrets: secrets]) {
