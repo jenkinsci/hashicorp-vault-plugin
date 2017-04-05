@@ -43,9 +43,9 @@ import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
 import hudson.util.Secret;
-import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -79,7 +79,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         pullAndMergeConfiguration(build);
 
         try {
-            provideEnvironmentVariablesFromVault(context);
+            provideEnvironmentVariablesFromVault(context, build);
         } catch (VaultException e) {
             e.printStackTrace(logger);
             throw new AbortException(e.getMessage());
@@ -106,10 +106,11 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     }
 
 
-    private void provideEnvironmentVariablesFromVault(Context context) throws VaultException {
+    private void provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
         String url = getConfiguration().getVaultUrl();
-        String roleId = retrieveVaultCredentials().getRoleId();
-        Secret secretId = retrieveVaultCredentials().getSecretId();
+        VaultTokenCredential creds = retrieveVaultCredentials(build);
+        String roleId = creds.getRoleId();
+        Secret secretId = creds.getSecretId();
 
         vaultAccessor.init(url);
         for (VaultSecret vaultSecret : vaultSecrets) {
@@ -123,12 +124,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
-    private VaultTokenCredential retrieveVaultCredentials() {
+    private VaultTokenCredential retrieveVaultCredentials(Run build) {
         String id = getConfiguration().getVaultTokenCredentialId();
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException("The credential id was not set - neither in the global config nor in the job config.");
         }
-        List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), Jenkins.getAuthentication(), Collections.<DomainRequirement>emptyList());
+        List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, build.getParent(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
         VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
 
         if (credential == null) {

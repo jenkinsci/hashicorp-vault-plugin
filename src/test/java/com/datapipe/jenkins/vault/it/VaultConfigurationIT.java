@@ -52,9 +52,9 @@ public class VaultConfigurationIT {
 
       globalConfig.save();
 
-      SystemCredentialsProvider.getInstance().save();
       SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays
             .asList(createTokenCredential(GLOBAL_CREDENTIALS_ID_1), createTokenCredential(GLOBAL_CREDENTIALS_ID_2))));
+
       this.project = jenkins.createFreeStyleProject("test");
    }
 
@@ -123,13 +123,6 @@ public class VaultConfigurationIT {
 
    @Test
    public void shouldUseJenkinsfileConfiguration() throws Exception {
-      List<VaultSecret> secrets = standardSecrets();
-
-      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
-      vaultBuildWrapper.setVaultAccessor(mockAccessor);
-      vaultBuildWrapper.setConfiguration(new VaultConfiguration("", GLOBAL_CREDENTIALS_ID_2));
-
       WorkflowJob pipeline = jenkins.createProject(WorkflowJob.class, "Pipeline");
       pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
               "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
@@ -149,7 +142,7 @@ public class VaultConfigurationIT {
       jenkins.assertLogContains("echo ****", build);
    }
 
-   private static Credentials createTokenCredential(final String credentialId) {
+   public static Credentials createTokenCredential(final String credentialId) {
       return new VaultTokenCredential() {
          @Override
          public String getRoleId() {
@@ -173,7 +166,7 @@ public class VaultConfigurationIT {
 
          @Override
          public CredentialsScope getScope() {
-            return CredentialsScope.SYSTEM;
+            return CredentialsScope.GLOBAL;
          }
 
          @Override
