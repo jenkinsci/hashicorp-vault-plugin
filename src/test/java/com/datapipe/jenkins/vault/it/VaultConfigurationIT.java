@@ -92,6 +92,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
+      jenkins.assertLogNotContains("some-secret", build);
       verify(mockAccessor, times(1)).init("http://global-vault-url.com");
       verify(mockAccessor, times(1)).auth("role-id-"+GLOBAL_CREDENTIALS_ID_1, Secret.fromString("secret-id-"+GLOBAL_CREDENTIALS_ID_1));
       verify(mockAccessor, times(1)).read("secret/path1");
@@ -119,6 +120,7 @@ public class VaultConfigurationIT {
         verify(mockAccessor, times(1)).auth("role-id-"+GLOBAL_CREDENTIALS_ID_2, Secret.fromString("secret-id-"+GLOBAL_CREDENTIALS_ID_2));
         verify(mockAccessor, times(1)).read("secret/path1");
         jenkins.assertLogContains("echo ****", build);
+       jenkins.assertLogNotContains("some-secret", build);
     }
 
    @Test
@@ -140,6 +142,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
+      jenkins.assertLogNotContains("some-secret", build);
    }
 
    @Test
