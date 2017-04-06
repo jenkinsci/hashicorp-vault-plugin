@@ -43,9 +43,9 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
-import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -141,9 +141,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   private String getToken() {
     String token;
-    if (authTokenCredentialId != null || getDescriptor().getAuthTokenCredentialId() != null){
+    if (!StringUtils.isBlank(authTokenCredentialId) || !StringUtils.isBlank(getDescriptor().getAuthTokenCredentialId())){
       return getTokenFromCredentials();
-    } else if (tokenFilePath != null || getDescriptor().getTokenFilePath() != null){
+    } else if (!StringUtils.isBlank(tokenFilePath) || !StringUtils.isBlank(getDescriptor().getTokenFilePath())){
       return readTokenFromFile();
     }
     return null;
@@ -181,7 +181,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                    } catch (IOException e) {
                      throw new RuntimeException(e);
                    }
-                 }});
+                 }}).trim();
     } catch (IOException| InterruptedException e) {
       throw new RuntimeException(e);
     }
@@ -287,23 +287,11 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       Object authTokenCredentialId = formData.getString("authTokenCredentialId");
       Object tokenFilePath = formData.getString("tokenFilePath");
 
-      if (!JSONNull.getInstance().equals(vaultUrl)) {
-        this.vaultUrl = (String) vaultUrl;
-      } else {
-        this.vaultUrl = null;
-      }
+      this.vaultUrl = (String) vaultUrl;
 
-      if (!JSONNull.getInstance().equals(authTokenCredentialId)) {
-        this.authTokenCredentialId = (String) authTokenCredentialId;
-      } else {
-        this.authTokenCredentialId = null;
-      }
+      this.authTokenCredentialId = (String) authTokenCredentialId;
 
-      if (!JSONNull.getInstance().equals(tokenFilePath)) {
-        this.tokenFilePath = (String) tokenFilePath;
-      } else {
-        this.tokenFilePath = null;
-      }
+      this.tokenFilePath = (String) tokenFilePath;
 
       save();
       return super.configure(req, formData);
