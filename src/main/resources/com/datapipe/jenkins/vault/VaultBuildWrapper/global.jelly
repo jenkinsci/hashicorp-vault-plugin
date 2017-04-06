@@ -10,5 +10,9 @@
       <c:select />
     </f:entry>
 
+    <f:entry title="Authentication Token File Path" field="tokenFilePath">
+      <f:textbox />
+    </f:entry>
+
   </f:section>
 </j:jelly>

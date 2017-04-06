@@ -14,6 +14,11 @@
             <c:select />
           </f:entry>
         </f:optionalBlock>
+        <f:optionalBlock name="tokenPathOverride" title="Override Authentication Token File Path?">
+          <f:entry title="Authentication Token File Path" field="tokenFilePath">
+            <f:textbox />
+          </f:entry>
+        </f:optionalBlock>
       </table>
     </f:block>
 

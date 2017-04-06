@@ -94,7 +94,7 @@ public class VaultBuildWrapperTest {
 
       @Override
       public CredentialsScope getScope() {
-        return CredentialsScope.SYSTEM;
+        return CredentialsScope.GLOBAL;
       }
 
       @NonNull

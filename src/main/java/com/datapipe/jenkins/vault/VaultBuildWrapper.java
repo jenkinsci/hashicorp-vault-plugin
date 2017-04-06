@@ -36,6 +36,7 @@ import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import hudson.*;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.*;
+import hudson.remoting.VirtualChannel;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
 import hudson.util.ListBoxModel;
@@ -44,12 +45,15 @@ import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
+import org.apache.commons.io.FileUtils;
+import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -78,6 +82,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   private String vaultUrl;
   private String authTokenCredentialId;
+  private String tokenFilePath;
   private List<VaultSecret> vaultSecrets;
   private List<String> valuesToMask = new ArrayList<>();
 
@@ -106,6 +111,15 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   }
 
   @DataBoundSetter
+  public void setTokenFilePath(String tokenFilePath) {
+    this.tokenFilePath = tokenFilePath;
+  }
+
+  public String getTokenFilePath() {
+    return tokenFilePath;
+  }
+
+  @DataBoundSetter
   public void setAuthTokenCredentialId(String authTokenCredentialId) {
     this.authTokenCredentialId = authTokenCredentialId;
   }
@@ -126,6 +140,16 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   }
 
   private String getToken() {
+    String token;
+    if (authTokenCredentialId != null || getDescriptor().getAuthTokenCredentialId() != null){
+      return getTokenFromCredentials();
+    } else if (tokenFilePath != null || getDescriptor().getTokenFilePath() != null){
+      return readTokenFromFile();
+    }
+    return null;
+  }
+
+  private String getTokenFromCredentials() {
     String id = authTokenCredentialId;
     if (id == null || id.isEmpty()) {
       id = getDescriptor().getAuthTokenCredentialId();
@@ -133,6 +157,34 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
     VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
     return credential == null ? null : Secret.toString(credential.getToken());
+  }
+
+  private String readTokenFromFile() {
+    String path = tokenFilePath;
+    if (path == null || path.isEmpty()){
+      path = getDescriptor().getTokenFilePath();
+    }
+    if (path == null || path.isEmpty()){
+      return null;
+    }
+    FilePath file = new FilePath(new File(path));
+    try {
+      return file.act(new FilePath.FileCallable<String>() {
+                 @Override
+                 public void checkRoles(RoleChecker roleChecker) throws SecurityException {
+                   //not needed
+                 }
+
+                 @Override public String invoke(File f, VirtualChannel channel) {
+                   try {
+                     return FileUtils.readFileToString(f);
+                   } catch (IOException e) {
+                     throw new RuntimeException(e);
+                   }
+                 }});
+    } catch (IOException| InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   // Overridden for better type safety.
@@ -202,6 +254,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     private String authTokenCredentialId;
 
+    private String tokenFilePath;
+
     /**
      * In order to load the persisted global configuration, you have to call load() in the
      * constructor.
@@ -231,6 +285,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       // set that to properties and call save().
       Object vaultUrl = formData.getString("vaultUrl");
       Object authTokenCredentialId = formData.getString("authTokenCredentialId");
+      Object tokenFilePath = formData.getString("tokenFilePath");
 
       if (!JSONNull.getInstance().equals(vaultUrl)) {
         this.vaultUrl = (String) vaultUrl;
@@ -242,6 +297,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         this.authTokenCredentialId = (String) authTokenCredentialId;
       } else {
         this.authTokenCredentialId = null;
+      }
+
+      if (!JSONNull.getInstance().equals(tokenFilePath)) {
+        this.tokenFilePath = (String) tokenFilePath;
+      } else {
+        this.tokenFilePath = null;
       }
 
       save();
@@ -263,6 +324,14 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     public void setAuthTokenCredentialId(String authTokenCredentialId) {
       this.authTokenCredentialId = authTokenCredentialId;
+    }
+
+    public String getTokenFilePath() {
+      return tokenFilePath;
+    }
+
+    public void setTokenFilePath(String tokenFilePath) {
+      this.tokenFilePath = tokenFilePath;
     }
 
     public ListBoxModel doFillAuthTokenCredentialIdItems(){
