@@ -196,6 +196,30 @@ public class VaultConfigurationIT {
    }
 
    @Test
+   public void shouldFailIfNoConfigurationExists() throws Exception {
+      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      globalConfig.setConfiguration(null);
+
+      globalConfig.save();
+      List<VaultSecret> secrets = standardSecrets();
+
+      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+      VaultAccessor mockAccessor = mockVaultAccessor();
+      vaultBuildWrapper.setVaultAccessor(mockAccessor);
+
+      this.project.getBuildWrappersList().add(vaultBuildWrapper);
+      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+
+      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+
+      jenkins.assertBuildStatus(Result.FAILURE, build);
+      verify(mockAccessor, times(0)).init(anyString());
+      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).read(anyString());
+      jenkins.assertLogContains("No configuration found - please configure the VaultPlugin.", build);
+   }
+
+   @Test
    public void shouldFailIfCredentialsDoNotExist() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
       globalConfig.setConfiguration(new VaultConfiguration("http://example.com", "some-made-up-ID"));

@@ -152,6 +152,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 configuration = resolver.forJob(build.getParent());
             }
         }
+        if (configuration == null){
+            throw new VaultPluginException("No configuration found - please configure the VaultPlugin.");
+        }
     }
 
     @Override
