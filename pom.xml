@@ -14,7 +14,7 @@
 	<version>1.4-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 	<properties>
-		<jenkins.version>2.46.1</jenkins.version>
+		<jenkins.version>1.642.1</jenkins.version>
 		<java.level>7</java.level>
 		<jenkins-test-harness.version>2.19</jenkins-test-harness.version>
 	</properties>
