@@ -29,7 +29,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     @DataBoundConstructor
     public VaultConfiguration(String vaultUrl, String vaultTokenCredentialId) {
-        this.vaultUrl = vaultUrl;
+        this.vaultUrl = normalizeUrl(vaultUrl);
         this.vaultTokenCredentialId = vaultTokenCredentialId;
     }
 
@@ -62,7 +62,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     @DataBoundSetter
     public void setVaultUrl(String vaultUrl) {
-        this.vaultUrl = vaultUrl;
+        this.vaultUrl = normalizeUrl(vaultUrl);
     }
 
     @DataBoundSetter
@@ -82,5 +82,13 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(uri).build();
             return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item, VaultTokenCredential.class, domainRequirements);
         }
+    }
+
+    private String normalizeUrl(String url) {
+        if(url.endsWith("/")) {
+            return url.substring(0, url.length() -1);
+        }
+
+        return url;
     }
 }
