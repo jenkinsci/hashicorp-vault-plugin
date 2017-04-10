@@ -50,6 +50,18 @@
 	  <tag>hashicorp-vault-plugin-1.3</tag>
   </scm>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jenkins-ci.tools</groupId>
+        <artifactId>maven-hpi-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <compatibleSinceVersion>1.4</compatibleSinceVersion>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <!--
   <distributionManagement>
