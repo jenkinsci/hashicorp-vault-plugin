@@ -1,29 +1,32 @@
 package com.datapipe.jenkins.vault;
 
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.CoreMatchers.is;
-
-import java.util.*;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
-
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsDescriptor;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.domains.Domain;
+import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
+import com.datapipe.jenkins.vault.credentials.impl.VaultTokenCredentialImpl;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.tasks.Shell;
+import hudson.util.Secret;
+import org.apache.commons.io.FileUtils;
+import org.junit.*;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import hudson.model.*;
-import hudson.tasks.Shell;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertThat;
 
 /**
  * These test cases make use of the Jenkins test harness. It requires the VAULT_ADDR and VAULT_TOKEN
@@ -43,6 +46,8 @@ public class VaultBuildWrapperTest {
    */
   private static final String VAULT_TOKEN = System.getenv("VAULT_TOKEN");
 
+  private static final String VAULT_TOKEN_CREDENTIAL_ID = "token-credential";
+
   private static Vault vault;
 
   @Rule
@@ -57,9 +62,47 @@ public class VaultBuildWrapperTest {
    * @throws VaultException
    */
   @BeforeClass
-  public static void init() throws VaultException {
+  public static void init() throws VaultException, IOException {
     vault = new Vault(new VaultConfig(VAULT_ADDR, VAULT_TOKEN));
     writeTestSecrets();
+  }
+
+  @Before
+  public void setupCredentials() throws IOException {
+    SystemCredentialsProvider.getInstance().save();
+    SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), createTokenCredential()));
+  }
+
+  private static List<Credentials> createTokenCredential(){
+    return Arrays.asList(new Credentials[]{new VaultTokenCredential() {
+      @Override
+      public Secret getToken() {
+        return Secret.fromString(VAULT_TOKEN);
+      }
+
+      @NonNull
+      @Override
+      public String getDescription() {
+        return "description";
+      }
+
+      @NonNull
+      @Override
+      public String getId() {
+        return VAULT_TOKEN_CREDENTIAL_ID;
+      }
+
+      @Override
+      public CredentialsScope getScope() {
+        return CredentialsScope.GLOBAL;
+      }
+
+      @NonNull
+      @Override
+      public CredentialsDescriptor getDescriptor() {
+        return new VaultTokenCredentialImpl.DescriptorImpl();
+      }
+    }});
   }
 
   /**
@@ -101,7 +144,7 @@ public class VaultBuildWrapperTest {
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
     vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setAuthToken(VaultBuildWrapperTest.VAULT_TOKEN);
+    vaultBuildWrapper.setAuthTokenCredentialId(VaultBuildWrapperTest.VAULT_TOKEN_CREDENTIAL_ID);
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
     this.project.getBuildersList().add(new Shell("echo $envVar1"));
@@ -138,7 +181,7 @@ public class VaultBuildWrapperTest {
 
     VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
     vaultBuildWrapper.setVaultUrl(VaultBuildWrapperTest.VAULT_ADDR);
-    vaultBuildWrapper.setAuthToken(VaultBuildWrapperTest.VAULT_TOKEN);
+    vaultBuildWrapper.setAuthTokenCredentialId(VaultBuildWrapperTest.VAULT_TOKEN_CREDENTIAL_ID);
 
     this.project.getBuildWrappersList().add(vaultBuildWrapper);
 
@@ -154,7 +197,6 @@ public class VaultBuildWrapperTest {
     }
     // count number of occurences as of http://stackoverflow.com/a/770069
     assertThat(log.split("\\+ echo \\*\\*\\*\\*", -1).length - 1, is(10));
-
   }
 
   /**

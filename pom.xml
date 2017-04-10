@@ -77,12 +77,11 @@
 		</pluginRepository>
 	</pluginRepositories>
 	<dependencies>
-		<!-- possibly adding this
 		<dependency>
-		    <groupId>org.jenkins-ci.plugins</groupId> 
-			<artifactId>credentials</artifactId> <version>1.9.4</version>
+			<groupId>org.jenkins-ci.plugins</groupId>
+			<artifactId>credentials</artifactId>
+			<version>2.1.13</version>
 		</dependency>
-		-->
 		<dependency>
 			<groupId>com.bettercloud</groupId>
 			<artifactId>vault-java-driver</artifactId>

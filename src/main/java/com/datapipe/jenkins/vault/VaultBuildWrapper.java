@@ -26,23 +26,38 @@ package com.datapipe.jenkins.vault;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.matchers.IdMatcher;
+import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import hudson.*;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.*;
+import hudson.remoting.VirtualChannel;
+import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
+import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
-import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -66,7 +81,8 @@ import java.util.Map;
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
   private String vaultUrl;
-  private Secret authToken;
+  private String authTokenCredentialId;
+  private String tokenFilePath;
   private List<VaultSecret> vaultSecrets;
   private List<String> valuesToMask = new ArrayList<>();
 
@@ -82,7 +98,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     // Defaults to null to allow using global configuration
     // I am not sure this is necessary.
     this.vaultUrl = null;
-    this.authToken = null;
+    this.authTokenCredentialId = null;
   }
 
   @DataBoundSetter
@@ -95,12 +111,21 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   }
 
   @DataBoundSetter
-  public void setAuthToken(String authToken) {
-    this.authToken = Secret.fromString(authToken);
+  public void setTokenFilePath(String tokenFilePath) {
+    this.tokenFilePath = tokenFilePath;
   }
 
-  public Secret getAuthToken() {
-    return this.authToken;
+  public String getTokenFilePath() {
+    return tokenFilePath;
+  }
+
+  @DataBoundSetter
+  public void setAuthTokenCredentialId(String authTokenCredentialId) {
+    this.authTokenCredentialId = authTokenCredentialId;
+  }
+
+  public String getAuthTokenCredentialId() {
+    return this.authTokenCredentialId;
   }
 
   public List<VaultSecret> getVaultSecrets() {
@@ -114,11 +139,52 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     return this.vaultUrl;
   }
 
-  private Secret getToken() {
-    if (this.authToken == null || Secret.toString(this.authToken).isEmpty()) {
-      return getDescriptor().getAuthToken();
+  private String getToken() {
+    String token;
+    if (!StringUtils.isBlank(authTokenCredentialId) || !StringUtils.isBlank(getDescriptor().getAuthTokenCredentialId())){
+      return getTokenFromCredentials();
+    } else if (!StringUtils.isBlank(tokenFilePath) || !StringUtils.isBlank(getDescriptor().getTokenFilePath())){
+      return readTokenFromFile();
     }
-    return this.authToken;
+    return null;
+  }
+
+  private String getTokenFromCredentials() {
+    String id = authTokenCredentialId;
+    if (id == null || id.isEmpty()) {
+      id = getDescriptor().getAuthTokenCredentialId();
+    }
+    List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+    VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
+    return credential == null ? null : Secret.toString(credential.getToken());
+  }
+
+  private String readTokenFromFile() {
+    String path = tokenFilePath;
+    if (path == null || path.isEmpty()){
+      path = getDescriptor().getTokenFilePath();
+    }
+    if (path == null || path.isEmpty()){
+      return null;
+    }
+    FilePath file = new FilePath(new File(path));
+    try {
+      return file.act(new FilePath.FileCallable<String>() {
+                 @Override
+                 public void checkRoles(RoleChecker roleChecker) throws SecurityException {
+                   //not needed
+                 }
+
+                 @Override public String invoke(File f, VirtualChannel channel) {
+                   try {
+                     return FileUtils.readFileToString(f);
+                   } catch (IOException e) {
+                     throw new RuntimeException(e);
+                   }
+                 }}).trim();
+    } catch (IOException| InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   // Overridden for better type safety.
@@ -137,7 +203,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     PrintStream logger = listener.getLogger();
 
     String url = getUrl();
-    String token = Secret.toString(getToken());
+    String token = getToken();
 
     for (VaultSecret vaultSecret : vaultSecrets) {
 
@@ -185,7 +251,10 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
      * If you don't want fields to be persisted, use <tt>transient</tt>.
      */
     private String vaultUrl;
-    private Secret authToken;
+
+    private String authTokenCredentialId;
+
+    private String tokenFilePath;
 
     /**
      * In order to load the persisted global configuration, you have to call load() in the
@@ -215,19 +284,14 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       // To persist global configuration information,
       // set that to properties and call save().
       Object vaultUrl = formData.getString("vaultUrl");
-      Object authToken = formData.getString("authToken");
+      Object authTokenCredentialId = formData.getString("authTokenCredentialId");
+      Object tokenFilePath = formData.getString("tokenFilePath");
 
-      if (!JSONNull.getInstance().equals(vaultUrl)) {
-        this.vaultUrl = (String) vaultUrl;
-      } else {
-        this.vaultUrl = null;
-      }
+      this.vaultUrl = (String) vaultUrl;
 
-      if (!JSONNull.getInstance().equals(authToken)) {
-        this.authToken = Secret.fromString((String) authToken);
-      } else {
-        this.authToken = null;
-      }
+      this.authTokenCredentialId = (String) authTokenCredentialId;
+
+      this.tokenFilePath = (String) tokenFilePath;
 
       save();
       return super.configure(req, formData);
@@ -237,17 +301,33 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       return this.vaultUrl;
     }
 
-    public Secret getAuthToken() {
-      return this.authToken;
-    }
-
     // Required by external plugins (according to Articfactory plugin)
     public void setVaultUrl(String vaultUrl) {
       this.vaultUrl = vaultUrl;
     }
 
-    public void setAuthToken(String authToken) {
-      this.authToken = Secret.fromString(authToken);
+    public String getAuthTokenCredentialId() {
+      return authTokenCredentialId;
+    }
+
+    public void setAuthTokenCredentialId(String authTokenCredentialId) {
+      this.authTokenCredentialId = authTokenCredentialId;
+    }
+
+    public String getTokenFilePath() {
+      return tokenFilePath;
+    }
+
+    public void setTokenFilePath(String tokenFilePath) {
+      this.tokenFilePath = tokenFilePath;
+    }
+
+    public ListBoxModel doFillAuthTokenCredentialIdItems(){
+      if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+        return new ListBoxModel();
+      }
+      AbstractIdCredentialsListBoxModel model = new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, Jenkins.getInstance(), VaultTokenCredential.class);
+      return model;
     }
   }
 
