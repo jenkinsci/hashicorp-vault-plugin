@@ -236,7 +236,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
   /**
    * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public so
    * that it can be accessed from views.
-   * 
+   *
    * <p>
    * See <tt>src/main/resources/com/datapipe/jenkins/vault/VaultBuildWrapper/*.jelly</tt> for the
    * actual HTML fragment for the configuration screen.
@@ -246,7 +246,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     /**
      * To persist global configuration information, simply store it in a field and call save().
-     * 
+     *
      * <p>
      * If you don't want fields to be persisted, use <tt>transient</tt>.
      */
@@ -322,11 +322,18 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
       this.tokenFilePath = tokenFilePath;
     }
 
-    public ListBoxModel doFillAuthTokenCredentialIdItems(){
-      if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
-        return new ListBoxModel();
+    public ListBoxModel doFillAuthTokenCredentialIdItems() {
+      final ListBoxModel lbm = new ListBoxModel();
+      final Jenkins jenkins = Jenkins.getInstance();
+
+      if (jenkins == null) {
+        return lbm;
       }
-      AbstractIdCredentialsListBoxModel model = new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, Jenkins.getInstance(), VaultTokenCredential.class);
+
+      if (!jenkins.hasPermission(Jenkins.ADMINISTER)) {
+        return lbm;
+      }
+      AbstractIdCredentialsListBoxModel model = new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, jenkins, VaultTokenCredential.class);
       return model;
     }
   }
