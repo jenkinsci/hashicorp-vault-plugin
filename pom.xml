@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>com.datapipe.jenkins.plugins</groupId>
 	<artifactId>hashicorp-vault-plugin</artifactId>
-	<version>1.4-SNAPSHOT</version>
+	<version>1.5-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 	<properties>
 		<jenkins.version>1.642.1</jenkins.version>
