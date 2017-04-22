@@ -45,7 +45,6 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
-import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
@@ -66,7 +65,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
-import hudson.util.Secret;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
@@ -122,9 +120,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
         }
 
-        VaultAppRoleCredential credential = (VaultAppRoleCredential) retrieveVaultCredentials(build);
-        String roleId = credential.getRoleId();
-        Secret secretId = credential.getSecretId();
+        VaultCredential credential = retrieveVaultCredentials(build);
 
         vaultAccessor.init(url);
         for (VaultSecret vaultSecret : vaultSecrets) {
