@@ -35,6 +35,7 @@ import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
+import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 
@@ -138,6 +139,32 @@ public class VaultConfigurationIT {
         verify(mockAccessor, times(1)).auth((VaultCredential)GLOBAL_CREDENTIAL_2);
         verify(mockAccessor, times(1)).read("secret/path1");
         jenkins.assertLogContains("echo ****", build);
+       jenkins.assertLogNotContains("some-secret", build);
+    }
+
+    @Test
+    public void shouldDealWithTokenBasedCredential() throws Exception {
+      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(standardSecrets());
+       VaultAccessor mockAccessor = mockVaultAccessor();
+       vaultBuildWrapper.setVaultAccessor(mockAccessor);
+
+       Credentials credential = new VaultTokenCredential(CredentialsScope.GLOBAL, "token-1", "description", Secret.fromString("test-token"));
+       SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(),Arrays.asList(credential)));
+
+       this.project.getBuildWrappersList().add(vaultBuildWrapper);
+       vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", "token-1"));
+       this.project.getBuildersList().add(new Shell("echo $envVar1"));
+
+       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+
+       assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://job-vault-url.com"));
+       assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is("token-1"));
+
+       jenkins.assertBuildStatus(Result.SUCCESS, build);
+       verify(mockAccessor, times(1)).init("http://job-vault-url.com");
+       verify(mockAccessor, times(1)).auth((VaultCredential)credential);
+       verify(mockAccessor, times(1)).read("secret/path1");
+       jenkins.assertLogContains("echo ****", build);
        jenkins.assertLogNotContains("some-secret", build);
     }
 
