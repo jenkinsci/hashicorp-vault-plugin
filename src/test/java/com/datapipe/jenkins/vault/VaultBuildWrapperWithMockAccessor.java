@@ -1,17 +1,21 @@
 package com.datapipe.jenkins.vault;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
+import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
+
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.tasks.BuildWrapper;
-import hudson.util.Secret;
-import org.kohsuke.stapler.DataBoundConstructor;
-
-import javax.annotation.CheckForNull;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /*
 This class is only used for testing the Jenkinsfile - we can not inject our
@@ -31,9 +35,10 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
             }
 
             @Override
-            public void auth(String roleId, Secret secretId) {
-                if (!roleId.equals("role-id-global-2") || !secretId.getPlainText().equals("secret-id-global-2")) {
-                    throw new AssertionError("role-id " + roleId + " or secret-id " + secretId + " do not match expected: -global-2");
+            public void auth(VaultCredential vaultCredential) {
+                VaultAppRoleCredential appRoleCredential = (VaultAppRoleCredential) vaultCredential;
+                if (!appRoleCredential.getRoleId().equals("role-id-global-2") || !appRoleCredential.getSecretId().getPlainText().equals("secret-id-global-2")) {
+                    throw new AssertionError("role-id " + appRoleCredential.getRoleId() + " or secret-id " + appRoleCredential.getSecretId() + " do not match expected: -global-2");
                 }
 
             }

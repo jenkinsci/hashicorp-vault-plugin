@@ -34,6 +34,7 @@ import com.datapipe.jenkins.vault.VaultBuildWrapper;
 import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
+import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 
@@ -51,6 +52,9 @@ public class VaultConfigurationIT {
    public static final String GLOBAL_CREDENTIALS_ID_1 = "global-1";
    public static final String GLOBAL_CREDENTIALS_ID_2 = "global-2";
 
+   private Credentials GLOBAL_CREDENTIAL_1;
+   private Credentials GLOBAL_CREDENTIAL_2;
+
    public static final String JENKINSFILE_URL = "http://jenkinsfile-vault-url.com";
 
    private FreeStyleProject project;
@@ -62,8 +66,12 @@ public class VaultConfigurationIT {
 
       globalConfig.save();
 
+
+      GLOBAL_CREDENTIAL_1 = createTokenCredential(GLOBAL_CREDENTIALS_ID_1);
+      GLOBAL_CREDENTIAL_2 = createTokenCredential(GLOBAL_CREDENTIALS_ID_2);
+
       SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays
-            .asList(createTokenCredential(GLOBAL_CREDENTIALS_ID_1), createTokenCredential(GLOBAL_CREDENTIALS_ID_2))));
+            .asList(GLOBAL_CREDENTIAL_1, GLOBAL_CREDENTIAL_2)));
 
       this.project = jenkins.createFreeStyleProject("test");
    }
@@ -104,7 +112,7 @@ public class VaultConfigurationIT {
       jenkins.assertLogContains("echo ****", build);
       jenkins.assertLogNotContains("some-secret", build);
       verify(mockAccessor, times(1)).init("http://global-vault-url.com");
-      verify(mockAccessor, times(1)).auth("role-id-"+GLOBAL_CREDENTIALS_ID_1, Secret.fromString("secret-id-"+GLOBAL_CREDENTIALS_ID_1));
+      verify(mockAccessor, times(1)).auth((VaultCredential)GLOBAL_CREDENTIAL_1);
       verify(mockAccessor, times(1)).read("secret/path1");
    }
 
@@ -127,7 +135,7 @@ public class VaultConfigurationIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         verify(mockAccessor, times(1)).init("http://job-vault-url.com");
-        verify(mockAccessor, times(1)).auth("role-id-"+GLOBAL_CREDENTIALS_ID_2, Secret.fromString("secret-id-"+GLOBAL_CREDENTIALS_ID_2));
+        verify(mockAccessor, times(1)).auth((VaultCredential)GLOBAL_CREDENTIAL_2);
         verify(mockAccessor, times(1)).read("secret/path1");
         jenkins.assertLogContains("echo ****", build);
        jenkins.assertLogNotContains("some-secret", build);
@@ -175,7 +183,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString());
-      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).auth(any(VaultCredential.class));
       verify(mockAccessor, times(0)).read(anyString());
       jenkins.assertLogContains("The credential id was not configured - please specify the credentials to use.", build);
    }
@@ -200,7 +208,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString());
-      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).auth(any(VaultCredential.class));
       verify(mockAccessor, times(0)).read(anyString());
       jenkins.assertLogContains("The vault url was not configured - please specify the vault url to use.", build);
    }
@@ -224,7 +232,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString());
-      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).auth(any(VaultCredential.class));
       verify(mockAccessor, times(0)).read(anyString());
       jenkins.assertLogContains("No configuration found - please configure the VaultPlugin.", build);
    }
@@ -249,7 +257,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString());
-      verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+      verify(mockAccessor, times(0)).auth(any(VaultCredential.class));
       verify(mockAccessor, times(0)).read(anyString());
       jenkins.assertLogContains("CredentialsUnavailableException", build);
    }

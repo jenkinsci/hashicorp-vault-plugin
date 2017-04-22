@@ -122,13 +122,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
         }
 
-        VaultAppRoleCredential creds = (VaultAppRoleCredential) retrieveVaultCredentials(build);
-        String roleId = creds.getRoleId();
-        Secret secretId = creds.getSecretId();
+        VaultAppRoleCredential credential = (VaultAppRoleCredential) retrieveVaultCredentials(build);
+        String roleId = credential.getRoleId();
+        Secret secretId = credential.getSecretId();
 
         vaultAccessor.init(url);
         for (VaultSecret vaultSecret : vaultSecrets) {
-            vaultAccessor.auth(roleId, secretId);
+            vaultAccessor.auth(credential);
             Map<String, String> values = vaultAccessor.read(vaultSecret.getPath());
 
             for (VaultSecretValue value : vaultSecret.getSecretValues()) {

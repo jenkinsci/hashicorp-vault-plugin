@@ -5,8 +5,12 @@ import javax.annotation.Nonnull;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
+import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
 import hudson.Extension;
 import hudson.util.Secret;
@@ -29,6 +33,17 @@ public class VaultAppRoleCredential extends BaseStandardCredentials implements V
 
     public Secret getSecretId() {
         return secretId;
+    }
+
+    @Override
+    public Vault authorizeWithVault(Vault vault, VaultConfig config) {
+        String token = null;
+        try {
+            token = vault.auth().loginByAppRole("approle", roleId, Secret.toString(secretId)).getAuthClientToken();
+        } catch (VaultException e) {
+            throw new VaultPluginException("could not log in into vault", e);
+        }
+        return new Vault(config.token(token));
     }
 
     @Extension

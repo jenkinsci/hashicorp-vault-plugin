@@ -31,6 +31,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
+import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainCredentials;
@@ -39,6 +40,7 @@ import com.datapipe.jenkins.vault.VaultBuildWrapper;
 import com.datapipe.jenkins.vault.configuration.FolderVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
+import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 
@@ -46,7 +48,6 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.tasks.Shell;
-import hudson.util.Secret;
 import jenkins.model.GlobalConfiguration;
 
 public class FolderIT {
@@ -56,6 +57,12 @@ public class FolderIT {
 
     private static final String FOLDER_1_CREDENTIALS_ID = "folder1";
     private static final String FOLDER_2_CREDENTIALS_ID = "folder2";
+
+    private Credentials GLOBAL_CREDENTIAL_1;
+    private Credentials GLOBAL_CREDENTIAL_2;
+
+    private Credentials FOLDER_1_CREDENTIAL;
+    private Credentials FOLDER_2_CREDENTIAL;
 
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
@@ -71,14 +78,20 @@ public class FolderIT {
         globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1));
         globalConfig.save();
 
+        FOLDER_1_CREDENTIAL = createTokenCredential(FOLDER_1_CREDENTIALS_ID);
+        FOLDER_2_CREDENTIAL = createTokenCredential(FOLDER_2_CREDENTIALS_ID);
+
         FolderCredentialsProvider.FolderCredentialsProperty folder1CredProperty = new FolderCredentialsProvider.FolderCredentialsProperty(
-                new DomainCredentials[]{new DomainCredentials(Domain.global(), Arrays.asList(createTokenCredential(FOLDER_1_CREDENTIALS_ID)))});
+                new DomainCredentials[]{new DomainCredentials(Domain.global(), Arrays.asList(FOLDER_1_CREDENTIAL))});
 
         FolderCredentialsProvider.FolderCredentialsProperty folder2CredProperty = new FolderCredentialsProvider.FolderCredentialsProperty(
-                new DomainCredentials[]{new DomainCredentials(Domain.global(), Arrays.asList(createTokenCredential(FOLDER_2_CREDENTIALS_ID)))});
+                new DomainCredentials[]{new DomainCredentials(Domain.global(), Arrays.asList(FOLDER_2_CREDENTIAL))});
+
+        GLOBAL_CREDENTIAL_1 = createTokenCredential(GLOBAL_CREDENTIALS_ID_1);
+        GLOBAL_CREDENTIAL_2 = createTokenCredential(GLOBAL_CREDENTIALS_ID_2);
 
         SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays
-                .asList(createTokenCredential(GLOBAL_CREDENTIALS_ID_1), createTokenCredential(GLOBAL_CREDENTIALS_ID_2))));
+                .asList(GLOBAL_CREDENTIAL_1, GLOBAL_CREDENTIAL_2)));
 
         this.folder1 = jenkins.createProject(Folder.class, "folder1");
         this.folder2 = jenkins.createProject(Folder.class, "folder2");
@@ -127,7 +140,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1)).init("http://folder1.com");
-        verify(mockAccessor, times(1)).auth("role-id-"+FOLDER_1_CREDENTIALS_ID, Secret.fromString("secret-id-"+FOLDER_1_CREDENTIALS_ID));
+        verify(mockAccessor, times(1)).auth((VaultCredential)FOLDER_1_CREDENTIAL);
         verify(mockAccessor, times(1)).read("secret/path1");
     }
 
@@ -151,7 +164,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1)).init("http://folder1.com");
-        verify(mockAccessor, times(1)).auth("role-id-"+FOLDER_1_CREDENTIALS_ID, Secret.fromString("secret-id-"+FOLDER_1_CREDENTIALS_ID));
+        verify(mockAccessor, times(1)).auth((VaultCredential)FOLDER_1_CREDENTIAL);
         verify(mockAccessor, times(1)).read("secret/path1");
     }
 
@@ -175,7 +188,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);
         verify(mockAccessor, times(0)).init(anyString());
-        verify(mockAccessor, times(0)).auth(anyString(), any(Secret.class));
+        verify(mockAccessor, times(0)).auth(any(VaultCredential.class));
         verify(mockAccessor, times(0)).read(anyString());
     }
 
