@@ -23,6 +23,20 @@
  */
 package com.datapipe.jenkins.vault;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
 import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -31,13 +45,20 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
-import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
+import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
+import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import com.google.common.annotations.VisibleForTesting;
-import hudson.*;
+
+import hudson.AbortException;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
@@ -45,23 +66,8 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
-import hudson.util.ListBoxModel;
 import hudson.util.Secret;
-import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
     private VaultConfiguration configuration;
@@ -116,7 +122,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
         }
 
-        VaultTokenCredential creds = retrieveVaultCredentials(build);
+        VaultAppRoleCredential creds = (VaultAppRoleCredential) retrieveVaultCredentials(build);
         String roleId = creds.getRoleId();
         Secret secretId = creds.getSecretId();
 
@@ -132,13 +138,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
-    private VaultTokenCredential retrieveVaultCredentials(Run build) {
-        String id = getConfiguration().getVaultTokenCredentialId();
+    private VaultCredential retrieveVaultCredentials(Run build) {
+        String id = getConfiguration().getVaultCredentialId();
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException("The credential id was not configured - please specify the credentials to use.");
         }
-        List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, build.getParent(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
-        VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
+        List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+        VaultCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
 
         if (credential == null) {
             throw new CredentialsUnavailableException(id);

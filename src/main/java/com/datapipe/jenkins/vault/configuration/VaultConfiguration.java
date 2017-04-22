@@ -11,7 +11,7 @@ import org.kohsuke.stapler.QueryParameter;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
+import com.datapipe.jenkins.vault.credentials.VaultCredential;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -23,21 +23,21 @@ import hudson.util.ListBoxModel;
 public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> {
     private String vaultUrl;
 
-    private String vaultTokenCredentialId;
+    private String vaultCredentialId;
 
     public VaultConfiguration() {
         // no args constructor
     }
 
     @DataBoundConstructor
-    public VaultConfiguration(String vaultUrl, String vaultTokenCredentialId) {
+    public VaultConfiguration(String vaultUrl, String vaultCredentialId) {
         this.vaultUrl = normalizeUrl(vaultUrl);
-        this.vaultTokenCredentialId = vaultTokenCredentialId;
+        this.vaultCredentialId = vaultCredentialId;
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
         this.vaultUrl = toCopy.getVaultUrl();
-        this.vaultTokenCredentialId = toCopy.getVaultTokenCredentialId();
+        this.vaultCredentialId = toCopy.getVaultCredentialId();
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -45,8 +45,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
             return this;
         }
         VaultConfiguration result = new VaultConfiguration(this);
-        if (StringUtils.isBlank(result.getVaultTokenCredentialId())) {
-            result.setVaultTokenCredentialId(parent.getVaultTokenCredentialId());
+        if (StringUtils.isBlank(result.getVaultCredentialId())) {
+            result.setVaultCredentialId(parent.getVaultCredentialId());
         }
         if (StringUtils.isBlank(result.getVaultUrl())) {
             result.setVaultUrl(parent.getVaultUrl());
@@ -58,8 +58,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return vaultUrl;
     }
 
-    public String getVaultTokenCredentialId() {
-        return vaultTokenCredentialId;
+    public String getVaultCredentialId() {
+        return vaultCredentialId;
     }
 
     @DataBoundSetter
@@ -68,8 +68,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     }
 
     @DataBoundSetter
-    public void setVaultTokenCredentialId(String vaultTokenCredentialId) {
-        this.vaultTokenCredentialId = vaultTokenCredentialId;
+    public void setVaultCredentialId(String vaultCredentialId) {
+        this.vaultCredentialId = vaultCredentialId;
     }
 
     @Extension
@@ -79,12 +79,12 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
             return "Vault Configuration";
         }
 
-        public ListBoxModel doFillVaultTokenCredentialIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
+        public ListBoxModel doFillVaultCredentialIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
             // This is needed for folders: credentials bound to a folder are
             // realized through domain requirements
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(uri).build();
             return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item,
-                    VaultTokenCredential.class, domainRequirements);
+                    VaultCredential.class, domainRequirements);
         }
     }
 

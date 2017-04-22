@@ -1,5 +1,34 @@
 package com.datapipe.jenkins.vault.it.folder;
 
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_1;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_2;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.JENKINSFILE_URL;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
@@ -12,27 +41,13 @@ import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
+
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.tasks.Shell;
 import hudson.util.Secret;
 import jenkins.model.GlobalConfiguration;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-
-import java.io.IOException;
-import java.util.*;
-
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.*;
 
 public class FolderIT {
     // check that you cannot access another credentials folder
@@ -107,7 +122,7 @@ public class FolderIT {
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
-        assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
+        assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
@@ -131,7 +146,7 @@ public class FolderIT {
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
-        assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
+        assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
@@ -155,7 +170,7 @@ public class FolderIT {
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
-        assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(FOLDER_2_CREDENTIALS_ID));
+        assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_2_CREDENTIALS_ID));
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);
@@ -170,7 +185,7 @@ public class FolderIT {
         pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
                 "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
                 "                   configuration: [$class: 'VaultConfiguration', \n" +
-                "                             vaultTokenCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
+                "                             vaultCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
                 "                             vaultUrl: '"+JENKINSFILE_URL+"'], \n" +
                 "                   vaultSecrets: [\n" +
                 "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: [\n" +

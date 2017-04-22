@@ -1,24 +1,22 @@
 package com.datapipe.jenkins.vault.it;
 
-import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.CredentialsDescriptor;
-import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
-import com.cloudbees.plugins.credentials.domains.Domain;
-import com.datapipe.jenkins.vault.VaultAccessor;
-import com.datapipe.jenkins.vault.VaultBuildWrapper;
-import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
-import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
-import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
-import com.datapipe.jenkins.vault.credentials.VaultTokenCredentialImpl;
-import com.datapipe.jenkins.vault.model.VaultSecret;
-import com.datapipe.jenkins.vault.model.VaultSecretValue;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import hudson.tasks.Shell;
-import hudson.util.Secret;
-import jenkins.model.GlobalConfiguration;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -27,12 +25,24 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import java.io.IOException;
-import java.util.*;
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.domains.Domain;
+import com.datapipe.jenkins.vault.VaultAccessor;
+import com.datapipe.jenkins.vault.VaultBuildWrapper;
+import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
+import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
+import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
+import com.datapipe.jenkins.vault.model.VaultSecret;
+import com.datapipe.jenkins.vault.model.VaultSecretValue;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.*;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.tasks.Shell;
+import hudson.util.Secret;
+import jenkins.model.GlobalConfiguration;
 
 public class VaultConfigurationIT {
    @Rule
@@ -88,7 +98,7 @@ public class VaultConfigurationIT {
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
       assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://global-vault-url.com"));
-      assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_1));
+      assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(GLOBAL_CREDENTIALS_ID_1));
 
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
@@ -113,7 +123,7 @@ public class VaultConfigurationIT {
         FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://job-vault-url.com"));
-        assertThat(vaultBuildWrapper.getConfiguration().getVaultTokenCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
+        assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         verify(mockAccessor, times(1)).init("http://job-vault-url.com");
@@ -129,7 +139,7 @@ public class VaultConfigurationIT {
       pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
               "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
               "                   configuration: [$class: 'VaultConfiguration', \n" +
-              "                             vaultTokenCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
+              "                             vaultCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
               "                             vaultUrl: '"+JENKINSFILE_URL+"'], \n" +
               "                   vaultSecrets: [\n" +
               "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: [\n" +
@@ -245,36 +255,6 @@ public class VaultConfigurationIT {
    }
 
    public static Credentials createTokenCredential(final String credentialId) {
-      return new VaultTokenCredential() {
-         @Override
-         public String getRoleId() {
-            return "role-id-"+credentialId;
-         }
-
-         @Override
-         public Secret getSecretId() {
-            return Secret.fromString("secret-id-"+credentialId);
-         }
-
-         @Override
-         public String getDescription() {
-            return "description";
-         }
-
-         @Override
-         public String getId() {
-            return credentialId;
-         }
-
-         @Override
-         public CredentialsScope getScope() {
-            return CredentialsScope.GLOBAL;
-         }
-
-         @Override
-         public CredentialsDescriptor getDescriptor() {
-            return new VaultTokenCredentialImpl.DescriptorImpl();
-         }
-      };
+      return new VaultAppRoleCredential(CredentialsScope.GLOBAL, credentialId, "description", "role-id-"+credentialId, Secret.fromString("secret-id-"+credentialId));
    }
 }

@@ -10,7 +10,7 @@ public class VaultConfigurationSpec {
     public static VaultConfiguration completeTestConfig(String identifier) {
         VaultConfiguration result = new VaultConfiguration();
         result.setVaultUrl("http://example.com/" + identifier);
-        result.setVaultTokenCredentialId("credential" + identifier);
+        result.setVaultCredentialId("credential" + identifier);
         return result;
     }
 
@@ -22,7 +22,7 @@ public class VaultConfigurationSpec {
 
     public static VaultConfiguration credentialOnlyConfig(String identifier) {
         VaultConfiguration result = new VaultConfiguration();
-        result.setVaultTokenCredentialId("credential" + identifier);
+        result.setVaultCredentialId("credential" + identifier);
         return result;
     }
 
@@ -32,7 +32,7 @@ public class VaultConfigurationSpec {
         VaultConfiguration child = completeTestConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
 
-        assertThat(result.getVaultTokenCredentialId(), is(child.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(child.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(child.getVaultUrl()));
     }
 
@@ -42,14 +42,14 @@ public class VaultConfigurationSpec {
         VaultConfiguration child = urlOnlyConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
 
-        assertThat(result.getVaultTokenCredentialId(), is(parent.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(parent.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(child.getVaultUrl()));
 
         parent = completeTestConfig("parent");
         child = credentialOnlyConfig("child");
         result = child.mergeWithParent(parent);
 
-        assertThat(result.getVaultTokenCredentialId(), is(child.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(child.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(parent.getVaultUrl()));
     }
 
@@ -59,7 +59,7 @@ public class VaultConfigurationSpec {
         VaultConfiguration child = new VaultConfiguration();
         VaultConfiguration result = child.mergeWithParent(parent);
 
-        assertThat(result.getVaultTokenCredentialId(), is(parent.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(parent.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(parent.getVaultUrl()));
     }
 
@@ -69,7 +69,7 @@ public class VaultConfigurationSpec {
         VaultConfiguration child = completeTestConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
 
-        assertThat(result.getVaultTokenCredentialId(), is(child.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(child.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(child.getVaultUrl()));
     }
 
@@ -78,7 +78,7 @@ public class VaultConfigurationSpec {
         VaultConfiguration dummy = completeTestConfig("dummy");
         VaultConfiguration result = dummy.mergeWithParent(null);
 
-        assertThat(result.getVaultTokenCredentialId(), is(dummy.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(dummy.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(dummy.getVaultUrl()));
     }
 

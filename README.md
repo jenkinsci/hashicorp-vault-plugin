@@ -32,7 +32,7 @@ The lower the level the higher its priority, meaning: if you configure a URL in 
 In your configuration (may it be global, folder or job) you see the following screen: 
 ![Global Configuration](docs/images/configuration_screen.png)
 
-The credential you need to provide is a `VaultTokenCredential`, which looks like this:  
+The credential you need to provide is a `VaultCredential`, which looks like this:  
 
 ![Credential Configuration](docs/images/credential_screen.png)
 
@@ -62,7 +62,7 @@ node {
   // (e.g. folder or global) will be used
   def configuration = [$class: 'VaultConfiguration', 
                        vaultUrl: 'http://my-very-other-vault-url.com', 
-                       vaultTokenCredentialId: 'my-vault-cred-id']
+                       vaultCredentialId: 'my-vault-cred-id']
   
   // inside this block your credentials will be available as env variables
   wrap([$class: 'VaultBuildWrapper', configuration: configuration, vaultSecrets: secrets]) {

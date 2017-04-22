@@ -59,7 +59,7 @@ public class FolderVaultConfigurationSpec {
 
         VaultConfiguration expected = completeTestConfig("firstParent").mergeWithParent(completeTestConfig("secondParent"));
 
-        assertThat(result.getVaultTokenCredentialId(), is(expected.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(expected.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(expected.getVaultUrl()));
     }
 
@@ -84,7 +84,7 @@ public class FolderVaultConfigurationSpec {
 
         VaultConfiguration expected = completeTestConfig("firstParent").mergeWithParent(null);
 
-        assertThat(result.getVaultTokenCredentialId(), is(expected.getVaultTokenCredentialId()));
+        assertThat(result.getVaultCredentialId(), is(expected.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(expected.getVaultUrl()));
     }
 
