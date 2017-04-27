@@ -1,4 +1,4 @@
-[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/hashicorp-vault-plugin&build=20)](https://jenkins.ci.cloudbees.com/job/plugins/hashicorp-vault-plugin/20/)
+[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/hashicorp-vault-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/hashicorp-vault-plugin)
 # Jenkins Vault Plugin
 
 This plugin adds a build wrapper to set environment variables from a HashiCorp [Vault](https://www.vaultproject.io/) secret. Secrets are generally masked in the build log, so you can't accidentally print them.
