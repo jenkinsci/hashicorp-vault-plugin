@@ -102,6 +102,11 @@ The `BuildWrapper` did not change, so no changes to your Jenkinsfile should be n
 # CHANGELOG
 
 * **2017/05/04** - Breaking change release (AppRole auth backend, Folder ability, improved configuration, ...)
+* **2017/04/10** - Feature Release - 1.4
+ -  * Support reading Vault Token from file on disk [JENKINS-37713](issues.jenkins-ci.org/browse/JENKINS-37713)
+ -  * Using credentials plugin for authentication token [JENKINS-38646](issues.jenkins-ci.org/browse/JENKINS-38646)
+* **2017/03/03** - Feature Release - 1.3
+ -  * Vault Plugin should mask credentials in build log [JENKINS-39383](issues.jenkins-ci.org/browse/JENKINS-39383)
 * **2016/08/15** - Re-release due to failed maven release - 1.2
 * **2016/08/11** - Bugfix release - 1.1
   * Refactor to allow getting multiple vault keys in a single API call [JENKINS-37151](https://issues.jenkins-ci.org/browse/JENKINS-37151)
