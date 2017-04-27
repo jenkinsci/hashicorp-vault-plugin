@@ -4,7 +4,7 @@
 This plugin adds a build wrapper to set environment variables from a HashiCorp [Vault](https://www.vaultproject.io/) secret. Secrets are generally masked in the build log, so you can't accidentally print them.
 
 # Vault Authentication Backends
-This plugin only allows authenticating against Vault using the AppRole authentication backend. Hashicorp recommends using AppRole for Servers / automated workflows (like Jenkins) and using Tokens (default mechanism, Github Token, ...) for every developer's machine.
+This plugin allows authenticating against Vault using the AppRole authentication backend. Hashicorp recommends using AppRole for Servers / automated workflows (like Jenkins) and using Tokens (default mechanism, Github Token, ...) for every developer's machine.
   Furthermore, this plugin allows using a Vault Token - either configured directly in Jenkins or read from an arbitrary file on the Jenkins Machine.
 
 ### How does AppRole work?
