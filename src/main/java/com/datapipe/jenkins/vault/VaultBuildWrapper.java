@@ -1,18 +1,18 @@
 /**
  * The MIT License (MIT)
- *
+ * <p>
  * Copyright (c) 2016 Datapipe, Inc.
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,37 +23,6 @@
  */
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.AbstractIdCredentialsListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.matchers.IdMatcher;
-import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
-import hudson.*;
-import hudson.console.ConsoleLogFilter;
-import hudson.model.*;
-import hudson.remoting.VirtualChannel;
-import hudson.security.ACL;
-import hudson.tasks.BuildWrapper;
-import hudson.util.ListBoxModel;
-import hudson.util.Secret;
-import jenkins.model.Jenkins;
-import jenkins.tasks.SimpleBuildWrapper;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.remoting.RoleChecker;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -61,281 +30,167 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Sample {@link BuildWrapper}.
- *
- * <p>
- * When the user configures the project and enables this builder,
- * {@link DescriptorImpl#newInstance(StaplerRequest)} is invoked and a new {@link VaultBuildWrapper}
- * is created. The created instance is persisted to the project configuration XML by using XStream,
- * so this allows you to use instance fields (like {@link #vaultUrl}) to remember the configuration.
- * </p>
- *
- * <p>
- * When a build is performed, the {@link #preCheckout(AbstractBuild, Launcher, BuildListener)}
- * method will be invoked.
- * </p>
- *
- * @author Peter Tierno {@literal <}ptierno{@literal @}datapipe.com{@literal >}
- */
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import com.bettercloud.vault.VaultException;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.matchers.IdMatcher;
+import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
+import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
+import com.datapipe.jenkins.vault.credentials.VaultCredential;
+import com.datapipe.jenkins.vault.exception.VaultPluginException;
+import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
+import com.datapipe.jenkins.vault.model.VaultSecret;
+import com.datapipe.jenkins.vault.model.VaultSecretValue;
+import com.google.common.annotations.VisibleForTesting;
+
+import hudson.AbortException;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.console.ConsoleLogFilter;
+import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.security.ACL;
+import hudson.tasks.BuildWrapper;
+import jenkins.tasks.SimpleBuildWrapper;
+
 public class VaultBuildWrapper extends SimpleBuildWrapper {
+    private VaultConfiguration configuration;
+    private List<VaultSecret> vaultSecrets;
+    private List<String> valuesToMask = new ArrayList<>();
+    private VaultAccessor vaultAccessor = new VaultAccessor();
 
-  private String vaultUrl;
-  private String authTokenCredentialId;
-  private String tokenFilePath;
-  private List<VaultSecret> vaultSecrets;
-  private List<String> valuesToMask = new ArrayList<>();
-
-  // Possibly add these later
-  // private final int openTimeout;
-  // private final int readTimeout;
-
-  // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
-  @DataBoundConstructor
-  public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
-    this.vaultSecrets = vaultSecrets;
-
-    // Defaults to null to allow using global configuration
-    // I am not sure this is necessary.
-    this.vaultUrl = null;
-    this.authTokenCredentialId = null;
-  }
-
-  @DataBoundSetter
-  public void setVaultUrl(String vaultUrl) {
-    this.vaultUrl = vaultUrl;
-  }
-
-  public String getVaultUrl() {
-    return this.vaultUrl;
-  }
-
-  @DataBoundSetter
-  public void setTokenFilePath(String tokenFilePath) {
-    this.tokenFilePath = tokenFilePath;
-  }
-
-  public String getTokenFilePath() {
-    return tokenFilePath;
-  }
-
-  @DataBoundSetter
-  public void setAuthTokenCredentialId(String authTokenCredentialId) {
-    this.authTokenCredentialId = authTokenCredentialId;
-  }
-
-  public String getAuthTokenCredentialId() {
-    return this.authTokenCredentialId;
-  }
-
-  public List<VaultSecret> getVaultSecrets() {
-    return this.vaultSecrets;
-  }
-
-  private String getUrl() {
-    if (this.vaultUrl == null || this.vaultUrl.isEmpty()) {
-      return getDescriptor().getVaultUrl();
+    @DataBoundConstructor
+    public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
+        this.vaultSecrets = vaultSecrets;
     }
-    return this.vaultUrl;
-  }
 
-  private String getToken() {
-    String token;
-    if (!StringUtils.isBlank(authTokenCredentialId) || !StringUtils.isBlank(getDescriptor().getAuthTokenCredentialId())){
-      return getTokenFromCredentials();
-    } else if (!StringUtils.isBlank(tokenFilePath) || !StringUtils.isBlank(getDescriptor().getTokenFilePath())){
-      return readTokenFromFile();
+    @Override
+    public void setUp(Context context, Run<?, ?> build, FilePath workspace,
+                      Launcher launcher, TaskListener listener, EnvVars initialEnvironment)
+            throws IOException, InterruptedException {
+        PrintStream logger = listener.getLogger();
+        pullAndMergeConfiguration(build);
+
+        try {
+            provideEnvironmentVariablesFromVault(context, build);
+        } catch (VaultException e) {
+            e.printStackTrace(logger);
+            throw new AbortException(e.getMessage());
+        }
     }
-    return null;
-  }
 
-  private String getTokenFromCredentials() {
-    String id = authTokenCredentialId;
-    if (id == null || id.isEmpty()) {
-      id = getDescriptor().getAuthTokenCredentialId();
+
+    public List<VaultSecret> getVaultSecrets() {
+        return this.vaultSecrets;
     }
-    List<VaultTokenCredential> credentials = CredentialsProvider.lookupCredentials(VaultTokenCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
-    VaultTokenCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
-    return credential == null ? null : Secret.toString(credential.getToken());
-  }
 
-  private String readTokenFromFile() {
-    String path = tokenFilePath;
-    if (path == null || path.isEmpty()){
-      path = getDescriptor().getTokenFilePath();
+    @DataBoundSetter
+    public void setConfiguration(VaultConfiguration configuration) {
+        this.configuration = configuration;
     }
-    if (path == null || path.isEmpty()){
-      return null;
+
+    public VaultConfiguration getConfiguration() {
+        return this.configuration;
     }
-    FilePath file = new FilePath(new File(path));
-    try {
-      return file.act(new FilePath.FileCallable<String>() {
-                 @Override
-                 public void checkRoles(RoleChecker roleChecker) throws SecurityException {
-                   //not needed
-                 }
 
-                 @Override public String invoke(File f, VirtualChannel channel) {
-                   try {
-                     return FileUtils.readFileToString(f);
-                   } catch (IOException e) {
-                     throw new RuntimeException(e);
-                   }
-                 }}).trim();
-    } catch (IOException| InterruptedException e) {
-      throw new RuntimeException(e);
+    @VisibleForTesting
+    public void setVaultAccessor(VaultAccessor vaultAccessor) {
+        this.vaultAccessor = vaultAccessor;
     }
-  }
 
-  // Overridden for better type safety.
-  // If your plugin doesn't really define any property on Descriptor
-  // you don't have to do this.
-  @Override
-  public DescriptorImpl getDescriptor() {
-    return (DescriptorImpl) super.getDescriptor();
-  }
 
-  @Override
-  public void setUp(Context context, Run<?, ?> build, FilePath workspace,
-      Launcher launcher, TaskListener listener, EnvVars initialEnvironment)
-      throws IOException, InterruptedException {
-    // This is where you 'build' the project.
-    PrintStream logger = listener.getLogger();
+    private void provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
+        String url = getConfiguration().getVaultUrl();
 
-    String url = getUrl();
-    String token = getToken();
-
-    for (VaultSecret vaultSecret : vaultSecrets) {
-
-      try {
-        VaultConfig vaultConfig = new VaultConfig(url, token).build();
-
-        Vault vault = new Vault(vaultConfig);
-
-        Map<String, String> values =
-            vault.logical().read(vaultSecret.getPath()).getData();
-
-        for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-          valuesToMask.add(values.get(value.getVaultKey()));
-          context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+        if (StringUtils.isBlank(url)){
+            throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
         }
 
-      } catch (VaultException e) {
-        e.printStackTrace(logger);
-        throw new AbortException(e.getMessage());
-      }
-    }
-  }
+        VaultCredential credential = retrieveVaultCredentials(build);
 
-  @Override
-  public ConsoleLogFilter createLoggerDecorator(
-      @Nonnull final Run<?, ?> build) {
-    return new MaskingConsoleLogFilter(build.getCharset().name(), valuesToMask);
-  }
+        vaultAccessor.init(url);
+        for (VaultSecret vaultSecret : vaultSecrets) {
+            vaultAccessor.auth(credential);
+            Map<String, String> values = vaultAccessor.read(vaultSecret.getPath());
 
-  /**
-   * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public so
-   * that it can be accessed from views.
-   *
-   * <p>
-   * See <tt>src/main/resources/com/datapipe/jenkins/vault/VaultBuildWrapper/*.jelly</tt> for the
-   * actual HTML fragment for the configuration screen.
-   */
-  @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-  public static final class DescriptorImpl extends Descriptor<BuildWrapper> {
-
-    /**
-     * To persist global configuration information, simply store it in a field and call save().
-     *
-     * <p>
-     * If you don't want fields to be persisted, use <tt>transient</tt>.
-     */
-    private String vaultUrl;
-
-    private String authTokenCredentialId;
-
-    private String tokenFilePath;
-
-    /**
-     * In order to load the persisted global configuration, you have to call load() in the
-     * constructor.
-     */
-    public DescriptorImpl() {
-      super(VaultBuildWrapper.class);
-      load();
+            for (VaultSecretValue value : vaultSecret.getSecretValues()) {
+                valuesToMask.add(values.get(value.getVaultKey()));
+                context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+            }
+        }
     }
 
-    public boolean isApplicable(AbstractProject<?, ?> item) {
-      // Indicates that this builder can be used with all kinds of project types
-      return true;
+    private VaultCredential retrieveVaultCredentials(Run build) {
+        String id = getConfiguration().getVaultCredentialId();
+        if (StringUtils.isBlank(id)) {
+            throw new VaultPluginException("The credential id was not configured - please specify the credentials to use.");
+        }
+        List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+        VaultCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
+
+        if (credential == null) {
+            throw new CredentialsUnavailableException(id);
+        }
+
+        return credential;
     }
 
-    /**
-     * This human readable name is used in the configuration screen.
-     */
-    @Override
-    public String getDisplayName() {
-      return "Vault Plugin";
+    private void pullAndMergeConfiguration(Run<?, ?> build) {
+        for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
+            if (configuration != null) {
+                configuration = configuration.mergeWithParent(resolver.forJob(build.getParent()));
+            } else {
+                configuration = resolver.forJob(build.getParent());
+            }
+        }
+        if (configuration == null){
+            throw new VaultPluginException("No configuration found - please configure the VaultPlugin.");
+        }
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject formData)
-        throws FormException {
-      // To persist global configuration information,
-      // set that to properties and call save().
-      Object vaultUrl = formData.getString("vaultUrl");
-      Object authTokenCredentialId = formData.getString("authTokenCredentialId");
-      Object tokenFilePath = formData.getString("tokenFilePath");
-
-      this.vaultUrl = (String) vaultUrl;
-
-      this.authTokenCredentialId = (String) authTokenCredentialId;
-
-      this.tokenFilePath = (String) tokenFilePath;
-
-      save();
-      return super.configure(req, formData);
+    public ConsoleLogFilter createLoggerDecorator(
+            @Nonnull final Run<?, ?> build) {
+        return new MaskingConsoleLogFilter(build.getCharset().name(), valuesToMask);
     }
 
-    public String getVaultUrl() {
-      return this.vaultUrl;
+
+    /**
+     * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public so
+     * that it can be accessed from views.
+     */
+    @Extension
+    public static final class DescriptorImpl extends Descriptor<BuildWrapper> {
+        public DescriptorImpl() {
+            super(VaultBuildWrapper.class);
+            load();
+        }
+
+        public boolean isApplicable(AbstractProject<?, ?> item) {
+            // Indicates that this builder can be used with all kinds of project types
+            return true;
+        }
+
+        /**
+         * This human readable name is used in the configuration screen.
+         */
+        @Override
+        public String getDisplayName() {
+            return "Vault Plugin";
+        }
     }
-
-    // Required by external plugins (according to Articfactory plugin)
-    public void setVaultUrl(String vaultUrl) {
-      this.vaultUrl = vaultUrl;
-    }
-
-    public String getAuthTokenCredentialId() {
-      return authTokenCredentialId;
-    }
-
-    public void setAuthTokenCredentialId(String authTokenCredentialId) {
-      this.authTokenCredentialId = authTokenCredentialId;
-    }
-
-    public String getTokenFilePath() {
-      return tokenFilePath;
-    }
-
-    public void setTokenFilePath(String tokenFilePath) {
-      this.tokenFilePath = tokenFilePath;
-    }
-
-    public ListBoxModel doFillAuthTokenCredentialIdItems() {
-      final ListBoxModel lbm = new ListBoxModel();
-      final Jenkins jenkins = Jenkins.getInstance();
-
-      if (jenkins == null) {
-        return lbm;
-      }
-
-      if (!jenkins.hasPermission(Jenkins.ADMINISTER)) {
-        return lbm;
-      }
-      AbstractIdCredentialsListBoxModel model = new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, jenkins, VaultTokenCredential.class);
-      return model;
-    }
-  }
-
 }

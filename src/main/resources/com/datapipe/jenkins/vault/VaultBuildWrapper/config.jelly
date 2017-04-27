@@ -1,30 +1,9 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
-  <f:section title="Vault Plugin">
-
-    <f:block>
-      <table>
-        <f:optionalBlock name="urlOverride" title="Override Vault URL?">
-          <f:entry title="Vault URL" field="vaultUrl">
-            <f:textbox />
-          </f:entry>
-        </f:optionalBlock>
-        <f:optionalBlock name="tokenOverride" title="Override Authentication Token?">
-          <f:entry title="Authentication Token Credential" field="authTokenCredentialId">
-            <c:select />
-          </f:entry>
-        </f:optionalBlock>
-        <f:optionalBlock name="tokenPathOverride" title="Override Authentication Token File Path?">
-          <f:entry title="Authentication Token File Path" field="tokenFilePath">
-            <f:textbox />
-          </f:entry>
-        </f:optionalBlock>
-      </table>
-    </f:block>
-
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:section title="Vault Plugin">
+        <f:property field="configuration" header="Vault Configuration" />
+    </f:section>
     <f:entry>
-      <f:repeatableProperty field="vaultSecrets" minimum="0" header="Vault Secret" add="Add a vault secret"></f:repeatableProperty>
+        <f:repeatableProperty field="vaultSecrets" minimum="0" header="Vault Secret" add="Add a vault secret"></f:repeatableProperty>
     </f:entry>
-
-  </f:section>
 </j:jelly>

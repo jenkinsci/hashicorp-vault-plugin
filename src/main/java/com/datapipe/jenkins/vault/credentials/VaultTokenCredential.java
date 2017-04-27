@@ -1,21 +1,36 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.cloudbees.plugins.credentials.CredentialsNameProvider;
-import com.cloudbees.plugins.credentials.NameWith;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import hudson.util.Secret;
-
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-@NameWith(VaultTokenCredential.NameProvider.class)
-public interface VaultTokenCredential extends StandardCredentials {
-    Secret getToken();
+import org.kohsuke.stapler.DataBoundConstructor;
 
-    public static class NameProvider extends CredentialsNameProvider<VaultTokenCredential> {
+import com.cloudbees.plugins.credentials.CredentialsScope;
 
-        @Nonnull
-        public String getName(@Nonnull VaultTokenCredential credentials) {
-            return credentials.getDescription();
+import hudson.Extension;
+import hudson.util.Secret;
+
+public class VaultTokenCredential extends AbstractVaultTokenCredential {
+    private Secret token;
+
+    @DataBoundConstructor
+    public VaultTokenCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id, @CheckForNull String description, @Nonnull Secret token) {
+        super(scope, id, description);
+        this.token = token;
+    }
+
+
+    @Override
+    public String getToken() {
+        return Secret.toString(token);
+    }
+
+    @Extension
+    public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
+
+        @Override public String getDisplayName() {
+            return "Vault Token Credential";
         }
+
     }
 }
