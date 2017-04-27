@@ -8,22 +8,22 @@ This plugin allows authenticating against Vault using the AppRole authentication
   Furthermore, this plugin allows using a Vault Token - either configured directly in Jenkins or read from an arbitrary file on the Jenkins Machine.
 
 ### How does AppRole work?
-In short: you register an approle auth backend using a self-chosen name (e.g. Jenkins). This approle is identified by a `role-id` and secured with a `secret_id`. If you have both of those values you can ask Vault for a token that can be used to access vault.  
-When registering the approle backend you can set a couple of different parameters: 
+In short: you register an approle auth backend using a self-chosen name (e.g. Jenkins). This approle is identified by a `role-id` and secured with a `secret_id`. If you have both of those values you can ask Vault for a token that can be used to access vault.
+When registering the approle backend you can set a couple of different parameters:
 * How long should the `secret_id` live (can be indefinite)
 * how often can one use a token that is obtained via this backend
 * which IP addresses can obtain a token using `role-id` and `secret-id`?
-* many more  
+* many more
 
 This is just a short introduction, please refer to [Hashicorp itself](https://www.vaultproject.io/docs/auth/approle.html) to get detailed information.
-### What about other backends? 
-Hashicorp explicitly recommends the AppRole Backend for machine-to-machine authentication. Token based auth is mainly supported for backwards compatibility. 
+### What about other backends?
+Hashicorp explicitly recommends the AppRole Backend for machine-to-machine authentication. Token based auth is mainly supported for backwards compatibility.
 Another backend that might make much sense is the AWS EC2 backend, but we do not support it yet. Feel free to contribute!
 
 Implementing additional authentication backends is actually quite easy:
 
-Simply provide a class implementing `VaultTokenCredential` that contains a `Descriptor` extending `BaseStandardCredentialsDescriptor`. 
-The `Descriptor` needs to be annotated with `@Extension`. Your credential needs to know how to authenticate with Vault and provide an authenticated Vault session. 
+Simply provide a class implementing `VaultTokenCredential` that contains a `Descriptor` extending `BaseStandardCredentialsDescriptor`.
+The `Descriptor` needs to be annotated with `@Extension`. Your credential needs to know how to authenticate with Vault and provide an authenticated Vault session.
 See [VaultAppRoleCredential.java](https://github.com/jenkinsci/hashicorp-vault-plugin/blob/master/src/main/java/com/datapipe/jenkins/vault/credentials/VaultTokenCredential) for an example.
 
 
@@ -32,16 +32,16 @@ See [VaultAppRoleCredential.java](https://github.com/jenkinsci/hashicorp-vault-p
 You can configure the plugin on three different levels:
 * Global: in your global config
 * [Folder](https://wiki.jenkins-ci.org/display/JENKINS/CloudBees+Folders+Plugin)-Level: on the folder your job is running in
-* Job-Level: either on your freestyle project job or directly in the Jenkinsfile 
+* Job-Level: either on your freestyle project job or directly in the Jenkinsfile
 
 The lower the level the higher its priority, meaning: if you configure a URL in your global settings, but override it in your particular job, this URL will be used for communicating with Vault.
-In your configuration (may it be global, folder or job) you see the following screen: 
+In your configuration (may it be global, folder or job) you see the following screen:
 ![Global Configuration](docs/images/configuration_screen.png)
 
 The credential you provide determines what authentication backend will be used.
 Currently, there are three different Credential Types you can use:
 
-#### Vault App Role Credential 
+#### Vault App Role Credential
 
 ![App Role Credential](docs/images/approle_credential.png)
 
@@ -65,7 +65,7 @@ If you still use free style jobs (hint: you should consider migrating to [Jenkin
 
 ![Job Configuration](docs/images/job_screen.png)
 
-The secrets are available as environment variables then. 
+The secrets are available as environment variables then.
 
 ### Usage via Jenkinsfile
 Let the code speak for itself:
@@ -79,13 +79,13 @@ node {
       [$class: 'VaultSecret', path: 'secret/another_test', secretValues: [
           [$class: 'VaultSecretValue', envVar: 'another_test', vaultKey: 'value']]]
   ]
-  
+
   // optional configuration, if you do not provide this the next higher configuration
   // (e.g. folder or global) will be used
-  def configuration = [$class: 'VaultConfiguration', 
-                       vaultUrl: 'http://my-very-other-vault-url.com', 
+  def configuration = [$class: 'VaultConfiguration',
+                       vaultUrl: 'http://my-very-other-vault-url.com',
                        vaultCredentialId: 'my-vault-cred-id']
-  
+
   // inside this block your credentials will be available as env variables
   wrap([$class: 'VaultBuildWrapper', configuration: configuration, vaultSecrets: secrets]) {
       sh 'echo $testing'
@@ -97,16 +97,18 @@ node {
 In the future we might migrate to a [BuildStep](http://javadoc.jenkins-ci.org/hudson/tasks/BuildStep.html) instead of a BuildWrapper.
 
 # Migration Guide
+
 ### Upgrade from 1.x to 2.0
 The `BuildWrapper` did not change, so no changes to your Jenkinsfile should be necessary. However, you need to reconfigure Vault in your Jenkins instance based on the instructions above. There is no way to smoothly upgrade this, because this is a major rewrite and handling of configuration completly changed.
+
 # CHANGELOG
 
-* **2017/05/04** - Breaking change release (AppRole auth backend, Folder ability, improved configuration, ...)
+* **2017/04/27** - Breaking change release (AppRole auth backend, Folder ability, improved configuration, ...)
 * **2017/04/10** - Feature Release - 1.4
- -  * Support reading Vault Token from file on disk [JENKINS-37713](issues.jenkins-ci.org/browse/JENKINS-37713)
- -  * Using credentials plugin for authentication token [JENKINS-38646](issues.jenkins-ci.org/browse/JENKINS-38646)
+  * Support reading Vault Token from file on disk [JENKINS-37713](issues.jenkins-ci.org/browse/JENKINS-37713)
+  * Using credentials plugin for authentication token [JENKINS-38646](issues.jenkins-ci.org/browse/JENKINS-38646)
 * **2017/03/03** - Feature Release - 1.3
- -  * Vault Plugin should mask credentials in build log [JENKINS-39383](issues.jenkins-ci.org/browse/JENKINS-39383)
+  * Vault Plugin should mask credentials in build log [JENKINS-39383](issues.jenkins-ci.org/browse/JENKINS-39383)
 * **2016/08/15** - Re-release due to failed maven release - 1.2
 * **2016/08/11** - Bugfix release - 1.1
   * Refactor to allow getting multiple vault keys in a single API call [JENKINS-37151](https://issues.jenkins-ci.org/browse/JENKINS-37151)
