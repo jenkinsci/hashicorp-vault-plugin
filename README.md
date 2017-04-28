@@ -24,7 +24,7 @@ Implementing additional authentication backends is actually quite easy:
 
 Simply provide a class implementing `VaultTokenCredential` that contains a `Descriptor` extending `BaseStandardCredentialsDescriptor`.
 The `Descriptor` needs to be annotated with `@Extension`. Your credential needs to know how to authenticate with Vault and provide an authenticated Vault session.
-See [VaultAppRoleCredential.java](https://github.com/jenkinsci/hashicorp-vault-plugin/blob/master/src/main/java/com/datapipe/jenkins/vault/credentials/VaultTokenCredential) for an example.
+See [VaultAppRoleCredential.java](https://github.com/jenkinsci/hashicorp-vault-plugin/blob/master/src/main/java/com/datapipe/jenkins/vault/credentials/VaultTokenCredential.java) for an example.
 
 
 # Plugin Usage
