@@ -85,6 +85,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         PrintStream logger = listener.getLogger();
         pullAndMergeConfiguration(build);
 
+        // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
         if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
             try {
                 provideEnvironmentVariablesFromVault(context, build);
