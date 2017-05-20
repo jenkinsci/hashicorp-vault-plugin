@@ -103,6 +103,8 @@ The `BuildWrapper` did not change, so no changes to your Jenkinsfile should be n
 
 # CHANGELOG
 
+* **2017/05/19** - Bugfix Release - 2.0.1
+  * Build fails if plugin is enabled for a job without secrets specified [JENKINS-44163](https://issues.jenkins-ci.org/browse/JENKINS-441630)
 * **2017/04/27** - Breaking change release (AppRole auth backend, Folder ability, improved configuration, ...)
 * **2017/04/10** - Feature Release - 1.4
   * Support reading Vault Token from file on disk [JENKINS-37713](issues.jenkins-ci.org/browse/JENKINS-37713)
