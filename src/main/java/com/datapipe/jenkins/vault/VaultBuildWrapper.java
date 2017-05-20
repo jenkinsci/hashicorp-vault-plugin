@@ -85,11 +85,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         PrintStream logger = listener.getLogger();
         pullAndMergeConfiguration(build);
 
-        try {
-            provideEnvironmentVariablesFromVault(context, build);
-        } catch (VaultException e) {
-            e.printStackTrace(logger);
-            throw new AbortException(e.getMessage());
+        if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
+            try {
+                provideEnvironmentVariablesFromVault(context, build);
+            } catch (VaultException e) {
+                e.printStackTrace(logger);
+                throw new AbortException(e.getMessage());
+            }
         }
     }
 
@@ -116,7 +118,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     private void provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
         String url = getConfiguration().getVaultUrl();
 
-        if (StringUtils.isBlank(url)){
+        if (StringUtils.isBlank(url)) {
             throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
         }
 
