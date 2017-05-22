@@ -5,7 +5,7 @@ This plugin adds a build wrapper to set environment variables from a HashiCorp [
 
 # Vault Authentication Backends
 This plugin allows authenticating against Vault using the AppRole authentication backend. Hashicorp recommends using AppRole for Servers / automated workflows (like Jenkins) and using Tokens (default mechanism, Github Token, ...) for every developer's machine.
-  Furthermore, this plugin allows using a Vault Token - either configured directly in Jenkins or read from an arbitrary file on the Jenkins Machine.
+  Furthermore, this plugin allows using a Github personal access token, or a Vault Token - either configured directly in Jenkins or read from an arbitrary file on the Jenkins Machine.
 
 ### How does AppRole work?
 In short: you register an approle auth backend using a self-chosen name (e.g. Jenkins). This approle is identified by a `role-id` and secured with a `secret_id`. If you have both of those values you can ask Vault for a token that can be used to access vault.
@@ -103,6 +103,9 @@ The `BuildWrapper` did not change, so no changes to your Jenkinsfile should be n
 
 # CHANGELOG
 
+* **2017/05/22** - Feature Release - 2.1.0
+  * Vault Key Not Saved In Vault Error Messaging [JENKINS-38647](https://issues.jenkins-ci.org/browse/JENKINS-38647)
+  * Add support github token auth [JENKINS-38939](https://issues.jenkins-ci.org/browse/JENKINS-38939)
 * **2017/05/19** - Bugfix Release - 2.0.1
   * Build fails if plugin is enabled for a job without secrets specified [JENKINS-44163](https://issues.jenkins-ci.org/browse/JENKINS-441630)
 * **2017/04/27** - Breaking change release (AppRole auth backend, Folder ability, improved configuration, ...)
