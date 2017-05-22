@@ -30,7 +30,7 @@ public class VaultAccessor {
         try {
             return vault.logical().read(path).getData();
         } catch (VaultException e) {
-            throw new VaultPluginException("could not read from vault", e);
+            throw new VaultPluginException("could not read from vault: " + e.getMessage() + " at path: " + path, e);
         }
     }
 }
