@@ -59,7 +59,10 @@ public class MaskingConsoleLogFilter extends ConsoleLogFilter
      */
     public static String getPatternStringForSecrets(Collection<String> secrets) {
         StringBuilder b = new StringBuilder();
-        List<String> sortedByLength = new ArrayList<String>(secrets);
+        List<String> sortedByLength = new ArrayList<String>(secrets.size());
+        for (String secret : secrets) {
+        	if (secret != null) sortedByLength.add(secret);
+        }
         Collections.sort(sortedByLength, new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
