@@ -1,7 +1,6 @@
 package com.datapipe.jenkins.vault;
 
-import java.util.Map;
-
+import java.io.Serializable;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
@@ -10,7 +9,7 @@ import com.bettercloud.vault.response.VaultResponse;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
-public class VaultAccessor {
+public class VaultAccessor implements Serializable {
     private Vault vault;
 
     private VaultConfig config;

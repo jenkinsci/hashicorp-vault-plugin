@@ -89,14 +89,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
             try {
                 List<LogicalResponse> responses = provideEnvironmentVariablesFromVault(context, build);
-                List<String> leaseIds = new ArrayList<>();
-                for (LogicalResponse response : responses) {
-                    String leaseId = response.getLeaseId();
-                    if (leaseId != null && !leaseId.isEmpty()) {
-                        leaseIds.add(leaseId);
-                    }
-                }
-                context.setDisposer(new VaultDisposer(vaultAccessor, leaseIds));
+                context.setDisposer(new VaultDisposer(getConfiguration(), retrieveVaultCredentials(build), retrieveLeaseIds(responses)));
             } catch (VaultException e) {
                 e.printStackTrace(logger);
                 throw new AbortException(e.getMessage());
@@ -123,6 +116,16 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         this.vaultAccessor = vaultAccessor;
     }
 
+    private List<String> retrieveLeaseIds(List<LogicalResponse> logicalResponses) {
+        List<String> leaseIds = new ArrayList<>();
+        for (LogicalResponse response : logicalResponses) {
+            String leaseId = response.getLeaseId();
+            if (leaseId != null && !leaseId.isEmpty()) {
+                leaseIds.add(leaseId);
+            }
+        }
+        return leaseIds;
+    }
 
     private List<LogicalResponse> provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
         String url = getConfiguration().getVaultUrl();
@@ -134,7 +137,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         VaultCredential credential = retrieveVaultCredentials(build);
 
         vaultAccessor.init(url);
-        ArrayList<LogicalResponse> responses = new ArrayList<LogicalResponse>();
+        ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             vaultAccessor.auth(credential);
             LogicalResponse response = vaultAccessor.read(vaultSecret.getPath());
@@ -171,7 +174,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 configuration = resolver.forJob(build.getParent());
             }
         }
-        if (configuration == null){
+        if (configuration == null) {
             throw new VaultPluginException("No configuration found - please configure the VaultPlugin.");
         }
     }
