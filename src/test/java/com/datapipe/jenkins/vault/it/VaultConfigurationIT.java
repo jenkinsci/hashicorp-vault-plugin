@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,6 +26,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
@@ -81,7 +85,9 @@ public class VaultConfigurationIT {
       VaultAccessor vaultAccessor = mock(VaultAccessor.class);
       Map<String, String> returnValue = new HashMap<>();
       returnValue.put("key1", "some-secret");
-      when(vaultAccessor.read("secret/path1")).thenReturn(returnValue);
+      LogicalResponse resp = mock(LogicalResponse.class);
+      when(resp.getData()).thenReturn(returnValue);
+      when(vaultAccessor.read("secret/path1")).thenReturn(resp);
       return vaultAccessor;
    }
 
@@ -289,7 +295,15 @@ public class VaultConfigurationIT {
       jenkins.assertLogContains("CredentialsUnavailableException", build);
    }
 
-   public static Credentials createTokenCredential(final String credentialId) {
-      return new VaultAppRoleCredential(CredentialsScope.GLOBAL, credentialId, "description", "role-id-"+credentialId, Secret.fromString("secret-id-"+credentialId));
+   public static VaultAppRoleCredential createTokenCredential(final String credentialId) {
+       Vault vault = mock(Vault.class, withSettings().serializable());
+       VaultAppRoleCredential cred = mock(VaultAppRoleCredential.class, withSettings().serializable());
+       when(cred.getId()).thenReturn(credentialId);
+       when(cred.getDescription()).thenReturn("description");
+       when(cred.getRoleId()).thenReturn("role-id-" + credentialId);
+       when(cred.getSecretId()).thenReturn(Secret.fromString("secret-id-" + credentialId));
+       when(cred.authorizeWithVault((Vault)any(), (VaultConfig)any())).thenReturn(vault);
+       return cred;
+
    }
 }
