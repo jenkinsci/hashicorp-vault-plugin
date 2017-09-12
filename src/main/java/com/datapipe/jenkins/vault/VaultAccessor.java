@@ -10,9 +10,9 @@ import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
 public class VaultAccessor implements Serializable {
-    private Vault vault;
+    private transient Vault vault;
 
-    private VaultConfig config;
+    private transient VaultConfig config;
 
     public void init(String url) {
         try {
