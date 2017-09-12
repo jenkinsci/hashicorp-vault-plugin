@@ -1,1 +1,1 @@
-buildPlugin(platforms: ['docker'])
+buildPlugin(platforms: ['docker'], findbugs: [archive: true])
