@@ -58,6 +58,7 @@ public class MaskingConsoleLogFilter extends ConsoleLogFilter
      * @return A {@link String} generated from that collection.
      */
     public static String getPatternStringForSecrets(Collection<String> secrets) {
+        if (secrets == null) return ""
         StringBuilder b = new StringBuilder();
         List<String> sortedByLength = new ArrayList<String>(secrets.size());
         for (String secret : secrets) {
