@@ -23,20 +23,6 @@
  */
 package com.datapipe.jenkins.vault;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
 import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -51,13 +37,7 @@ import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import com.google.common.annotations.VisibleForTesting;
-
-import hudson.AbortException;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.ExtensionList;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
@@ -66,12 +46,25 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
 import jenkins.tasks.SimpleBuildWrapper;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
     private VaultConfiguration configuration;
     private List<VaultSecret> vaultSecrets;
     private List<String> valuesToMask = new ArrayList<>();
     private VaultAccessor vaultAccessor = new VaultAccessor();
+    private PrintStream logger;
 
     @DataBoundConstructor
     public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
@@ -81,8 +74,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace,
                       Launcher launcher, TaskListener listener, EnvVars initialEnvironment)
-            throws IOException, InterruptedException {
-        PrintStream logger = listener.getLogger();
+            throws IOException {
+        logger = listener.getLogger();
         pullAndMergeConfiguration(build);
 
         // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
@@ -116,7 +109,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     }
 
 
-    private void provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
+    private void provideEnvironmentVariablesFromVault(Context context, Run build) {
         String url = getConfiguration().getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
@@ -128,11 +121,19 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         vaultAccessor.init(url);
         for (VaultSecret vaultSecret : vaultSecrets) {
             vaultAccessor.auth(credential);
-            Map<String, String> values = vaultAccessor.read(vaultSecret.getPath());
+            try {
+                Map<String, String> values = vaultAccessor.read(vaultSecret.getPath());
 
-            for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-                valuesToMask.add(values.get(value.getVaultKey()));
-                context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+                for (VaultSecretValue value : vaultSecret.getSecretValues()) {
+                    valuesToMask.add(values.get(value.getVaultKey()));
+                    context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+                }
+            }catch (VaultPluginException ex) {
+                VaultException e = (VaultException) ex.getCause();
+                if (e.getHttpStatusCode() == 404 && !configuration.isFailIfNotFound())
+                    logger.println("Vault credentials not found " + vaultSecret.getPath());
+                else
+                    throw ex;
             }
         }
     }

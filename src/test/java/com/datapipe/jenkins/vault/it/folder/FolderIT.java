@@ -1,34 +1,5 @@
 package com.datapipe.jenkins.vault.it.folder;
 
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_1;
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_2;
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.JENKINSFILE_URL;
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
 import com.cloudbees.plugins.credentials.Credentials;
@@ -43,12 +14,26 @@ import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
-
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.tasks.Shell;
 import jenkins.model.GlobalConfiguration;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import java.io.IOException;
+import java.util.*;
+
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.*;
 
 public class FolderIT {
     // check that you cannot access another credentials folder
@@ -75,7 +60,7 @@ public class FolderIT {
     @Before
     public void setupJenkins() throws IOException {
         GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-        globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1));
+        globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1, false));
         globalConfig.save();
 
         FOLDER_1_CREDENTIAL = createTokenCredential(FOLDER_1_CREDENTIALS_ID);
@@ -128,7 +113,7 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID)));
+        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
@@ -136,6 +121,7 @@ public class FolderIT {
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
+        assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
@@ -152,7 +138,7 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID)));
+        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
@@ -160,6 +146,7 @@ public class FolderIT {
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
+        assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
@@ -176,7 +163,7 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_2_CREDENTIALS_ID)));
+        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_2_CREDENTIALS_ID, false)));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
@@ -184,6 +171,7 @@ public class FolderIT {
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_2_CREDENTIALS_ID));
+        assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);

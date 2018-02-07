@@ -1,43 +1,45 @@
 package com.datapipe.jenkins.vault.configuration;
 
-import java.util.List;
-
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
-
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+
+import java.util.List;
 
 public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> {
     private String vaultUrl;
 
     private String vaultCredentialId;
 
+    private boolean failIfNotFound;
+
     public VaultConfiguration() {
         // no args constructor
     }
 
     @DataBoundConstructor
-    public VaultConfiguration(String vaultUrl, String vaultCredentialId) {
+    public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound) {
         this.vaultUrl = normalizeUrl(vaultUrl);
         this.vaultCredentialId = vaultCredentialId;
+        this.failIfNotFound = failIfNotFound;
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
         this.vaultUrl = toCopy.getVaultUrl();
         this.vaultCredentialId = toCopy.getVaultCredentialId();
+        this.failIfNotFound = toCopy.failIfNotFound;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -51,6 +53,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         if (StringUtils.isBlank(result.getVaultUrl())) {
             result.setVaultUrl(parent.getVaultUrl());
         }
+        result.failIfNotFound = failIfNotFound;
         return result;
     }
 
@@ -70,6 +73,15 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     @DataBoundSetter
     public void setVaultCredentialId(String vaultCredentialId) {
         this.vaultCredentialId = vaultCredentialId;
+    }
+
+    public boolean isFailIfNotFound() {
+        return failIfNotFound;
+    }
+
+    @DataBoundSetter
+    public void setFailIfNotFound(boolean failIfNotFound) {
+        this.failIfNotFound = failIfNotFound;
     }
 
     @Extension
