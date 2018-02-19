@@ -52,7 +52,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,19 +72,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace,
-                      Launcher launcher, TaskListener listener, EnvVars initialEnvironment)
-            throws IOException {
+                      Launcher launcher, TaskListener listener, EnvVars initialEnvironment) {
         logger = listener.getLogger();
         pullAndMergeConfiguration(build);
 
         // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
         if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
-            try {
-                provideEnvironmentVariablesFromVault(context, build);
-            } catch (VaultException e) {
-                e.printStackTrace(logger);
-                throw new AbortException(e.getMessage());
-            }
+            provideEnvironmentVariablesFromVault(context, build);
         }
     }
 
@@ -118,7 +111,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url);
+        vaultAccessor.init(url, configuration.isSkipSslVerification());
         for (VaultSecret vaultSecret : vaultSecrets) {
             vaultAccessor.auth(credential);
             try {

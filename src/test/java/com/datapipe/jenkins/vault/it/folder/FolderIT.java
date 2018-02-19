@@ -150,7 +150,7 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
-        verify(mockAccessor, times(1)).init("http://folder1.com");
+        verify(mockAccessor, times(1)).init("http://folder1.com", true);
         verify(mockAccessor, times(1)).auth((VaultCredential)FOLDER_1_CREDENTIAL);
         verify(mockAccessor, times(1)).read("secret/path1");
     }

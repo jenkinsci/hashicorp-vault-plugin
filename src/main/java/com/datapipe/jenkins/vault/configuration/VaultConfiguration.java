@@ -23,7 +23,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String vaultCredentialId;
 
-    private boolean failIfNotFound;
+    private boolean failIfNotFound = true;
+
+    private boolean skipSslVerification = true;
 
     public VaultConfiguration() {
         // no args constructor
@@ -82,6 +84,14 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     @DataBoundSetter
     public void setFailIfNotFound(boolean failIfNotFound) {
         this.failIfNotFound = failIfNotFound;
+    }
+
+    public boolean isSkipSslVerification() {
+        return skipSslVerification;
+    }
+
+    public void setSkipSslVerification(boolean skipSslVerification) {
+        this.skipSslVerification = skipSslVerification;
     }
 
     @Extension
