@@ -33,6 +33,7 @@ import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import hudson.tasks.BuildWrapperDescriptor;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -60,11 +61,9 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
-import hudson.tasks.BuildWrapper;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
@@ -177,14 +176,14 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
      * that it can be accessed from views.
      */
     @Extension
-    public static final class DescriptorImpl extends Descriptor<BuildWrapper> {
+    public static final class DescriptorImpl extends BuildWrapperDescriptor {
         public DescriptorImpl() {
             super(VaultBuildWrapper.class);
             load();
         }
 
+        @Override
         public boolean isApplicable(AbstractProject<?, ?> item) {
-            // Indicates that this builder can be used with all kinds of project types
             return true;
         }
 
