@@ -6,7 +6,7 @@ import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.JENKINSFILE_URL
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -29,6 +29,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
 import com.cloudbees.plugins.credentials.Credentials;
@@ -105,9 +106,11 @@ public class FolderIT {
 
     private VaultAccessor mockVaultAccessor() {
         VaultAccessor vaultAccessor = mock(VaultAccessor.class);
+        LogicalResponse resp = mock(LogicalResponse.class);
         Map<String, String> returnValue = new HashMap<>();
         returnValue.put("key1", "some-secret");
-        when(vaultAccessor.read("secret/path1")).thenReturn(returnValue);
+        when(resp.getData()).thenReturn(returnValue);
+        when(vaultAccessor.read("secret/path1")).thenReturn(resp);
         return vaultAccessor;
     }
 

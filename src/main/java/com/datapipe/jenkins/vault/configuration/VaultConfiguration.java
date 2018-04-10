@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.configuration;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -20,7 +21,7 @@ import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 
-public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> {
+public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements Serializable {
     private String vaultUrl;
 
     private String vaultCredentialId;

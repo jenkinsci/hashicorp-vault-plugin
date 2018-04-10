@@ -34,6 +34,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import hudson.tasks.BuildWrapperDescriptor;
+import com.bettercloud.vault.response.LogicalResponse;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -87,7 +88,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
         if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
             try {
-                provideEnvironmentVariablesFromVault(context, build);
+                List<LogicalResponse> responses = provideEnvironmentVariablesFromVault(context, build);
+                context.setDisposer(new VaultDisposer(getConfiguration(), retrieveVaultCredentials(build), retrieveLeaseIds(responses)));
             } catch (VaultException e) {
                 e.printStackTrace(logger);
                 throw new AbortException(e.getMessage());
@@ -114,8 +116,18 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         this.vaultAccessor = vaultAccessor;
     }
 
+    private List<String> retrieveLeaseIds(List<LogicalResponse> logicalResponses) {
+        List<String> leaseIds = new ArrayList<>();
+        for (LogicalResponse response : logicalResponses) {
+            String leaseId = response.getLeaseId();
+            if (leaseId != null && !leaseId.isEmpty()) {
+                leaseIds.add(leaseId);
+            }
+        }
+        return leaseIds;
+    }
 
-    private void provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
+    private List<LogicalResponse> provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
         String url = getConfiguration().getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
@@ -125,15 +137,18 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         VaultCredential credential = retrieveVaultCredentials(build);
 
         vaultAccessor.init(url);
+        ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             vaultAccessor.auth(credential);
-            Map<String, String> values = vaultAccessor.read(vaultSecret.getPath());
-
+            LogicalResponse response = vaultAccessor.read(vaultSecret.getPath());
+            responses.add(response);
+            Map<String, String> values = response.getData();
             for (VaultSecretValue value : vaultSecret.getSecretValues()) {
                 valuesToMask.add(values.get(value.getVaultKey()));
                 context.env(value.getEnvVar(), values.get(value.getVaultKey()));
             }
         }
+        return responses;
     }
 
     private VaultCredential retrieveVaultCredentials(Run build) {
@@ -159,7 +174,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 configuration = resolver.forJob(build.getParent());
             }
         }
-        if (configuration == null){
+        if (configuration == null) {
             throw new VaultPluginException("No configuration found - please configure the VaultPlugin.");
         }
     }

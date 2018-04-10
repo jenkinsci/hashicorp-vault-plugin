@@ -1,5 +1,8 @@
 package com.datapipe.jenkins.vault;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +11,7 @@ import javax.annotation.CheckForNull;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import com.bettercloud.vault.response.LogicalResponse;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
@@ -44,13 +48,15 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
             }
 
             @Override
-            public Map<String, String> read(String path) {
+            public LogicalResponse read(String path) {
                 if (!path.equals("secret/path1")) {
                     throw new AssertionError("path " + path + " does not match expected: secret/path1");
                 }
                 Map<String, String> returnValue = new HashMap<>();
                 returnValue.put("key1", "some-secret");
-                return returnValue;
+                LogicalResponse resp = mock(LogicalResponse.class);
+                when(resp.getData()).thenReturn(returnValue);
+                return resp;
             }
         });
     }
