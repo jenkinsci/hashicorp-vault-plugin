@@ -10,7 +10,9 @@ import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
 public class VaultAccessor implements Serializable {
-    private transient Vault vault;
+	private static final long serialVersionUID = 1L;
+
+	private transient Vault vault;
 
     private transient VaultConfig config;
 
