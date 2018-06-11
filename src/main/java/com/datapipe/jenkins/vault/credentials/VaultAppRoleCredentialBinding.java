@@ -54,7 +54,7 @@ import java.util.Set;
 Exports VAULT_ADDR and VAULT_TOKEN variables to pipeline environment.
 
          withCredentials([[
-            $class: 'VaultAppRoleCredentialBindings',
+            $class: 'VaultAppRoleCredentialBinding',
             credentialsId: 'approle',
             vaultAddr: 'http://vault:8200'
             ]]) {
@@ -65,7 +65,7 @@ Exports VAULT_ADDR and VAULT_TOKEN variables to pipeline environment.
 The name of the exported variables can be chosen.
  
         withCredentials([[
-            $class: 'VaultAppRoleCredentialBindings',
+            $class: 'VaultAppRoleCredentialBinding',
             addrVariable: 'VA',
             tokenVariable: 'VT',
             credentialsId: 'approle',
@@ -81,7 +81,7 @@ The name of the exported variables can be chosen.
 /**
  * @author <a href="mailto:gotcha@bubblenet.be">Godefroid Chapelle</a>
  */
-public class VaultAppRoleCredentialBindings extends MultiBinding<VaultAppRoleCredential> {
+public class VaultAppRoleCredentialBinding extends MultiBinding<VaultAppRoleCredential> {
 
     private final static String DEFAULT_VAULT_ADDR_VARIABLE_NAME = "VAULT_ADDR";
     private final static String DEFAULT_VAULT_TOKEN_VARIABLE_NAME = "VAULT_TOKEN";
@@ -99,7 +99,7 @@ public class VaultAppRoleCredentialBindings extends MultiBinding<VaultAppRoleCre
      * @param vaultAddr
      */
     @DataBoundConstructor
-    public VaultAppRoleCredentialBindings(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
+    public VaultAppRoleCredentialBinding(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
         super(credentialsId);
         this.vaultAddr = vaultAddr;
         this.addrVariable = StringUtils.defaultIfBlank(addrVariable, DEFAULT_VAULT_ADDR_VARIABLE_NAME);
