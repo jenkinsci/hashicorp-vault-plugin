@@ -50,12 +50,29 @@ import java.util.Map;
 import java.util.Set;
 
 /* example:
+
+Exports VAULT_ADDR and VAULT_TOKEN variables to pipeline environment.
+
          withCredentials([[
             $class: 'VaultAppRoleCredentialBindings',
             credentialsId: 'approle',
             vaultAddr: 'http://vault:8200'
             ]]) {
+            sh 'echo token=$VAULT_ADDR'
             sh 'echo token=$VAULT_TOKEN'
+        }
+
+The name of the exported variables can be chosen.
+ 
+        withCredentials([[
+            $class: 'VaultAppRoleCredentialBindings',
+            addrVariable: 'VA',
+            tokenVariable: 'VT',
+            credentialsId: 'approle',
+            vaultAddr: 'http://vault:8200'
+            ]]) {
+            sh 'echo token=$VT'
+            sh 'echo addr=$VA'
         }
 
  *
