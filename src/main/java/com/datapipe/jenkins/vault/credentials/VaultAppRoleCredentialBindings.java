@@ -28,7 +28,6 @@ import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
@@ -67,23 +66,32 @@ import java.util.Set;
  */
 public class VaultAppRoleCredentialBindings extends MultiBinding<VaultAppRoleCredential> {
 
+    private final static String DEFAULT_VAULT_ADDR_VARIABLE_NAME = "VAULT_ADDR";
     private final static String DEFAULT_VAULT_TOKEN_VARIABLE_NAME = "VAULT_TOKEN";
 
     @NonNull
+    private final String addrVariable;
     private final String tokenVariable;
     private final String vaultAddr;
 
     /**
      *
+     * @param addrVariable if {@code null}, {@value DEFAULT_VAULT_ADDR_VARIABLE_NAME} will be used.
      * @param tokenVariable if {@code null}, {@value DEFAULT_VAULT_TOKEN_VARIABLE_NAME} will be used.
      * @param credentialsId
      * @param vaultAddr
      */
     @DataBoundConstructor
-    public VaultAppRoleCredentialBindings(@Nullable String tokenVariable, String credentialsId, String vaultAddr) {
+    public VaultAppRoleCredentialBindings(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
         super(credentialsId);
         this.vaultAddr = vaultAddr;
+        this.addrVariable = StringUtils.defaultIfBlank(addrVariable, DEFAULT_VAULT_ADDR_VARIABLE_NAME);
         this.tokenVariable = StringUtils.defaultIfBlank(tokenVariable, DEFAULT_VAULT_TOKEN_VARIABLE_NAME);
+    }
+
+    @NonNull
+    public String getAddrVariable() {
+        return addrVariable;
     }
 
     @NonNull
@@ -100,6 +108,7 @@ public class VaultAppRoleCredentialBindings extends MultiBinding<VaultAppRoleCre
     public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
         VaultAppRoleCredential credentials = getCredentials(build);
         Map<String,String> m = new HashMap<String,String>();
+        m.put(addrVariable, vaultAddr);
         m.put(tokenVariable, getToken(credentials));
 
         return new MultiEnvironment(m);
@@ -119,7 +128,7 @@ public class VaultAppRoleCredentialBindings extends MultiBinding<VaultAppRoleCre
 
     @Override
     public Set<String> variables() {
-        return new HashSet<String>(Arrays.asList(tokenVariable));
+        return new HashSet<String>(Arrays.asList(addrVariable, tokenVariable));
     }
 
     @Extension
