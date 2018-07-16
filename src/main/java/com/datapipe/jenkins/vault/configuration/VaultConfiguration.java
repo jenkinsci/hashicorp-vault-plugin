@@ -1,5 +1,14 @@
 package com.datapipe.jenkins.vault.configuration;
 
+import java.io.Serializable;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
@@ -18,7 +27,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import java.util.List;
 
-public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> {
+public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements Serializable {
     private String vaultUrl;
 
     private String vaultCredentialId;

@@ -102,7 +102,11 @@ In the future we might migrate to a [BuildStep](http://javadoc.jenkins-ci.org/hu
 The `BuildWrapper` did not change, so no changes to your Jenkinsfile should be necessary. However, you need to reconfigure Vault in your Jenkins instance based on the instructions above. There is no way to smoothly upgrade this, because this is a major rewrite and handling of configuration completly changed.
 
 # CHANGELOG
-
+* **2018/05/01** - Bugfix Release - 2.1.1
+  * MaskingConsoleLogFilter should filter out null secrets [JENKINS-46792](https://issues.jenkins-ci.org/browse/JENKINS-38647)
+  * [Avoid NPE Crash](https://github.com/jenkinsci/hashicorp-vault-plugin/pull/13)
+  * Switch to SimpleBuildWrapper for pipeline compatibility [JENKINS-48049](https://issues.jenkins-ci.org/browse/JENKINS-48049)
+  * Dynamic secrets should be revoked after build wrapper completes [JENKINS-46794](https://issues.jenkins-ci.org/browse/JENKINS-46794)
 * **2017/05/22** - Feature Release - 2.1.0
   * Vault Key Not Saved In Vault Error Messaging [JENKINS-38647](https://issues.jenkins-ci.org/browse/JENKINS-38647)
   * Add support github token auth [JENKINS-38939](https://issues.jenkins-ci.org/browse/JENKINS-38939)

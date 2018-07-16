@@ -8,8 +8,10 @@ import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.NameWith;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 
+import java.io.Serializable;
+
 @NameWith(VaultCredential.NameProvider.class)
-public interface VaultCredential extends StandardCredentials {
+public interface VaultCredential extends StandardCredentials, Serializable {
     Vault authorizeWithVault(Vault vault, VaultConfig config);
 
     class NameProvider extends CredentialsNameProvider<VaultCredential> {

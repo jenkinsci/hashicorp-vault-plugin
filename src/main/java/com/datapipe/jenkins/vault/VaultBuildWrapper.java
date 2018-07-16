@@ -24,6 +24,7 @@
 package com.datapipe.jenkins.vault;
 
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
@@ -40,11 +41,10 @@ import com.google.common.annotations.VisibleForTesting;
 import hudson.*;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
-import hudson.tasks.BuildWrapper;
+import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.tasks.SimpleBuildWrapper;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -101,8 +101,18 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         this.vaultAccessor = vaultAccessor;
     }
 
+    private List<String> retrieveLeaseIds(List<LogicalResponse> logicalResponses) {
+        List<String> leaseIds = new ArrayList<>();
+        for (LogicalResponse response : logicalResponses) {
+            String leaseId = response.getLeaseId();
+            if (leaseId != null && !leaseId.isEmpty()) {
+                leaseIds.add(leaseId);
+            }
+        }
+        return leaseIds;
+    }
 
-    private void provideEnvironmentVariablesFromVault(Context context, Run build) {
+    private List<LogicalResponse> provideEnvironmentVariablesFromVault(Context context, Run build) {
         String url = getConfiguration().getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
@@ -112,11 +122,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         VaultCredential credential = retrieveVaultCredentials(build);
 
         vaultAccessor.init(url, configuration.isSkipSslVerification());
+        ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             vaultAccessor.auth(credential);
             try {
-                Map<String, String> values = vaultAccessor.read(vaultSecret.getPath());
-
+                LogicalResponse response = vaultAccessor.read(vaultSecret.getPath());
+                responses.add(response);
+                Map<String, String> values = response.getData();
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
                     valuesToMask.add(values.get(value.getVaultKey()));
                     context.env(value.getEnvVar(), values.get(value.getVaultKey()));
@@ -129,6 +141,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                     throw ex;
             }
         }
+        return responses;
     }
 
     private VaultCredential retrieveVaultCredentials(Run build) {
@@ -154,7 +167,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 configuration = resolver.forJob(build.getParent());
             }
         }
-        if (configuration == null){
+        if (configuration == null) {
             throw new VaultPluginException("No configuration found - please configure the VaultPlugin.");
         }
     }
@@ -171,14 +184,14 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
      * that it can be accessed from views.
      */
     @Extension
-    public static final class DescriptorImpl extends Descriptor<BuildWrapper> {
+    public static final class DescriptorImpl extends BuildWrapperDescriptor {
         public DescriptorImpl() {
             super(VaultBuildWrapper.class);
             load();
         }
 
+        @Override
         public boolean isApplicable(AbstractProject<?, ?> item) {
-            // Indicates that this builder can be used with all kinds of project types
             return true;
         }
 

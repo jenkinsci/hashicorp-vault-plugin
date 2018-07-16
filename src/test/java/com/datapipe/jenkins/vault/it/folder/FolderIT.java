@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.it.folder;
 
+import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
 import com.cloudbees.plugins.credentials.Credentials;
@@ -33,6 +34,7 @@ import java.util.*;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class FolderIT {
@@ -90,9 +92,11 @@ public class FolderIT {
 
     private VaultAccessor mockVaultAccessor() {
         VaultAccessor vaultAccessor = mock(VaultAccessor.class);
+        LogicalResponse resp = mock(LogicalResponse.class);
         Map<String, String> returnValue = new HashMap<>();
         returnValue.put("key1", "some-secret");
-        when(vaultAccessor.read("secret/path1")).thenReturn(returnValue);
+        when(resp.getData()).thenReturn(returnValue);
+        when(vaultAccessor.read("secret/path1")).thenReturn(resp);
         return vaultAccessor;
     }
 
@@ -125,7 +129,7 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
-        verify(mockAccessor, times(1)).init("http://folder1.com");
+        verify(mockAccessor, times(1)).init("http://folder1.com", true);
         verify(mockAccessor, times(1)).auth((VaultCredential)FOLDER_1_CREDENTIAL);
         verify(mockAccessor, times(1)).read("secret/path1");
     }
