@@ -12,8 +12,8 @@
   <version>2.1.2-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <properties>
-    <jenkins.version>1.642.1</jenkins.version>
-    <java.level>7</java.level>
+    <jenkins.version>2.32.1</jenkins.version>
+    <java.level>8</java.level>
     <jenkins-test-harness.version>2.19</jenkins-test-harness.version>
   </properties>
   <name>HashiCorp Vault Plugin</name>
@@ -147,7 +147,7 @@
     <dependency>
       <groupId>com.bettercloud</groupId>
       <artifactId>vault-java-driver</artifactId>
-      <version>2.0.0</version>
+      <version>3.1.0</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
