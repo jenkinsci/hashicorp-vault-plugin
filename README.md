@@ -19,7 +19,7 @@ When registering the approle backend you can set a couple of different parameter
 This is just a short introduction, please refer to [Hashicorp itself](https://www.vaultproject.io/docs/auth/approle.html) to get detailed information.
 ### What about other backends?
 Hashicorp explicitly recommends the AppRole Backend for machine-to-machine authentication. Token based auth is mainly supported for backwards compatibility.
-Other backends that might make sense are the AWS EC2 backend, the Azure backend, and the Kubernetes backend. But we do not support these yet. Feel free to contribute!
+Other backends that might make sense are the AWS EC2 backend and the Azure backend. But we do not support these yet. Feel free to contribute!
 
 Implementing additional authentication backends is actually quite easy:
 
@@ -61,6 +61,12 @@ You enter your github personal access token to authenticate to vault.
 ![GCP Credential](docs/images/gcp_credential.png)
 
 You enter your Vault GCP auth `role` name and `audience`. The JWT will be automatically retrieved from GCE metdata. This requires that Jenkins master is running on a GCE instance.
+
+#### Vault Kubernetes Credential
+
+![Kubernetes Credential](docs/images/kubernetes_credential.png)
+
+You enter your Vault Kubernetes auth `role` name. The JWT will be automatically retrieved from the Kubernetes pod. This requires that Jenkins master is running in a Kubernetes pod.
 
 #### Vault Token Credential
 
