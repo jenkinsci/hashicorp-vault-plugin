@@ -1,6 +1,6 @@
 package com.datapipe.jenkins.vault;
 
-import java.io.Serializable;
+import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
@@ -9,7 +9,7 @@ import com.bettercloud.vault.response.VaultResponse;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
-import java.util.Map;
+import java.io.Serializable;
 
 public class VaultAccessor implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -24,7 +24,9 @@ public class VaultAccessor implements Serializable {
 
     public void init(String url, boolean skipSslVerification) {
         try {
-            config = new VaultConfig(url).sslVerify(skipSslVerification)
+            config = new VaultConfig()
+                    .address(url)
+                    .sslConfig(new SslConfig().verify(skipSslVerification).build())
                     .build();
             vault = new Vault(config);
         } catch (VaultException e) {
