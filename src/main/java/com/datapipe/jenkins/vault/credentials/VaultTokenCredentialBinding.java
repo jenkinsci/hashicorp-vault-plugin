@@ -9,7 +9,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.util.Secret;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +29,7 @@ import java.util.Set;
 Exports VAULT_ADDR and VAULT_TOKEN variables to pipeline environment.
 
          withCredentials([[
-            $class: 'VaultAppRoleCredentialBinding',
+            $class: 'VaultTokenCredentialBinding',
             credentialsId: 'approle',
             vaultAddr: 'http://vault:8200'
             ]]) {
@@ -41,7 +40,7 @@ Exports VAULT_ADDR and VAULT_TOKEN variables to pipeline environment.
 The name of the exported variables can be chosen.
  
         withCredentials([[
-            $class: 'VaultAppRoleCredentialBinding',
+            $class: 'VaultTokenCredentialBinding',
             addrVariable: 'VA',
             tokenVariable: 'VT',
             credentialsId: 'approle',
@@ -54,10 +53,7 @@ The name of the exported variables can be chosen.
  *
  */
 
-/**
- * @author <a href="mailto:gotcha@bubblenet.be">Godefroid Chapelle</a>
- */
-public class VaultAppRoleCredentialBinding extends MultiBinding<VaultAppRoleCredential> {
+public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultTokenCredential> {
 
     private final static String DEFAULT_VAULT_ADDR_VARIABLE_NAME = "VAULT_ADDR";
     private final static String DEFAULT_VAULT_TOKEN_VARIABLE_NAME = "VAULT_TOKEN";
@@ -75,7 +71,7 @@ public class VaultAppRoleCredentialBinding extends MultiBinding<VaultAppRoleCred
      * @param vaultAddr
      */
     @DataBoundConstructor
-    public VaultAppRoleCredentialBinding(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
+    public VaultTokenCredentialBinding(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
         super(credentialsId);
         this.vaultAddr = vaultAddr;
         this.addrVariable = StringUtils.defaultIfBlank(addrVariable, DEFAULT_VAULT_ADDR_VARIABLE_NAME);
@@ -93,13 +89,13 @@ public class VaultAppRoleCredentialBinding extends MultiBinding<VaultAppRoleCred
     }
 
     @Override
-    protected Class<VaultAppRoleCredential> type() {
-        return VaultAppRoleCredential.class;
+    protected Class<AbstractVaultTokenCredential> type() {
+        return AbstractVaultTokenCredential.class;
     }
 
     @Override
     public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
-        VaultAppRoleCredential credentials = getCredentials(build);
+        AbstractVaultTokenCredential credentials = getCredentials(build);
         Map<String,String> m = new HashMap<String,String>();
         m.put(addrVariable, vaultAddr);
         m.put(tokenVariable, getToken(credentials));
@@ -107,16 +103,14 @@ public class VaultAppRoleCredentialBinding extends MultiBinding<VaultAppRoleCred
         return new MultiEnvironment(m);
     }
 
-    private String getToken(VaultAppRoleCredential credentials) {
-        String token;
+    private String getToken(AbstractVaultTokenCredential credentials) {
         try {
             VaultConfig config = new VaultConfig(vaultAddr).build();
             Vault vault = new Vault(config);
-            token = vault.auth().loginByAppRole("approle", credentials.getRoleId(), Secret.toString(credentials.getSecretId())).getAuthClientToken();
+            return credentials.getToken(vault);
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
-        return token;
     }
 
     @Override
