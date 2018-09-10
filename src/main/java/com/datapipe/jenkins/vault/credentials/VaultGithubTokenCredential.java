@@ -3,22 +3,26 @@ package com.datapipe.jenkins.vault.credentials;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
+import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+
 import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
 import hudson.Extension;
 import hudson.util.Secret;
+import org.kohsuke.stapler.DataBoundSetter;
 
 public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
 
     // https://www.vaultproject.io/docs/auth/github.html#generate-a-github-personal-access-token
     private final @Nonnull Secret accessToken;
+
+    private VaultConfiguration configuration;
 
     @DataBoundConstructor
     public VaultGithubTokenCredential(@CheckForNull CredentialsScope scope,
@@ -29,13 +33,23 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
         this.accessToken = accessToken;
     }
 
+    @DataBoundSetter
+    public void setConfiguration(VaultConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
+    public VaultConfiguration getConfiguration() {
+        return this.configuration;
+    }
+
     public Secret getAccessToken() {
         return accessToken;
     }
 
-    protected String getToken(Vault vault ) {
+    protected String getToken() {
         try {
-            return vault.auth().loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
+            VaultConfig config = new VaultConfig(this.getConfiguration().getVaultUrl()).build();
+            return new Vault(config).auth().loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }

@@ -11,10 +11,10 @@ public abstract class AbstractVaultTokenCredential extends BaseStandardCredentia
         super(scope, id, description);
     }
 
-    protected abstract String getToken(Vault vault);
+    protected abstract String getToken();
 
     @Override
     public Vault authorizeWithVault(Vault vault, VaultConfig config) {
-        return new Vault(config.token(getToken(vault)));
+        return new Vault(config.token(getToken()));
     }
 }

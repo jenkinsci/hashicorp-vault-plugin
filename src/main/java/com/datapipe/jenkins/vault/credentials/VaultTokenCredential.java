@@ -3,7 +3,6 @@ package com.datapipe.jenkins.vault.credentials;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import com.bettercloud.vault.Vault;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -22,7 +21,7 @@ public class VaultTokenCredential extends AbstractVaultTokenCredential {
 
 
     @Override
-    public String getToken(Vault vault) {
+    public String getToken() {
         return Secret.toString(token);
     }
 

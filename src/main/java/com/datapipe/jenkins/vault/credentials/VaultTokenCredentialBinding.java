@@ -1,9 +1,5 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
@@ -88,6 +84,11 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
         return tokenVariable;
     }
 
+    @NonNull
+    public String getVaultAddr() {
+        return vaultAddr;
+    }
+
     @Override
     protected Class<AbstractVaultTokenCredential> type() {
         return AbstractVaultTokenCredential.class;
@@ -104,13 +105,7 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     }
 
     private String getToken(AbstractVaultTokenCredential credentials) {
-        try {
-            VaultConfig config = new VaultConfig(vaultAddr).build();
-            Vault vault = new Vault(config);
-            return credentials.getToken(vault);
-        } catch (VaultException e) {
-            throw new VaultPluginException("failed to connect to vault", e);
-        }
+            return credentials.getToken();
     }
 
     @Override
@@ -119,14 +114,14 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     }
 
     @Extension
-    public static class DescriptorImpl extends BindingDescriptor<VaultAppRoleCredential> {
+    public static class DescriptorImpl extends BindingDescriptor<AbstractVaultTokenCredential> {
 
-        @Override protected Class<VaultAppRoleCredential> type() {
-            return VaultAppRoleCredential.class;
+        @Override protected Class<AbstractVaultTokenCredential> type() {
+            return AbstractVaultTokenCredential.class;
         }
 
         @Override public String getDisplayName() {
-            return "Vault App Role token";
+            return "Vault address and token";
         }
     }
 

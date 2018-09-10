@@ -6,7 +6,6 @@ import java.io.IOException;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import com.bettercloud.vault.Vault;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -29,7 +28,7 @@ public class VaultTokenFileCredential extends AbstractVaultTokenCredential {
 
 
     @Override
-    public String getToken(Vault vault) {
+    public String getToken() {
         FilePath file = new FilePath(new File(filepath));
         try {
             return file.act(new FilePath.FileCallable<String>() {
