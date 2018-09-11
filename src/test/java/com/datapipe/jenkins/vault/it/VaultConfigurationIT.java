@@ -295,6 +295,8 @@ public class VaultConfigurationIT {
       jenkins.assertLogContains("CredentialsUnavailableException", build);
    }
 
+
+
    public static VaultAppRoleCredential createTokenCredential(final String credentialId) {
        Vault vault = mock(Vault.class, withSettings().serializable());
        VaultAppRoleCredential cred = mock(VaultAppRoleCredential.class, withSettings().serializable());

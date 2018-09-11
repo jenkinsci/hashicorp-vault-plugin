@@ -5,7 +5,6 @@ import javax.annotation.Nonnull;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
-import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 
@@ -22,7 +21,7 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
     // https://www.vaultproject.io/docs/auth/github.html#generate-a-github-personal-access-token
     private final @Nonnull Secret accessToken;
 
-    private VaultConfiguration configuration;
+    private String vaultUrl;
 
     @DataBoundConstructor
     public VaultGithubTokenCredential(@CheckForNull CredentialsScope scope,
@@ -34,21 +33,17 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
     }
 
     @DataBoundSetter
-    public void setConfiguration(VaultConfiguration configuration) {
-        this.configuration = configuration;
-    }
-
-    public VaultConfiguration getConfiguration() {
-        return this.configuration;
+    public void setVaultUrl(String vaultUrl) {
+        this.vaultUrl = vaultUrl;
     }
 
     public Secret getAccessToken() {
         return accessToken;
     }
 
-    protected String getToken() {
+    public String getToken() {
         try {
-            VaultConfig config = new VaultConfig(this.getConfiguration().getVaultUrl()).build();
+            VaultConfig config = new VaultConfig(this.vaultUrl).build();
             return new Vault(config).auth().loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);

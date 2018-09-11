@@ -4,7 +4,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.bettercloud.vault.VaultConfig;
-import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.bettercloud.vault.Vault;

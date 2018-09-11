@@ -121,7 +121,7 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
         }
 
         @Override public String getDisplayName() {
-            return "Vault address and token";
+            return "HashiCorp Vault: Address and Token";
         }
     }
 
