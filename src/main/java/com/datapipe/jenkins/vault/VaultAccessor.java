@@ -18,7 +18,7 @@ public class VaultAccessor implements Serializable {
 
     public void init(String url) {
         try {
-            config = new VaultConfig(url).build();
+            config = new VaultConfig().address(url).build();
             vault = new Vault(config);
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
