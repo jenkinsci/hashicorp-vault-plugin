@@ -1,5 +1,10 @@
 package com.datapipe.jenkins.vault.credentials;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.VaultException;
+import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
@@ -105,7 +110,12 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     }
 
     private String getToken(AbstractVaultTokenCredential credentials) {
-            return credentials.getToken();
+        try {
+            VaultConfig config = new VaultConfig().address(vaultAddr).build();
+            return credentials.getToken(new Vault(config));
+        } catch (VaultException e) {
+            throw new VaultPluginException("could not log in into vault", e);
+        }
     }
 
     @Override

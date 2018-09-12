@@ -136,8 +136,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url);
-        vaultAccessor.auth(credential);
+        vaultAccessor.init(url, credential);
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             LogicalResponse response = vaultAccessor.read(vaultSecret.getPath());

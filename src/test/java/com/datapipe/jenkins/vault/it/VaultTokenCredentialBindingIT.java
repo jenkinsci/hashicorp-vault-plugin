@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.it;
 
+import com.bettercloud.vault.Vault;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.Domain;
@@ -19,6 +20,7 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,7 +39,7 @@ public class VaultTokenCredentialBindingIT {
             @Override
             public void evaluate() throws Throwable {
                 VaultAppRoleCredential c = mock(VaultAppRoleCredential.class);
-                when(c.getToken()).thenReturn(token);
+                when(c.getToken(any(Vault.class))).thenReturn(token);
                 when(c.getId()).thenReturn(credentialsId);
                 CredentialsProvider.lookupStores(story.j.jenkins).iterator().next().addCredentials(Domain.global(), c);
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
@@ -66,7 +68,7 @@ public class VaultTokenCredentialBindingIT {
             @Override
             public void evaluate() throws Throwable {
                 VaultGithubTokenCredential c = mock(VaultGithubTokenCredential.class);
-                when(c.getToken()).thenReturn(token);
+                when(c.getToken(any(Vault.class))).thenReturn(token);
                 when(c.getId()).thenReturn(credentialsId);
                 CredentialsProvider.lookupStores(story.j.jenkins).iterator().next().addCredentials(Domain.global(), c);
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
@@ -122,7 +124,7 @@ public class VaultTokenCredentialBindingIT {
             @Override
             public void evaluate() throws Throwable {
                 VaultTokenFileCredential c = mock(VaultTokenFileCredential.class);
-                when(c.getToken()).thenReturn(token);
+                when(c.getToken(any(Vault.class))).thenReturn(token);
                 when(c.getId()).thenReturn(credentialsId);
                 CredentialsProvider.lookupStores(story.j.jenkins).iterator().next().addCredentials(Domain.global(), c);
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);

@@ -29,8 +29,7 @@ public class VaultDisposer extends SimpleBuildWrapper.Disposer {
     @Override
     public void tearDown(final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener) throws IOException, InterruptedException {
         VaultAccessor vaultAccessor = new VaultAccessor();
-        vaultAccessor.init(vaultConfiguration.getVaultUrl());
-        vaultAccessor.auth(vaultCredential);
+        vaultAccessor.init(vaultConfiguration.getVaultUrl(), vaultCredential);
         for (String leaseId : leaseIds) {
             if (leaseId != null && !leaseId.isEmpty()) {
                 vaultAccessor.revoke(leaseId);

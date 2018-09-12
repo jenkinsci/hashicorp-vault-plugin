@@ -4,7 +4,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 
@@ -14,7 +13,6 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
 import hudson.Extension;
 import hudson.util.Secret;
-import org.kohsuke.stapler.DataBoundSetter;
 
 public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
 
@@ -32,19 +30,13 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
         this.accessToken = accessToken;
     }
 
-    @DataBoundSetter
-    public void setVaultUrl(String vaultUrl) {
-        this.vaultUrl = vaultUrl;
-    }
-
     public Secret getAccessToken() {
         return accessToken;
     }
 
-    public String getToken() {
+    public String getToken(Vault vault) {
         try {
-            VaultConfig config = new VaultConfig(this.vaultUrl).build();
-            return new Vault(config).auth().loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
+            return vault.auth().loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }

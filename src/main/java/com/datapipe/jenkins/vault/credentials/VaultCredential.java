@@ -12,7 +12,7 @@ import java.io.Serializable;
 
 @NameWith(VaultCredential.NameProvider.class)
 public interface VaultCredential extends StandardCredentials, Serializable {
-    Vault authorizeWithVault(Vault vault, VaultConfig config);
+    Vault authorizeWithVault(VaultConfig config);
 
     class NameProvider extends CredentialsNameProvider<VaultCredential> {
 

@@ -1,6 +1,8 @@
 package com.datapipe.jenkins.vault;
 
 import java.io.Serializable;
+
+import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
@@ -16,17 +18,13 @@ public class VaultAccessor implements Serializable {
 
     private transient VaultConfig config;
 
-    public void init(String url) {
+    public void init(String url, VaultCredential credential) {
         try {
             config = new VaultConfig().address(url).build();
-            vault = new Vault(config);
+            vault = credential.authorizeWithVault(config);
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
-    }
-
-    public void auth(VaultCredential vaultCredential) {
-        vault = vaultCredential.authorizeWithVault(vault, config);
     }
 
     public LogicalResponse read(String path) {
