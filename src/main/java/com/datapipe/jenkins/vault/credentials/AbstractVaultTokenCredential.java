@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsScope;

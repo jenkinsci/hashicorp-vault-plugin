@@ -1,8 +1,6 @@
 package com.datapipe.jenkins.vault;
 
 import java.io.Serializable;
-
-import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;

@@ -1,10 +1,10 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
+import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
@@ -25,35 +25,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/* example:
-
-Exports VAULT_ADDR and VAULT_TOKEN variables to pipeline environment.
-
-         withCredentials([[
-            $class: 'VaultTokenCredentialBinding',
-            credentialsId: 'approle',
-            vaultAddr: 'http://vault:8200'
-            ]]) {
-            sh 'echo token=$VAULT_ADDR'
-            sh 'echo token=$VAULT_TOKEN'
-        }
-
-The name of the exported variables can be chosen.
- 
-        withCredentials([[
-            $class: 'VaultTokenCredentialBinding',
-            addrVariable: 'VA',
-            tokenVariable: 'VT',
-            credentialsId: 'approle',
-            vaultAddr: 'http://vault:8200'
-            ]]) {
-            sh 'echo token=$VT'
-            sh 'echo addr=$VA'
-        }
-
- *
- */
-
 public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultTokenCredential> {
 
     private final static String DEFAULT_VAULT_ADDR_VARIABLE_NAME = "VAULT_ADDR";
@@ -68,8 +39,8 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
      *
      * @param addrVariable if {@code null}, {@value DEFAULT_VAULT_ADDR_VARIABLE_NAME} will be used.
      * @param tokenVariable if {@code null}, {@value DEFAULT_VAULT_TOKEN_VARIABLE_NAME} will be used.
-     * @param credentialsId
-     * @param vaultAddr
+     * @param credentialsId credential identifier
+     * @param vaultAddr vault address
      */
     @DataBoundConstructor
     public VaultTokenCredentialBinding(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {

@@ -6,7 +6,6 @@ import javax.annotation.Nonnull;
 import com.bettercloud.vault.Vault;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-
 import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
@@ -18,8 +17,6 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
 
     // https://www.vaultproject.io/docs/auth/github.html#generate-a-github-personal-access-token
     private final @Nonnull Secret accessToken;
-
-    private String vaultUrl;
 
     @DataBoundConstructor
     public VaultGithubTokenCredential(@CheckForNull CredentialsScope scope,
@@ -34,6 +31,7 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
         return accessToken;
     }
 
+    @Override
     public String getToken(Vault vault) {
         try {
             return vault.auth().loginByGithub(Secret.toString(accessToken)).getAuthClientToken();

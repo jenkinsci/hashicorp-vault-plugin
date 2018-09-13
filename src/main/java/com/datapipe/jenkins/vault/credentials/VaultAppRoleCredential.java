@@ -18,7 +18,6 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
 
     private final @Nonnull String roleId;
 
-
     @DataBoundConstructor
     public VaultAppRoleCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id, @CheckForNull String description, @Nonnull String roleId, @Nonnull Secret secretId) {
         super(scope, id, description);
@@ -34,6 +33,7 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
         return secretId;
     }
 
+    @Override
     public String getToken(Vault vault) {
         try {
             return vault.auth().loginByAppRole("approle", roleId, Secret.toString(secretId)).getAuthClientToken();
