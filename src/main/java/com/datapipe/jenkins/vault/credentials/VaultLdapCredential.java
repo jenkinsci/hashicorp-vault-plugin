@@ -25,6 +25,16 @@ public class VaultLdapCredential extends BaseStandardCredentials implements Vaul
         this.serviceAccountPassword = serviceAccountPassword;
     }
 
+    @Nonnull
+    public String getServiceAccountName() {
+        return serviceAccountName;
+    }
+
+    @Nonnull
+    public Secret getServiceAccountPassword() {
+        return serviceAccountPassword;
+    }
+
     @Override
     public Vault authorizeWithVault(Vault vault, VaultConfig config) {
         String token = null;
@@ -41,7 +51,7 @@ public class VaultLdapCredential extends BaseStandardCredentials implements Vaul
     public static class DescriptorImpl extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
 
         @Override public String getDisplayName() {
-            return "Vault LDAP Credentials";
+            return "Vault LDAP Credential";
         }
 
     }

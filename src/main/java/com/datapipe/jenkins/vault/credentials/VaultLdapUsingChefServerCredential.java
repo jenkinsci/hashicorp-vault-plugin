@@ -54,6 +54,46 @@ public class VaultLdapUsingChefServerCredential extends BaseStandardCredentials 
         this.dataBagItemKey = dataBagItemKey;
     }
 
+    @Nonnull
+    public String getServiceAccountName() {
+        return serviceAccountName;
+    }
+
+    @Nonnull
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    @Nonnull
+    public String getClientPemFilePath() {
+        return clientPemFilePath;
+    }
+
+    @Nonnull
+    public String getChefServerUrl() {
+        return chefServerUrl;
+    }
+
+    @Nonnull
+    public String getChefOrg() {
+        return chefOrg;
+    }
+
+    @Nonnull
+    public String getDataBag() {
+        return dataBag;
+    }
+
+    @Nonnull
+    public String getDataBagItem() {
+        return dataBagItem;
+    }
+
+    @Nonnull
+    public String getDataBagItemKey() {
+        return dataBagItemKey;
+    }
+
     @Override
     public Vault authorizeWithVault(Vault vault, VaultConfig config) {
         String token = null;
