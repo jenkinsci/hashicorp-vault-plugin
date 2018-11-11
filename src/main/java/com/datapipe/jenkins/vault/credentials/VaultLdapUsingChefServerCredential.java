@@ -61,14 +61,9 @@ public class VaultLdapUsingChefServerCredential extends BaseStandardCredentials 
             // Read the client.pem for a node
             String clientPem = this.readFile(clientPemFilePath).trim().toString();
             // Build a chefApi context
-            ContextBuilder contextBuilder = null;
-            try {
-                contextBuilder = ContextBuilder.newBuilder(new ChefApiMetadata())
+            ContextBuilder contextBuilder = ContextBuilder.newBuilder(new ChefApiMetadata())
                         .endpoint(chefServerUrl+"/oraganizations/"+chefOrg)
                         .credentials(nodeName, clientPem);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             ChefApi chefApi = contextBuilder.buildApi(ChefApi.class);
             // Fetch data bag that contains the credentials (Like service acoount password)
             DatabagItem item = chefApi.getDatabagItem(dataBag, dataBagItem);
@@ -81,6 +76,8 @@ public class VaultLdapUsingChefServerCredential extends BaseStandardCredentials 
         } catch (VaultException e) {
             throw new VaultPluginException("Couldn't login into vault", e);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return new Vault(config.token(token));
