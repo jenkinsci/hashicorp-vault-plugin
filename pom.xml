@@ -159,6 +159,11 @@
       <artifactId>mockito-core</artifactId>
       <version>2.7.21</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.jclouds.api</groupId>
+      <artifactId>chef</artifactId>
+      <version>2.0.3</version>
+    </dependency>
   </dependencies>
   <reporting>
     <plugins>
