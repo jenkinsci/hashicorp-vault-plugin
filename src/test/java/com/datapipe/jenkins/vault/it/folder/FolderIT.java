@@ -195,26 +195,5 @@ public class FolderIT {
         verify(mockAccessor, times(0)).read(anyString());
     }
 
-    @Test
-    public void jenkinsfileShouldOverrideFolderConfig() throws Exception {
-        WorkflowJob pipeline = folder1.createProject(WorkflowJob.class, "Pipeline");
-        pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
-                "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
-                "                   configuration: [$class: 'VaultConfiguration', \n" +
-                "                             vaultCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
-                "                             vaultUrl: '"+JENKINSFILE_URL+"'], \n" +
-                "                   vaultSecrets: [\n" +
-                "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: [\n" +
-                "                            [$class: 'VaultSecretValue', envVar: 'envVar1', vaultKey: 'key1']]]]]) {\n" +
-                "            sh \"echo ${env.envVar1}\"\n" +
-                "      }\n" +
-                "}", true));
-
-        WorkflowRun build = pipeline.scheduleBuild2(0).get();
-
-        jenkins.assertBuildStatus(Result.SUCCESS, build);
-        jenkins.assertLogContains("echo ****", build);
-    }
-
 
 }
