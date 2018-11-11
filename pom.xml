@@ -164,6 +164,11 @@
       <artifactId>chef</artifactId>
       <version>2.0.3</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>23.1-jre</version>
+    </dependency>
   </dependencies>
   <reporting>
     <plugins>
