@@ -41,7 +41,7 @@ public class VaultLdapCredential extends BaseStandardCredentials implements Vaul
     public static class DescriptorImpl extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
 
         @Override public String getDisplayName() {
-            return "Vault LDAP Credential";
+            return "Vault LDAP Credentials";
         }
 
     }
