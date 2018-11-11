@@ -100,7 +100,7 @@ public class VaultLdapUsingChefServerCredential extends BaseStandardCredentials 
     public static class DescriptorImpl extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
 
         @Override public String getDisplayName() {
-            return "Vault LDAP Credential";
+            return "Vault LDAP Credential using Chef server";
         }
 
     }
