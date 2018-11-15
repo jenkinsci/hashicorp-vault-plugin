@@ -20,11 +20,18 @@ public class VaultAppRoleCredential extends BaseStandardCredentials implements V
 
     private final @Nonnull String roleId;
 
+    private final String path;
+
     @DataBoundConstructor
-    public VaultAppRoleCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id, @CheckForNull String description, @Nonnull String roleId, @Nonnull Secret secretId) {
+    public VaultAppRoleCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id, @CheckForNull String description, @Nonnull String roleId, @Nonnull Secret secretId, String path) {
         super(scope, id, description);
         this.secretId = secretId;
         this.roleId = roleId;
+        if (path == null) {
+          this.path = "approle";
+        } else {
+          this.path = path;
+        }
     }
 
     public String getRoleId() {
@@ -35,11 +42,15 @@ public class VaultAppRoleCredential extends BaseStandardCredentials implements V
         return secretId;
     }
 
+    public String getPath() {
+        return path;
+    }
+
     @Override
     public Vault authorizeWithVault(Vault vault, VaultConfig config) {
         String token = null;
         try {
-            token = vault.auth().loginByAppRole("approle", roleId, Secret.toString(secretId)).getAuthClientToken();
+            token = vault.auth().loginByAppRole(path, roleId, Secret.toString(secretId)).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }
