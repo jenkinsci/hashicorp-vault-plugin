@@ -4,15 +4,21 @@
   <f:entry title="Path" field="path">
     <f:textbox />
   </f:entry>
-  
+
   <f:entry>
     <f:repeatableProperty field="secretValues" minimum="1" add="Add a key/value pair"></f:repeatableProperty>
   </f:entry>
-  
+
   <f:entry title="">
     <div align="right">
       <f:repeatableDeleteButton />
     </div>
   </f:entry>
-  
+
+  <f:advanced title="Advanced Settings">
+    <f:entry field="engineVersion" title="K/V Engine Version">
+      <f:select />
+    </f:entry>
+  </f:advanced>
+
 </j:jelly>

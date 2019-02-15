@@ -25,8 +25,9 @@ public class VaultAccessor implements Serializable {
         }
     }
 
-    public LogicalResponse read(String path) {
+    public LogicalResponse read(String path, Integer engineVersion) {
         try {
+            this.config.engineVersion(engineVersion);
             return vault.logical().read(path);
         } catch (VaultException e) {
             throw new VaultPluginException("could not read from vault: " + e.getMessage() + " at path: " + path, e);

@@ -2,6 +2,7 @@ package com.datapipe.jenkins.vault.it;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -87,7 +88,7 @@ public class VaultConfigurationIT {
       returnValue.put("key1", "some-secret");
       LogicalResponse resp = mock(LogicalResponse.class);
       when(resp.getData()).thenReturn(returnValue);
-      when(vaultAccessor.read("secret/path1")).thenReturn(resp);
+      when(vaultAccessor.read("secret/path1", 2)).thenReturn(resp);
       return vaultAccessor;
    }
 
@@ -96,7 +97,9 @@ public class VaultConfigurationIT {
       VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
       List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
       secretValues.add(secretValue);
-      secrets.add(new VaultSecret("secret/path1", secretValues));
+      VaultSecret secret = new VaultSecret("secret/path1", secretValues);
+      secret.setEngineVersion(2);
+      secrets.add(secret);
       return secrets;
    }
 
@@ -119,7 +122,7 @@ public class VaultConfigurationIT {
       jenkins.assertLogContains("echo ****", build);
       jenkins.assertLogNotContains("some-secret", build);
       verify(mockAccessor, times(1)).init("http://global-vault-url.com", (VaultCredential)GLOBAL_CREDENTIAL_1);
-      verify(mockAccessor, times(1)).read("secret/path1");
+      verify(mockAccessor, times(1)).read("secret/path1", 2);
    }
 
     @Test
@@ -141,7 +144,7 @@ public class VaultConfigurationIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential)GLOBAL_CREDENTIAL_2);
-        verify(mockAccessor, times(1)).read("secret/path1");
+        verify(mockAccessor, times(1)).read("secret/path1", 2);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
     }
@@ -166,7 +169,7 @@ public class VaultConfigurationIT {
 
        jenkins.assertBuildStatus(Result.SUCCESS, build);
        verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential)credential);
-       verify(mockAccessor, times(1)).read("secret/path1");
+       verify(mockAccessor, times(1)).read("secret/path1", 2);
        jenkins.assertLogContains("echo ****", build);
        jenkins.assertLogNotContains("some-secret", build);
     }
@@ -213,7 +216,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
-      verify(mockAccessor, times(0)).read(anyString());
+      verify(mockAccessor, times(0)).read(anyString(), anyInt());
       jenkins.assertLogContains("The credential id was not configured - please specify the credentials to use.", build);
    }
 
@@ -237,7 +240,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
-      verify(mockAccessor, times(0)).read(anyString());
+      verify(mockAccessor, times(0)).read(anyString(), anyInt());
       jenkins.assertLogContains("The vault url was not configured - please specify the vault url to use.", build);
    }
 
@@ -260,7 +263,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
-      verify(mockAccessor, times(0)).read(anyString());
+      verify(mockAccessor, times(0)).read(anyString(), anyInt());
       jenkins.assertLogContains("No configuration found - please configure the VaultPlugin.", build);
    }
 
@@ -284,7 +287,7 @@ public class VaultConfigurationIT {
 
       jenkins.assertBuildStatus(Result.FAILURE, build);
       verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
-      verify(mockAccessor, times(0)).read(anyString());
+      verify(mockAccessor, times(0)).read(anyString(), anyInt());
       jenkins.assertLogContains("CredentialsUnavailableException", build);
    }
 

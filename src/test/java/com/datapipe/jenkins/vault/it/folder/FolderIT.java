@@ -8,6 +8,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -110,7 +111,7 @@ public class FolderIT {
         Map<String, String> returnValue = new HashMap<>();
         returnValue.put("key1", "some-secret");
         when(resp.getData()).thenReturn(returnValue);
-        when(vaultAccessor.read("secret/path1")).thenReturn(resp);
+        when(vaultAccessor.read("secret/path1", 2)).thenReturn(resp);
         return vaultAccessor;
     }
 
@@ -119,7 +120,9 @@ public class FolderIT {
         VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
         List<VaultSecretValue> secretValues = new ArrayList<VaultSecretValue>();
         secretValues.add(secretValue);
-        secrets.add(new VaultSecret("secret/path1", secretValues));
+        VaultSecret secret = new VaultSecret("secret/path1", secretValues);
+        secret.setEngineVersion(2);
+        secrets.add(secret);
         return secrets;
     }
 
@@ -143,7 +146,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential)FOLDER_1_CREDENTIAL);
-        verify(mockAccessor, times(1)).read("secret/path1");
+        verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 
     @Test
@@ -165,7 +168,7 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
-        verify(mockAccessor, times(1)).read("secret/path1");
+        verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 
     @Test
@@ -188,7 +191,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);
         verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
-        verify(mockAccessor, times(0)).read(anyString());
+        verify(mockAccessor, times(0)).read(anyString(), anyInt());
     }
 
     @Test

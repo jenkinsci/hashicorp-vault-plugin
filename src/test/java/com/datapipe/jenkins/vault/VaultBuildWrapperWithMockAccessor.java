@@ -43,7 +43,7 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
             }
 
             @Override
-            public LogicalResponse read(String path) {
+            public LogicalResponse read(String path, Integer engineVersion) {
                 if (!path.equals("secret/path1")) {
                     throw new AssertionError("path " + path + " does not match expected: secret/path1");
                 }

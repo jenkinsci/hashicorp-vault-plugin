@@ -26,18 +26,24 @@ package com.datapipe.jenkins.vault.model;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.StaplerRequest;
 
 import java.util.List;
 
 /**
  * Represents a Vault secret.
- * 
+ *
  * @author Peter Tierno {@literal <}ptierno{@literal @}datapipe.com{@literal >}
  */
 public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
   private String path;
+  private Integer engineVersion;
   private List<VaultSecretValue> secretValues;
 
   @DataBoundConstructor
@@ -46,8 +52,17 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
     this.secretValues = secretValues;
   }
 
+  @DataBoundSetter
+  public void setEngineVersion(Integer engineVersion) {
+    this.engineVersion = engineVersion;
+  }
+
   public String getPath() {
     return this.path;
+  }
+
+  public Integer getEngineVersion() {
+    return this.engineVersion;
   }
 
   public List<VaultSecretValue> getSecretValues() {
@@ -57,9 +72,30 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
   @Extension
   public static final class DescriptorImpl extends Descriptor<VaultSecret> {
 
+    private Integer engineVersion;
+
+    public Integer getEngineVersion() {
+      return this.engineVersion;
+    }
+
     @Override
     public String getDisplayName() {
       return "Vault Secret";
+    }
+
+    @Override
+    public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+      this.engineVersion = Integer.parseInt(formData.getString("engineVersion"));
+
+      save();
+      return false;
+    }
+
+    public ListBoxModel doFillEngineVersionItems() {
+      return new ListBoxModel(
+              new Option("2", "2"),
+              new Option("1", "1")
+      );
     }
 
   }
