@@ -18,24 +18,32 @@ public class VaultAccessor implements Serializable {
 
     private transient VaultConfig config;
 
+
     public void init(String url) {
-        init(url, false);
+        init(url, null, false);
     }
 
     public void init(String url, boolean skipSslVerification) {
+        init(url, null, skipSslVerification);
+    }
+  
+    public void init(String url, VaultCredential credential) {
+        init(url, credential, false);
+    }
+  
+    public void init(String url, VaultCredential credential, boolean skipSslVerification) {
         try {
             config = new VaultConfig()
                     .address(url)
                     .sslConfig(new SslConfig().verify(skipSslVerification).build())
                     .build();
-            vault = new Vault(config);
+            if (credential == null)
+                vault = new Vault(config);
+            else
+                vault = credential.authorizeWithVault(config);
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
-    }
-
-    public void auth(VaultCredential vaultCredential) {
-        vault = vaultCredential.authorizeWithVault(vault, config);
     }
 
     public LogicalResponse read(String path) {

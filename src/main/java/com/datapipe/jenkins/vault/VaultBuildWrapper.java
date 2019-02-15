@@ -120,8 +120,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
 
         VaultCredential credential = retrieveVaultCredentials(build);
-
-        vaultAccessor.init(url, configuration.isSkipSslVerification());
+      
+        vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             vaultAccessor.auth(credential);

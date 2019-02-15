@@ -131,6 +131,7 @@ public class FolderIT {
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1)).init("http://folder1.com", true);
         verify(mockAccessor, times(1)).auth((VaultCredential)FOLDER_1_CREDENTIAL);
+        verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential)FOLDER_1_CREDENTIAL);
         verify(mockAccessor, times(1)).read("secret/path1");
     }
 
@@ -148,7 +149,7 @@ public class FolderIT {
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
-        assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
+        verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential)FOLDER_1_CREDENTIAL);
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
         assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
 
@@ -179,8 +180,7 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);
-        verify(mockAccessor, times(0)).init(anyString());
-        verify(mockAccessor, times(0)).auth(any(VaultCredential.class));
+        verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
         verify(mockAccessor, times(0)).read(anyString());
     }
 
