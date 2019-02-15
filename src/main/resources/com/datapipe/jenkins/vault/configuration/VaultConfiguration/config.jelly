@@ -7,4 +7,7 @@
     <f:entry title="Vault Credential" field="vaultCredentialId" name="vaultCredentialId">
         <c:select/>
     </f:entry>
+    <f:entry title="Fail if path is not found" field="failIfNotFound" name="failIfNotFound">
+        <f:checkbox/>
+    </f:entry>
 </j:jelly>

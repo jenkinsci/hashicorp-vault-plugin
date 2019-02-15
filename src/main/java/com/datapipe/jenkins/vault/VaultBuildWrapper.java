@@ -23,23 +23,10 @@
  */
 package com.datapipe.jenkins.vault;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
-import hudson.tasks.BuildWrapperDescriptor;
-import com.bettercloud.vault.response.LogicalResponse;
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
+import com.google.common.annotations.VisibleForTesting;
 
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
@@ -52,9 +39,20 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
-import com.google.common.annotations.VisibleForTesting;
 
-import hudson.AbortException;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -65,6 +63,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
@@ -72,6 +71,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     private List<VaultSecret> vaultSecrets;
     private List<String> valuesToMask = new ArrayList<>();
     private VaultAccessor vaultAccessor = new VaultAccessor();
+    private PrintStream logger;
 
     @DataBoundConstructor
     public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
@@ -80,20 +80,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace,
-                      Launcher launcher, TaskListener listener, EnvVars initialEnvironment)
-            throws IOException, InterruptedException {
-        PrintStream logger = listener.getLogger();
+                      Launcher launcher, TaskListener listener, EnvVars initialEnvironment) {
+        logger = listener.getLogger();
         pullAndMergeConfiguration(build);
 
         // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
         if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
-            try {
-                List<LogicalResponse> responses = provideEnvironmentVariablesFromVault(context, build);
-                context.setDisposer(new VaultDisposer(getConfiguration(), retrieveVaultCredentials(build), retrieveLeaseIds(responses)));
-            } catch (VaultException e) {
-                e.printStackTrace(logger);
-                throw new AbortException(e.getMessage());
-            }
+            provideEnvironmentVariablesFromVault(context, build);
         }
     }
 
@@ -127,7 +120,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         return leaseIds;
     }
 
-    private List<LogicalResponse> provideEnvironmentVariablesFromVault(Context context, Run build) throws VaultException {
+    private List<LogicalResponse> provideEnvironmentVariablesFromVault(Context context, Run build) {
         String url = getConfiguration().getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
@@ -136,15 +129,23 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url, credential);
+        vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
-            LogicalResponse response = vaultAccessor.read(vaultSecret.getPath(), vaultSecret.getEngineVersion());
-            responses.add(response);
-            Map<String, String> values = response.getData();
-            for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-                valuesToMask.add(values.get(value.getVaultKey()));
-                context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+            try {
+                LogicalResponse response = vaultAccessor.read(vaultSecret.getPath(), vaultSecret.getEngineVersion());
+                responses.add(response);
+                Map<String, String> values = response.getData();
+                for (VaultSecretValue value : vaultSecret.getSecretValues()) {
+                    valuesToMask.add(values.get(value.getVaultKey()));
+                    context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+                }
+            }catch (VaultPluginException ex) {
+                VaultException e = (VaultException) ex.getCause();
+                if (e.getHttpStatusCode() == 404 && !configuration.isFailIfNotFound())
+                    logger.println("Vault credentials not found " + vaultSecret.getPath());
+                else
+                    throw ex;
             }
         }
         return responses;
