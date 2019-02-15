@@ -16,17 +16,13 @@ public class VaultAccessor implements Serializable {
 
     private transient VaultConfig config;
 
-    public void init(String url) {
+    public void init(String url, VaultCredential credential) {
         try {
             config = new VaultConfig().address(url).build();
-            vault = new Vault(config);
+            vault = credential.authorizeWithVault(config);
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
-    }
-
-    public void auth(VaultCredential vaultCredential) {
-        vault = vaultCredential.authorizeWithVault(vault, config);
     }
 
     public LogicalResponse read(String path) {
