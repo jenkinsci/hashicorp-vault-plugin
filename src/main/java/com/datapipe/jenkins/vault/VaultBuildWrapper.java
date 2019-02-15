@@ -23,6 +23,8 @@
  */
 package com.datapipe.jenkins.vault;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import com.bettercloud.vault.VaultException;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
@@ -37,8 +39,25 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
-import com.google.common.annotations.VisibleForTesting;
-import hudson.*;
+
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
@@ -46,17 +65,6 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.tasks.SimpleBuildWrapper;
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
     private VaultConfiguration configuration;
@@ -120,11 +128,10 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
 
         VaultCredential credential = retrieveVaultCredentials(build);
-      
+
         vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
-            vaultAccessor.auth(credential);
             try {
                 LogicalResponse response = vaultAccessor.read(vaultSecret.getPath());
                 responses.add(response);

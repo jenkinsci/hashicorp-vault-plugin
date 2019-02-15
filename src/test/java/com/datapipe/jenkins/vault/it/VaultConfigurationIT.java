@@ -1,7 +1,16 @@
 package com.datapipe.jenkins.vault.it;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
+
 import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -16,12 +25,7 @@ import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import hudson.tasks.Shell;
-import hudson.util.Secret;
-import jenkins.model.GlobalConfiguration;
+
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -31,11 +35,19 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.*;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.tasks.Shell;
+import hudson.util.Secret;
+import jenkins.model.GlobalConfiguration;
 
 public class VaultConfigurationIT {
    @Rule
@@ -106,9 +118,7 @@ public class VaultConfigurationIT {
       jenkins.assertLogContains("echo ****", build);
       jenkins.assertLogNotContains("some-secret", build);
 
-      verify(mockAccessor, times(1)).init("http://global-vault-url.com", true);
-      verify(mockAccessor, times(1)).auth((VaultCredential)GLOBAL_CREDENTIAL_1);
-      verify(mockAccessor, times(1)).init("http://global-vault-url.com", (VaultCredential)GLOBAL_CREDENTIAL_1);
+      verify(mockAccessor, times(1)).init("http://global-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_1, false);
       verify(mockAccessor, times(1)).read("secret/path1");
    }
 
@@ -130,9 +140,7 @@ public class VaultConfigurationIT {
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
-        verify(mockAccessor, times(1)).init("http://job-vault-url.com", true);
-        verify(mockAccessor, times(1)).auth((VaultCredential)GLOBAL_CREDENTIAL_2);
-        verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential)GLOBAL_CREDENTIAL_2);
+        verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_2, false);
         verify(mockAccessor, times(1)).read("secret/path1");
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
@@ -157,9 +165,7 @@ public class VaultConfigurationIT {
        assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is("token-1"));
 
        jenkins.assertBuildStatus(Result.SUCCESS, build);
-       verify(mockAccessor, times(1)).init("http://job-vault-url.com", true);
-       verify(mockAccessor, times(1)).auth((VaultCredential)credential);
-       verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential)credential);
+       verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) credential, false);
        verify(mockAccessor, times(1)).read("secret/path1");
        jenkins.assertLogContains("echo ****", build);
        jenkins.assertLogNotContains("some-secret", build);

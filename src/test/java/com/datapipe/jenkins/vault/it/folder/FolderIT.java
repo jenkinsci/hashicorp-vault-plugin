@@ -1,5 +1,18 @@
 package com.datapipe.jenkins.vault.it.folder;
 
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_1;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_2;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.JENKINSFILE_URL;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
@@ -15,11 +28,7 @@ import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import hudson.tasks.Shell;
-import jenkins.model.GlobalConfiguration;
+
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -29,13 +38,18 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.tasks.Shell;
+import jenkins.model.GlobalConfiguration;
 
 public class FolderIT {
     // check that you cannot access another credentials folder
@@ -129,9 +143,7 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
-        verify(mockAccessor, times(1)).init("http://folder1.com", true);
-        verify(mockAccessor, times(1)).auth((VaultCredential)FOLDER_1_CREDENTIAL);
-        verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential)FOLDER_1_CREDENTIAL);
+        verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
         verify(mockAccessor, times(1)).read("secret/path1");
     }
 
@@ -149,14 +161,13 @@ public class FolderIT {
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
-        verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential)FOLDER_1_CREDENTIAL);
+        verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential)FOLDER_1_CREDENTIAL, false);
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(FOLDER_1_CREDENTIALS_ID));
         assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
-        verify(mockAccessor, times(1)).init("http://folder1.com", true);
-        verify(mockAccessor, times(1)).auth((VaultCredential)FOLDER_1_CREDENTIAL);
+        verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
         verify(mockAccessor, times(1)).read("secret/path1");
     }
 

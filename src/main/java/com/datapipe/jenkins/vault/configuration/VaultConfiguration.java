@@ -1,7 +1,9 @@
 package com.datapipe.jenkins.vault.configuration;
 
-import java.io.Serializable;
-import java.util.List;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import com.datapipe.jenkins.vault.credentials.VaultCredential;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
@@ -9,23 +11,15 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.datapipe.jenkins.vault.credentials.VaultCredential;
+import java.io.Serializable;
+import java.util.List;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
-import java.util.List;
 
 public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements Serializable {
     private String vaultUrl;
@@ -34,7 +28,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private boolean failIfNotFound = true;
 
-    private boolean skipSslVerification = true;
+    private boolean skipSslVerification = false;
 
     public VaultConfiguration() {
         // no args constructor

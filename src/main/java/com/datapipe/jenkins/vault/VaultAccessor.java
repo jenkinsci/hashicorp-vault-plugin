@@ -26,11 +26,11 @@ public class VaultAccessor implements Serializable {
     public void init(String url, boolean skipSslVerification) {
         init(url, null, skipSslVerification);
     }
-  
+
     public void init(String url, VaultCredential credential) {
         init(url, credential, false);
     }
-  
+
     public void init(String url, VaultCredential credential, boolean skipSslVerification) {
         try {
             config = new VaultConfig()
