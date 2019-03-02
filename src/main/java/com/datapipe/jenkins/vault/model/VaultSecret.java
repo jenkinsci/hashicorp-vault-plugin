@@ -51,22 +51,14 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
   private static final String NO_PREFIX = "";
 
   private String path;
-  private String envPrefix;
+  private String envPrefix = NO_PREFIX;
   private Integer engineVersion;
   private List<VaultSecretValue> secretValues;
 
-  public VaultSecret(String path, List<VaultSecretValue> secretValues) {
-    this(path, secretValues, NO_PREFIX);
-  }
-
   @DataBoundConstructor
-  public VaultSecret(String path, List<VaultSecretValue> secretValues, String envPrefix) {
+  public VaultSecret(String path, List<VaultSecretValue> secretValues) {
     this.path = path;
     this.secretValues = secretValues;
-    if (envPrefix != null) {
-      this.envPrefix = envPrefix;
-    }
-    else this.envPrefix = NO_PREFIX;
   }
 
   @DataBoundSetter
@@ -88,6 +80,13 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
   public String getEnvPrefix() {
     return envPrefix;
+  }
+
+  @DataBoundSetter
+  public void setEnvPrefix(String envPrefix) {
+    if (envPrefix != null) {
+      this.envPrefix = envPrefix;
+    }
   }
 
   @Extension
