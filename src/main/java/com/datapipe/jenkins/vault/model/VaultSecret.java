@@ -42,14 +42,32 @@ import java.util.List;
  */
 public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
+  /**
+   * Default prefix is used to differentiate values having the same keys across
+   * multiple Vault paths. In this way, the different secrets can both be stored
+   * in Jenkins' environment under different names.
+   * The default remains to NOT include a prefix so as to retain current behaviour.
+   */
+  private static final String NO_PREFIX = "";
+
   private String path;
+  private String envPrefix;
   private Integer engineVersion;
   private List<VaultSecretValue> secretValues;
 
-  @DataBoundConstructor
+//  @DataBoundConstructor
   public VaultSecret(String path, List<VaultSecretValue> secretValues) {
+    this(path, secretValues, NO_PREFIX);
+  }
+
+  @DataBoundConstructor
+  public VaultSecret(String path, List<VaultSecretValue> secretValues, String envPrefix) {
     this.path = path;
     this.secretValues = secretValues;
+    if (envPrefix != null) {
+      this.envPrefix = envPrefix;
+    }
+    else this.envPrefix = NO_PREFIX;
   }
 
   @DataBoundSetter
@@ -67,6 +85,10 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
   public List<VaultSecretValue> getSecretValues() {
     return this.secretValues;
+  }
+
+  public String getEnvPrefix() {
+    return envPrefix;
   }
 
   @Extension

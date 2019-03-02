@@ -136,9 +136,29 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 LogicalResponse response = vaultAccessor.read(vaultSecret.getPath(), vaultSecret.getEngineVersion());
                 responses.add(response);
                 Map<String, String> values = response.getData();
-                for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-                    valuesToMask.add(values.get(value.getVaultKey()));
-                    context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+
+                if (vaultSecret.getSecretValues().isEmpty()) {
+                    // Convention is that unless you request specific secret values to pull from
+                    // a Vault path is that everything will get placed in Jenkins' environment
+
+                    for (Map.Entry<String, String> vaultEntry : values.entrySet()) {
+                        String vaultSecretKey = vaultEntry.getKey();
+                        String vaultSecretValue = vaultEntry.getValue();
+
+                        String envKey = vaultSecret.getEnvPrefix() + vaultSecretKey;
+
+                        valuesToMask.add(vaultSecretValue);
+                        context.env(envKey, vaultSecretValue);
+                    }
+
+                }
+                else {
+                    for (VaultSecretValue value : vaultSecret.getSecretValues()) {
+                        valuesToMask.add(values.get(value.getVaultKey()));
+
+                        String envKey = vaultSecret.getEnvPrefix() + value.getEnvVar();
+                        context.env(envKey, values.get(value.getVaultKey()));
+                    }
                 }
             }catch (VaultPluginException ex) {
                 VaultException e = (VaultException) ex.getCause();

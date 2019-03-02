@@ -49,6 +49,7 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
                 }
                 Map<String, String> returnValue = new HashMap<>();
                 returnValue.put("key1", "some-secret");
+                returnValue.put("key2", "another-secret");
                 LogicalResponse resp = mock(LogicalResponse.class);
                 when(resp.getData()).thenReturn(returnValue);
                 return resp;

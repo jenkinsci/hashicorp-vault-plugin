@@ -85,6 +85,7 @@ public class VaultConfigurationIT {
       VaultAccessor vaultAccessor = mock(VaultAccessor.class);
       Map<String, String> returnValue = new HashMap<>();
       returnValue.put("key1", "some-secret");
+      returnValue.put("key2", "another-secret");
       LogicalResponse resp = mock(LogicalResponse.class);
       when(resp.getData()).thenReturn(returnValue);
       when(vaultAccessor.read("secret/path1", 2)).thenReturn(resp);
@@ -193,7 +194,77 @@ public class VaultConfigurationIT {
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
       jenkins.assertLogNotContains("some-secret", build);
-   }
+    }
+
+    @Test
+    public void shouldReturnAllSecrets() throws Exception {
+        WorkflowJob pipeline = jenkins.createProject(WorkflowJob.class, "Pipeline");
+        pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
+                "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
+                "                   configuration: [$class: 'VaultConfiguration', \n" +
+                "                             vaultCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
+                "                             vaultUrl: '"+JENKINSFILE_URL+"'], \n" +
+                "                   vaultSecrets: [\n" +
+                "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: []]]]) {\n" +
+                "            sh \"echo key1: ${env.key1}\"\n" +
+                "            sh \"echo key2: ${env.key2}\"\n" +
+                "      }\n" +
+                "}", true));
+
+        WorkflowRun build = pipeline.scheduleBuild2(0).get();
+
+        jenkins.assertBuildStatus(Result.SUCCESS, build);
+        jenkins.assertLogContains("echo key1: ****", build);
+        jenkins.assertLogNotContains("some-secret", build);
+        jenkins.assertLogContains("echo key2: ****", build);
+        jenkins.assertLogNotContains("another-secret", build);
+    }
+
+    @Test
+    public void shouldReturnAllSecretsWithEnvPrefix() throws Exception {
+        WorkflowJob pipeline = jenkins.createProject(WorkflowJob.class, "Pipeline");
+        pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
+                "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
+                "                   configuration: [$class: 'VaultConfiguration', \n" +
+                "                             vaultCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
+                "                             vaultUrl: '"+JENKINSFILE_URL+"'], \n" +
+                "                   vaultSecrets: [\n" +
+                "                            [$class: 'VaultSecret', path: 'secret/path1', envPrefix: 'myprefix-', secretValues: []]]]) {\n" +
+                "            sh \"echo myprefix-key1: ${env.'myprefix-key1'}\"\n" +
+                "            sh \"echo myprefix-key2: ${env.'myprefix-key2'}\"\n" +
+                "      }\n" +
+                "}", true));
+
+        WorkflowRun build = pipeline.scheduleBuild2(0).get();
+
+        jenkins.assertBuildStatus(Result.SUCCESS, build);
+        jenkins.assertLogContains("echo myprefix-key1: ****", build);
+        jenkins.assertLogNotContains("some-secret", build);
+        jenkins.assertLogContains("echo myprefix-key2: ****", build);
+        jenkins.assertLogNotContains("another-secret", build);
+    }
+
+    @Test
+    public void shouldReturnSpecificSecretsWithEnvPrefix() throws Exception {
+        WorkflowJob pipeline = jenkins.createProject(WorkflowJob.class, "Pipeline");
+        pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
+                "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
+                "                   configuration: [$class: 'VaultConfiguration', \n" +
+                "                             vaultCredentialId: '"+GLOBAL_CREDENTIALS_ID_2+"', \n" +
+                "                             vaultUrl: '"+JENKINSFILE_URL+"'], \n" +
+                "                   vaultSecrets: [\n" +
+                "                            [$class: 'VaultSecret', path: 'secret/path1', envPrefix: 'myprefix-', secretValues: [\n" +
+                "                            [$class: 'VaultSecretValue', envVar: 'envVar1', vaultKey: 'key1']]]]]) {\n" +
+                "            sh \"echo myprefix-envVar1: ${env.'myprefix-envVar1'}\"\n" +
+                "      }\n" +
+                "}", true));
+
+        WorkflowRun build = pipeline.scheduleBuild2(0).get();
+
+        jenkins.assertBuildStatus(Result.SUCCESS, build);
+        jenkins.assertLogContains("echo myprefix-envVar1: ****", build);
+        jenkins.assertLogNotContains("some-secret", build);
+    }
 
    @Test
    public void shouldFailIfCredentialsNotConfigured() throws Exception {

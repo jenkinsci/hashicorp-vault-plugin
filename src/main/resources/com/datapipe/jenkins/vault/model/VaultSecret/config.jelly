@@ -21,4 +21,8 @@
     </f:entry>
   </f:advanced>
 
+  <f:entry title="Environment Variable Prefix" field="envPrefix">
+    <f:textbox />
+  </f:entry>
+
 </j:jelly>
