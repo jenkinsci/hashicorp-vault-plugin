@@ -160,7 +160,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                         context.env(envKey, values.get(value.getVaultKey()));
                     }
                 }
-            }catch (VaultPluginException ex) {
+            } catch (VaultPluginException ex) {
                 VaultException e = (VaultException) ex.getCause();
                 if (e.getHttpStatusCode() == 404 && !configuration.isFailIfNotFound())
                     logger.println("Vault credentials not found " + vaultSecret.getPath());

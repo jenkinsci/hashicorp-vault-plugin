@@ -55,7 +55,6 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
   private Integer engineVersion;
   private List<VaultSecretValue> secretValues;
 
-//  @DataBoundConstructor
   public VaultSecret(String path, List<VaultSecretValue> secretValues) {
     this(path, secretValues, NO_PREFIX);
   }
