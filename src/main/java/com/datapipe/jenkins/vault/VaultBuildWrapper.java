@@ -137,6 +137,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 responses.add(response);
                 Map<String, String> values = response.getData();
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
+                    if (values.get(value.getVaultKey()) == null || values.get(value.getVaultKey()).trim().isEmpty())
+                        throw new IllegalArgumentException("Vault Secret " + value.getVaultKey() + " at " + vaultSecret.getPath() + " is either null or empty. Please check the Secret in Vault.");
                     valuesToMask.add(values.get(value.getVaultKey()));
                     context.env(value.getEnvVar(), values.get(value.getVaultKey()));
                 }
@@ -145,7 +147,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 if (e.getHttpStatusCode() == 404 && !configuration.isFailIfNotFound())
                     logger.println("Vault credentials not found " + vaultSecret.getPath());
                 else
-                    throw ex;
+                    throw new VaultPluginException("Vault credentials not found " + vaultSecret.getPath(), e);
             }
         }
         return responses;
