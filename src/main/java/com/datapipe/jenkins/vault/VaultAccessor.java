@@ -39,13 +39,10 @@ public class VaultAccessor implements Serializable {
 
         LOGGER.log(Level.INFO, "Vault Accessor init: " + url + " with credential: " + credential);
 
-        String namespace = "dx_tiaas";
-
         try {
             config = new VaultConfig()
                     .address(url)
                     .sslConfig(new SslConfig().verify(skipSslVerification).build())
-                    .nameSpace(namespace)
                     .build();
             if (credential == null)
                 vault = new Vault(config);

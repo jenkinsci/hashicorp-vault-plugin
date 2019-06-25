@@ -39,7 +39,8 @@ public class VaultUsernamePasswordCredentialBinding extends MultiBinding<VaultUs
     }
 
     @Override
-    public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
+    public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener)
+            throws IOException, InterruptedException {
         VaultUsernamePasswordCredential credentials = this.getCredentials(build);
         Map<String, String> map = new HashMap<String, String>();
         map.put(this.usernameVariable, credentials.getUsername());
@@ -73,7 +74,7 @@ public class VaultUsernamePasswordCredentialBinding extends MultiBinding<VaultUs
 
         @Override
         public String getDisplayName() {
-            return "Hashicorp Vault Credentials";
+            return "Hashicorp Vault Username-Password Credentials";
         }
     }
 }

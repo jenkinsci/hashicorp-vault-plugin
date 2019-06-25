@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
-import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.plugins.credentials.*;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -28,28 +27,41 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@SuppressWarnings("ALL")
 public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials implements VaultUsernamePasswordCredential, StandardUsernamePasswordCredentials {
 
     public static final String DEFAULT_USERNAME_KEY = "username";
     public static final String DEFAULT_PASSWORD_KEY = "password";
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(VaultUsernamePasswordCredentialImpl.class.getName());
-    private String key;
+    private String path;
     private String usernameKey;
     private String passwordKey;
+    private Integer engineVersion;
 
     @DataBoundConstructor
     public VaultUsernamePasswordCredentialImpl(@CheckForNull CredentialsScope scope, @CheckForNull String id,
-                                         @CheckForNull String key, @CheckForNull String passwordKey, @CheckForNull String usernameKey, @CheckForNull String description) {
+                                               @CheckForNull String path,
+                                               @CheckForNull String usernameKey,
+                                               @CheckForNull String passwordKey,
+                                               @CheckForNull String engineVersion,
+                                               @CheckForNull String description) {
         super(scope, id, description);
-        this.key = key;
+        this.path = path;
         this.usernameKey = StringUtils.isEmpty(usernameKey) ? DEFAULT_USERNAME_KEY : usernameKey;
         this.passwordKey = StringUtils.isEmpty(passwordKey) ? DEFAULT_PASSWORD_KEY : passwordKey;
+        this.passwordKey = StringUtils.isEmpty(passwordKey) ? DEFAULT_PASSWORD_KEY : passwordKey;
+        try {
+            this.engineVersion = Integer.valueOf(engineVersion);
+        } catch (Exception e) {
+            LOGGER.info("Cannot parse engine version number " + engineVersion);
+            this.engineVersion = 1;
+        }
     }
 
     @Override
     public String getDisplayName() {
-        return this.key;
+        return this.path;
     }
 
     @NonNull
@@ -70,17 +82,15 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         }
 
         try {
-
             VaultAccessor vaultAccessor = new VaultAccessor();
             VaultCredential vaultCredential = retrieveVaultCredentials(globalConfig.getConfiguration().getVaultCredentialId());
             vaultAccessor.init(globalConfig.getConfiguration().getVaultUrl(), vaultCredential);
 
-            LOGGER.log(Level.INFO, "Fetching value " + key + " from vault: " + globalConfig.getConfiguration().getVaultUrl());
+            LOGGER.log(Level.INFO, "Fetching value " + this.getPath() + " from vault: " + globalConfig.getConfiguration().getVaultUrl());
 
-            Map<String, String> values = vaultAccessor.read(key, Integer.valueOf(1)).getData();
+            Map<String, String> values = vaultAccessor.read(this.getPath(), this.getEngineVersion()).getData();
 
             return values.get(valueKey);
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -92,7 +102,10 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         } else {
             LOGGER.log(Level.INFO, "Using credential ID : " + id );
         }
-        List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+        List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class,
+                Jenkins.getInstance(),
+                ACL.SYSTEM,
+                Collections.<DomainRequirement>emptyList());
         VaultCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
 
         if (credential == null) {
@@ -127,12 +140,20 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     }
 
     @NonNull
-    public String getKey() {
-        return key;
+    public String getPath() {
+        return path;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public Integer getEngineVersion() {
+        return engineVersion;
+    }
+
+    public void setEngineVersion(Integer engineVersion) {
+        this.engineVersion = engineVersion;
     }
 
     @Extension
@@ -140,7 +161,7 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
         @Override
         public String getDisplayName() {
-            return "Vault Username Password Credentials";
+            return "Vault Username-Password Credential";
         }
     }
 }
