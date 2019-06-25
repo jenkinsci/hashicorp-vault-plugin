@@ -30,21 +30,25 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private boolean skipSslVerification = false;
 
+    private String vaultNamespace;
+
     public VaultConfiguration() {
         // no args constructor
     }
 
     @DataBoundConstructor
-    public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound) {
+    public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound, String vaultNamespace) {
         this.vaultUrl = normalizeUrl(vaultUrl);
         this.vaultCredentialId = vaultCredentialId;
         this.failIfNotFound = failIfNotFound;
+        this.vaultNamespace = vaultNamespace;
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
         this.vaultUrl = toCopy.getVaultUrl();
         this.vaultCredentialId = toCopy.getVaultCredentialId();
         this.failIfNotFound = toCopy.failIfNotFound;
+        this.vaultNamespace = toCopy.vaultNamespace;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -58,6 +62,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         if (StringUtils.isBlank(result.getVaultUrl())) {
             result.setVaultUrl(parent.getVaultUrl());
         }
+        if (StringUtils.isBlank(result.getVaultNamespace())) {
+            result.setVaultNamespace(parent.getVaultNamespace());
+        }
         result.failIfNotFound = failIfNotFound;
         return result;
     }
@@ -70,6 +77,10 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return vaultCredentialId;
     }
 
+    public String getVaultNamespace() {
+        return vaultNamespace;
+    }
+
     @DataBoundSetter
     public void setVaultUrl(String vaultUrl) {
         this.vaultUrl = normalizeUrl(vaultUrl);
@@ -78,6 +89,11 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     @DataBoundSetter
     public void setVaultCredentialId(String vaultCredentialId) {
         this.vaultCredentialId = vaultCredentialId;
+    }
+
+    @DataBoundSetter
+    public void setVaultNamespace(String vaultNamespace) {
+        this.vaultNamespace = vaultNamespace;
     }
 
     public boolean isFailIfNotFound() {

@@ -129,7 +129,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
+        vaultAccessor.init(url, credential, configuration.isSkipSslVerification(), configuration.getVaultNamespace());
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             try {

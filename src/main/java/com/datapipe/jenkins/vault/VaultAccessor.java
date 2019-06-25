@@ -8,6 +8,7 @@ import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.response.VaultResponse;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 
@@ -32,11 +33,21 @@ public class VaultAccessor implements Serializable {
     }
 
     public void init(String url, VaultCredential credential, boolean skipSslVerification) {
+        init(url, credential, skipSslVerification, null);
+    }
+
+    public void init(String url, VaultCredential credential, boolean skipSslVerification, String vaultNamespace) {
         try {
             config = new VaultConfig()
                     .address(url)
-                    .sslConfig(new SslConfig().verify(skipSslVerification).build())
-                    .build();
+                    .sslConfig(new SslConfig().verify(skipSslVerification).build());
+
+            if (StringUtils.isNotEmpty(vaultNamespace)) {
+                config.nameSpace(vaultNamespace);
+            }
+
+            config.build();
+
             if (credential == null)
                 vault = new Vault(config);
             else

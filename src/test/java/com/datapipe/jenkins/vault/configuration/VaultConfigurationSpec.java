@@ -84,13 +84,13 @@ public class VaultConfigurationSpec {
 
     @Test
     public void shouldNotStoreTrailingSlashesInUrl() {
-        VaultConfiguration parent = new VaultConfiguration("http://vault-url.com/", null, false);
+        VaultConfiguration parent = new VaultConfiguration("http://vault-url.com/", null, false, "mynamespace");
         assertThat(parent.getVaultUrl(), is("http://vault-url.com"));
     }
 
     @Test
     public void shouldStoreFailureHandling() {
-        VaultConfiguration parent = new VaultConfiguration("http://vault-url.com/", null, false);
+        VaultConfiguration parent = new VaultConfiguration("http://vault-url.com/", null, false, "mynamespace");
         assertThat(parent.isFailIfNotFound(), is(false));
     }
 
