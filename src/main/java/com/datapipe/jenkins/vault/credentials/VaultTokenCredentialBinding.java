@@ -82,7 +82,7 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
 
     private String getToken(AbstractVaultTokenCredential credentials) {
         try {
-            VaultConfig config = new VaultConfig().address(vaultAddr).build();
+            VaultConfig config = new VaultConfig().address(vaultAddr).nameSpace("dx_tiaas").build();
             return credentials.getToken(new Vault(config));
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
