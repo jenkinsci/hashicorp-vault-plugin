@@ -9,10 +9,14 @@ import com.bettercloud.vault.response.VaultResponse;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.io.Serializable;
 
 public class VaultAccessor implements Serializable {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
+    
+    private static final Logger LOGGER = Logger.getLogger(VaultAccessor.class.getName());
 
 	private transient Vault vault;
 
@@ -32,10 +36,16 @@ public class VaultAccessor implements Serializable {
     }
 
     public void init(String url, VaultCredential credential, boolean skipSslVerification) {
+
+        LOGGER.log(Level.INFO, "Vault Accessor init: " + url + " with credential: " + credential);
+
+        String namespace = "dx_tiaas";
+
         try {
             config = new VaultConfig()
                     .address(url)
                     .sslConfig(new SslConfig().verify(skipSslVerification).build())
+                    .nameSpace(namespace)
                     .build();
             if (credential == null)
                 vault = new Vault(config);

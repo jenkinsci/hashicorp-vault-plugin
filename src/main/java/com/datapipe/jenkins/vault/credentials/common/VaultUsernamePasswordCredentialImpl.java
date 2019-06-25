@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
+import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.plugins.credentials.*;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -74,7 +75,7 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
             VaultCredential vaultCredential = retrieveVaultCredentials(globalConfig.getConfiguration().getVaultCredentialId());
             vaultAccessor.init(globalConfig.getConfiguration().getVaultUrl(), vaultCredential);
 
-            LOGGER.log(Level.FINE, "Fetching value " + key + " from vault: " + globalConfig.getConfiguration().getVaultUrl());
+            LOGGER.log(Level.INFO, "Fetching value " + key + " from vault: " + globalConfig.getConfiguration().getVaultUrl());
 
             Map<String, String> values = vaultAccessor.read(key, Integer.valueOf(1)).getData();
 
@@ -88,6 +89,8 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     private VaultCredential retrieveVaultCredentials(String id) {
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException("The credential id was not configured - please specify the credentials to use.");
+        } else {
+            LOGGER.log(Level.INFO, "Using credential ID : " + id );
         }
         List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
         VaultCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
@@ -137,7 +140,7 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
         @Override
         public String getDisplayName() {
-            return "Hashicorp Vault Credentials";
+            return "Vault Username Password Credentials";
         }
     }
 }
