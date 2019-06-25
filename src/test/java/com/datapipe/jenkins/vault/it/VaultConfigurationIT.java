@@ -67,7 +67,7 @@ public class VaultConfigurationIT {
    @Before
    public void setupJenkins() throws IOException {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1, false));
+      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1, false, "mynamespace"));
 
       globalConfig.save();
 
@@ -120,7 +120,7 @@ public class VaultConfigurationIT {
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
       jenkins.assertLogNotContains("some-secret", build);
-      verify(mockAccessor, times(1)).init("http://global-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_1, false);
+      verify(mockAccessor, times(1)).init("http://global-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_1, false, "mynamespace");
       verify(mockAccessor, times(1)).read("secret/path1", 2);
    }
 
@@ -133,7 +133,7 @@ public class VaultConfigurationIT {
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
-        vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", GLOBAL_CREDENTIALS_ID_2, false));
+        vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", GLOBAL_CREDENTIALS_ID_2, false, "mynamespace"));
         this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
         FreeStyleBuild build = this.project.scheduleBuild2(0).get();
@@ -142,7 +142,7 @@ public class VaultConfigurationIT {
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
-        verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_2, false);
+        verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_2, false, "mynamespace");
         verify(mockAccessor, times(1)).read("secret/path1", 2);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
@@ -158,7 +158,7 @@ public class VaultConfigurationIT {
        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(),Arrays.asList(credential)));
 
        this.project.getBuildWrappersList().add(vaultBuildWrapper);
-       vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", "token-1", false));
+       vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", "token-1", false, "mynamespace"));
        this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
@@ -167,7 +167,7 @@ public class VaultConfigurationIT {
        assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is("token-1"));
 
        jenkins.assertBuildStatus(Result.SUCCESS, build);
-       verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) credential, false);
+       verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) credential, false, "mynamespace");
        verify(mockAccessor, times(1)).read("secret/path1", 2);
        jenkins.assertLogContains("echo ****", build);
        jenkins.assertLogNotContains("some-secret", build);
@@ -198,7 +198,7 @@ public class VaultConfigurationIT {
    @Test
    public void shouldFailIfCredentialsNotConfigured() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", null, false));
+      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", null, false, "mynamespace"));
 
       globalConfig.save();
 
@@ -222,7 +222,7 @@ public class VaultConfigurationIT {
    @Test
    public void shouldFailIfUrlNotConfigured() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration(null, GLOBAL_CREDENTIALS_ID_2, false));
+      globalConfig.setConfiguration(new VaultConfiguration(null, GLOBAL_CREDENTIALS_ID_2, false, "mynamespace"));
 
       globalConfig.save();
 
@@ -269,7 +269,7 @@ public class VaultConfigurationIT {
    @Test
    public void shouldFailIfCredentialsDoNotExist() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://example.com", "some-made-up-ID", false));
+      globalConfig.setConfiguration(new VaultConfiguration("http://example.com", "some-made-up-ID", false, "mynamespace"));
 
       globalConfig.save();
 
