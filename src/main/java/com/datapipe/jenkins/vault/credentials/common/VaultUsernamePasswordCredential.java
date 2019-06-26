@@ -16,7 +16,7 @@ public interface VaultUsernamePasswordCredential extends StandardUsernameCredent
 
         @NonNull
         @Override
-        public String getName(@NonNull VaultUsernamePasswordCredential hashicorpVaultCredentials) {
+        public String getName(VaultUsernamePasswordCredential hashicorpVaultCredentials) {
             String description = Util.fixEmpty(hashicorpVaultCredentials.getDescription());
             return hashicorpVaultCredentials.getDisplayName() + (description == null ? "" : " (" + description + ")");
         }

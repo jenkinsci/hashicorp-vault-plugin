@@ -50,7 +50,6 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         this.path = path;
         this.usernameKey = StringUtils.isEmpty(usernameKey) ? DEFAULT_USERNAME_KEY : usernameKey;
         this.passwordKey = StringUtils.isEmpty(passwordKey) ? DEFAULT_PASSWORD_KEY : passwordKey;
-        this.passwordKey = StringUtils.isEmpty(passwordKey) ? DEFAULT_PASSWORD_KEY : passwordKey;
         try {
             this.engineVersion = Integer.valueOf(engineVersion);
         } catch (Exception e) {
@@ -88,8 +87,6 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
                     vaultCredential,
                     globalConfig.getConfiguration().isSkipSslVerification(),
                     globalConfig.getConfiguration().getVaultNamespace());
-
-            LOGGER.log(Level.INFO, "Fetching value " + this.getPath() + " from vault: " + globalConfig.getConfiguration().getVaultUrl());
 
             Map<String, String> values = vaultAccessor.read(this.getPath(), this.getEngineVersion()).getData();
 
