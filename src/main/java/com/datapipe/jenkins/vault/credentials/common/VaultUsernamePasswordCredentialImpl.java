@@ -25,6 +25,7 @@ import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.util.Collections;
@@ -46,23 +47,50 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     private Integer engineVersion;
 
     @DataBoundConstructor
-    public VaultUsernamePasswordCredentialImpl(@CheckForNull CredentialsScope scope, @CheckForNull String id,
-                                               @CheckForNull String path,
-                                               @CheckForNull String usernameKey,
-                                               @CheckForNull String passwordKey,
-                                               @CheckForNull String engineVersion,
-                                               @CheckForNull String description) {
+    public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
-        this.path = path;
-        this.usernameKey = StringUtils.isEmpty(usernameKey) ? DEFAULT_USERNAME_KEY : usernameKey;
-        this.passwordKey = StringUtils.isEmpty(passwordKey) ? DEFAULT_PASSWORD_KEY : passwordKey;
-        try {
-            this.engineVersion = Integer.valueOf(engineVersion);
-        } catch (Exception e) {
-            LOGGER.info("Cannot parse engine version number " + engineVersion);
-            this.engineVersion = 1;
-        }
     }
+
+
+    @NonNull
+    public String getPath() {
+        return path;
+    }
+
+    @DataBoundSetter
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    @NonNull
+    public String getUsernameKey() {
+        return usernameKey;
+    }
+
+    @DataBoundSetter
+    public void setUsernameKey(String usernameKey) {
+        this.usernameKey = StringUtils.isEmpty(usernameKey) ? DEFAULT_USERNAME_KEY : usernameKey;
+    }
+
+    @NonNull
+    public String getPasswordKey() {
+        return passwordKey;
+    }
+
+    @DataBoundSetter
+    public void setPasswordKey(String passwordKey) {
+        this.passwordKey = StringUtils.isEmpty(passwordKey) ? DEFAULT_PASSWORD_KEY : passwordKey;
+    }
+
+    public Integer getEngineVersion() {
+        return engineVersion;
+    }
+
+    @DataBoundSetter
+    public void setEngineVersion(Integer engineVersion) {
+        this.engineVersion = engineVersion;
+    }
+
 
     @Override
     public String getDisplayName() {
@@ -71,9 +99,16 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
     @NonNull
     @Override
+    public String getUsername() {
+        return getValue(this.usernameKey);
+    }
+
+    @NonNull
+    @Override
     public Secret getPassword() {
         return Secret.fromString(getValue(this.passwordKey));
     }
+
 
     private String getValue(String valueKey) {
         return getVaultSecret(this.getPath(), valueKey, this.getEngineVersion());
@@ -145,46 +180,6 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         return credential;
     }
 
-    @NonNull
-    @Override
-    public String getUsername() {
-        return getValue(this.usernameKey);
-    }
-
-    @NonNull
-    public String getPasswordKey() {
-        return passwordKey;
-    }
-
-    public void setPasswordKey(String passwordKey) {
-        this.passwordKey = passwordKey;
-    }
-
-    @NonNull
-    public String getUsernameKey() {
-        return usernameKey;
-    }
-
-    public void setUsernameKey(String usernameKey) {
-        this.usernameKey = usernameKey;
-    }
-
-    @NonNull
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public Integer getEngineVersion() {
-        return engineVersion;
-    }
-
-    public void setEngineVersion(Integer engineVersion) {
-        this.engineVersion = engineVersion;
-    }
 
     @Extension(ordinal = 1)
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {

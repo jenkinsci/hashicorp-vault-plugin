@@ -80,7 +80,13 @@ public class FolderIT {
     @Before
     public void setupJenkins() throws IOException {
         GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-        globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1, false, "mynamespace", TIMEOUT));
+
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        globalConfig.setConfiguration(vaultConfig);
         globalConfig.save();
 
         FOLDER_1_CREDENTIAL = createTokenCredential(FOLDER_1_CREDENTIALS_ID);
@@ -137,7 +143,12 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false, "mynamespace", TIMEOUT)));
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        this.folder1.addProperty(new FolderVaultConfiguration(vaultConfig));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
@@ -164,7 +175,12 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false, "mynamespace", TIMEOUT)));
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        this.folder1.addProperty(new FolderVaultConfiguration(vaultConfig));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
@@ -193,7 +209,12 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_2_CREDENTIALS_ID, false, "mynamespace", TIMEOUT)));
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://folder1.com", FOLDER_2_CREDENTIALS_ID);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        this.folder1.addProperty(new FolderVaultConfiguration(vaultConfig));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));

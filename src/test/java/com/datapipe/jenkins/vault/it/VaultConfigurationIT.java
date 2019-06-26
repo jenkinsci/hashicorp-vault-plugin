@@ -67,22 +67,28 @@ public class VaultConfigurationIT {
 
    private FreeStyleProject project;
 
-   @Before
-   public void setupJenkins() throws IOException {
-      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1, false, "mynamespace", TIMEOUT));
+    @Before
+    public void setupJenkins() throws IOException {
+        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
 
-      globalConfig.save();
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        globalConfig.setConfiguration(vaultConfig);
+
+        globalConfig.save();
 
 
-      GLOBAL_CREDENTIAL_1 = createTokenCredential(GLOBAL_CREDENTIALS_ID_1);
-      GLOBAL_CREDENTIAL_2 = createTokenCredential(GLOBAL_CREDENTIALS_ID_2);
+        GLOBAL_CREDENTIAL_1 = createTokenCredential(GLOBAL_CREDENTIALS_ID_1);
+        GLOBAL_CREDENTIAL_2 = createTokenCredential(GLOBAL_CREDENTIALS_ID_2);
 
-      SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays
-            .asList(GLOBAL_CREDENTIAL_1, GLOBAL_CREDENTIAL_2)));
+        SystemCredentialsProvider.getInstance().setDomainCredentialsMap(Collections.singletonMap(Domain.global(), Arrays
+                .asList(GLOBAL_CREDENTIAL_1, GLOBAL_CREDENTIAL_2)));
 
-      this.project = jenkins.createFreeStyleProject("test");
-   }
+        this.project = jenkins.createFreeStyleProject("test");
+    }
 
    private VaultAccessor mockVaultAccessor() {
       VaultAccessor vaultAccessor = mock(VaultAccessor.class);
@@ -141,7 +147,12 @@ public class VaultConfigurationIT {
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
-        vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", GLOBAL_CREDENTIALS_ID_2, false, "mynamespace", TIMEOUT));
+
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://job-vault-url.com", GLOBAL_CREDENTIALS_ID_2);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+        vaultBuildWrapper.setConfiguration(vaultConfig);
         this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
         FreeStyleBuild build = this.project.scheduleBuild2(0).get();
@@ -171,7 +182,11 @@ public class VaultConfigurationIT {
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
 
-        vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", "token-1", false, "mynamespace", TIMEOUT));
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://job-vault-url.com", "token-1");
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+        vaultBuildWrapper.setConfiguration(vaultConfig);
         this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
         FreeStyleBuild build = this.project.scheduleBuild2(0).get();
@@ -212,60 +227,69 @@ public class VaultConfigurationIT {
       jenkins.assertLogNotContains("some-secret", build);
    }
 
-   @Test
-   public void shouldFailIfCredentialsNotConfigured() throws Exception {
-      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", null, false, "mynamespace", TIMEOUT));
+    @Test
+    public void shouldFailIfCredentialsNotConfigured() throws Exception {
+        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://global-vault-url.com", null);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
 
-      globalConfig.save();
+        globalConfig.setConfiguration(vaultConfig);
 
-      List<VaultSecret> secrets = standardSecrets();
+        globalConfig.save();
 
-      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
-      vaultBuildWrapper.setVaultAccessor(mockAccessor);
+        List<VaultSecret> secrets = standardSecrets();
 
-      this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+        VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+        VaultAccessor mockAccessor = mockVaultAccessor();
+        vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        this.project.getBuildWrappersList().add(vaultBuildWrapper);
+        this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
-      jenkins.assertBuildStatus(Result.FAILURE, build);
-      VaultConfig config = new VaultConfig().address(anyString());
-      mockAccessor.setConfig(config);
-      mockAccessor.setCredential(any(VaultCredential.class));
-      verify(mockAccessor, times(0)).init();
-      verify(mockAccessor, times(0)).read(anyString(), anyInt());
-      jenkins.assertLogContains("The credential id was not configured - please specify the credentials to use.", build);
-   }
+        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
-   @Test
-   public void shouldFailIfUrlNotConfigured() throws Exception {
-      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration(null, GLOBAL_CREDENTIALS_ID_2, false, "mynamespace", TIMEOUT));
+        jenkins.assertBuildStatus(Result.FAILURE, build);
+        VaultConfig config = new VaultConfig().address(anyString());
+        mockAccessor.setConfig(config);
+        mockAccessor.setCredential(any(VaultCredential.class));
+        verify(mockAccessor, times(0)).init();
+        verify(mockAccessor, times(0)).read(anyString(), anyInt());
+        jenkins.assertLogContains("The credential id was not configured - please specify the credentials to use.", build);
+    }
 
-      globalConfig.save();
+    @Test
+    public void shouldFailIfUrlNotConfigured() throws Exception {
+        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+        VaultConfiguration vaultConfig = new VaultConfiguration(null, GLOBAL_CREDENTIALS_ID_2);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+        globalConfig.setConfiguration(vaultConfig);
 
-      List<VaultSecret> secrets = standardSecrets();
+        globalConfig.save();
 
-      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
-      vaultBuildWrapper.setVaultAccessor(mockAccessor);
+        List<VaultSecret> secrets = standardSecrets();
 
-      this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+        VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+        VaultAccessor mockAccessor = mockVaultAccessor();
+        vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        this.project.getBuildWrappersList().add(vaultBuildWrapper);
+        this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
-      jenkins.assertBuildStatus(Result.FAILURE, build);
-      VaultConfig config = new VaultConfig().address(anyString());
-      mockAccessor.setConfig(config);
-      mockAccessor.setCredential(any(VaultCredential.class));
+        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
-      verify(mockAccessor, times(0)).init();
-      verify(mockAccessor, times(0)).read(anyString(), anyInt());
-      jenkins.assertLogContains("The vault url was not configured - please specify the vault url to use.", build);
-   }
+        jenkins.assertBuildStatus(Result.FAILURE, build);
+        VaultConfig config = new VaultConfig().address(anyString());
+        mockAccessor.setConfig(config);
+        mockAccessor.setCredential(any(VaultCredential.class));
+
+        verify(mockAccessor, times(0)).init();
+        verify(mockAccessor, times(0)).read(anyString(), anyInt());
+        jenkins.assertLogContains("The vault url was not configured - please specify the vault url to use.", build);
+    }
 
    @Test
    public void shouldFailIfNoConfigurationExists() throws Exception {
@@ -293,32 +317,36 @@ public class VaultConfigurationIT {
       jenkins.assertLogContains("No configuration found - please configure the VaultPlugin.", build);
    }
 
-   @Test
-   public void shouldFailIfCredentialsDoNotExist() throws Exception {
-      GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://example.com", "some-made-up-ID", false, "mynamespace", TIMEOUT));
+    @Test
+    public void shouldFailIfCredentialsDoNotExist() throws Exception {
+        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+        VaultConfiguration vaultConfig = new VaultConfiguration("http://example.com", "some-made-up-ID");
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+        globalConfig.setConfiguration(vaultConfig);
 
-      globalConfig.save();
+        globalConfig.save();
 
-      List<VaultSecret> secrets = standardSecrets();
+        List<VaultSecret> secrets = standardSecrets();
 
-      VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
-      vaultBuildWrapper.setVaultAccessor(mockAccessor);
+        VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
+        VaultAccessor mockAccessor = mockVaultAccessor();
+        vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-      this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+        this.project.getBuildWrappersList().add(vaultBuildWrapper);
+        this.project.getBuildersList().add(new Shell("echo $envVar1"));
 
-      FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
-      jenkins.assertBuildStatus(Result.FAILURE, build);
-      VaultConfig config = new VaultConfig().address(anyString());
-      mockAccessor.setConfig(config);
-      mockAccessor.setCredential(any(VaultCredential.class));
-      verify(mockAccessor, times(0)).init();
-      verify(mockAccessor, times(0)).read(anyString(), anyInt());
-      jenkins.assertLogContains("CredentialsUnavailableException", build);
-   }
+        jenkins.assertBuildStatus(Result.FAILURE, build);
+        VaultConfig config = new VaultConfig().address(anyString());
+        mockAccessor.setConfig(config);
+        mockAccessor.setCredential(any(VaultCredential.class));
+        verify(mockAccessor, times(0)).init();
+        verify(mockAccessor, times(0)).read(anyString(), anyInt());
+        jenkins.assertLogContains("CredentialsUnavailableException", build);
+    }
 
    public static VaultAppRoleCredential createTokenCredential(final String credentialId) {
        Vault vault = mock(Vault.class, withSettings().serializable());

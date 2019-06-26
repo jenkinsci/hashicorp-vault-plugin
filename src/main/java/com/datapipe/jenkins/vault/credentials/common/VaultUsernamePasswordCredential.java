@@ -2,9 +2,7 @@ package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
 import com.cloudbees.plugins.credentials.NameWith;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
 

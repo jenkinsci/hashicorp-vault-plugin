@@ -16,6 +16,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
 import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -34,25 +35,42 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     @NonNull
     private final String addrVariable;
     private final String tokenVariable;
-    private final String namespaceVariable;
     private final String vaultAddr;
-    private final String vaultNamespace;
+    private String vaultNamespace;
+    private String namespaceVariable;
 
     /**
      *
      * @param addrVariable if {@code null}, {@value DEFAULT_VAULT_ADDR_VARIABLE_NAME} will be used.
-     * @param tokenVariable if {@code null}, {@value DEFAULT_VAULT_TOKEN_VARIABLE_NAME} will be used.
-     * @param namespaceVariable if {@code null}, {@value DEFAULT_VAULT_NAMESPACE_VARIABLE_NAME} will be used.
+     * @param tokenVariable if {@code null}, {@value DEFAULT_VAULT_TOKEN_VARIABLE_NAME} will be used.*
      * @param credentialsId credential identifier
      * @param vaultAddr vault address
      */
     @DataBoundConstructor
-    public VaultTokenCredentialBinding(@Nullable String addrVariable, @Nullable String tokenVariable, @Nullable String namespaceVariable, String credentialsId, String vaultAddr, String vaultNamespace) {
+    public VaultTokenCredentialBinding(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
         super(credentialsId);
         this.vaultAddr = vaultAddr;
-        this.vaultNamespace = vaultNamespace;
         this.addrVariable = StringUtils.defaultIfBlank(addrVariable, DEFAULT_VAULT_ADDR_VARIABLE_NAME);
         this.tokenVariable = StringUtils.defaultIfBlank(tokenVariable, DEFAULT_VAULT_TOKEN_VARIABLE_NAME);
+    }
+
+    @NonNull
+    public String getVaultNamespace() {
+        return vaultNamespace;
+    }
+
+    @DataBoundSetter
+    public void setVaultNamespace(String vaultNamespace) {
+        this.vaultNamespace = vaultNamespace;
+    }
+
+    @NonNull
+    public String getNamespaceVariable() {
+        return namespaceVariable;
+    }
+
+    @DataBoundSetter
+    public void setNamespaceVariable(String namespaceVariable) {
         this.namespaceVariable = StringUtils.defaultIfBlank(namespaceVariable, DEFAULT_VAULT_NAMESPACE_VARIABLE_NAME);
     }
 
@@ -67,18 +85,8 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     }
 
     @NonNull
-    public String getNamespaceVariable() {
-        return namespaceVariable;
-    }
-
-    @NonNull
     public String getVaultAddr() {
         return vaultAddr;
-    }
-
-    @NonNull
-    public String getVaultNamespace() {
-        return vaultNamespace;
     }
 
     @Override

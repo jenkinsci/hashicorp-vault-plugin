@@ -42,13 +42,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     }
 
     @DataBoundConstructor
-    public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound, String vaultNamespace, Integer timeout) {
+    public VaultConfiguration(String vaultUrl, String vaultCredentialId) {
         this.vaultUrl = normalizeUrl(vaultUrl);
         this.vaultCredentialId = vaultCredentialId;
-        this.failIfNotFound = failIfNotFound;
-        this.vaultNamespace = vaultNamespace;
-        this.timeout = (null != timeout) ? timeout : DEFAULT_TIMEOUT;
-
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
@@ -80,16 +76,42 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return result;
     }
 
+
+
     public String getVaultUrl() {
         return vaultUrl;
+    }
+
+    @DataBoundSetter
+    public void setVaultUrl(String vaultUrl) {
+        this.vaultUrl = normalizeUrl(vaultUrl);
     }
 
     public String getVaultCredentialId() {
         return vaultCredentialId;
     }
 
+    @DataBoundSetter
+    public void setVaultCredentialId(String vaultCredentialId) {
+        this.vaultCredentialId = vaultCredentialId;
+    }
+
+    public boolean isFailIfNotFound() {
+        return failIfNotFound;
+    }
+
+    @DataBoundSetter
+    public void setFailIfNotFound(boolean failIfNotFound) {
+        this.failIfNotFound = failIfNotFound;
+    }
+
     public String getVaultNamespace() {
         return vaultNamespace;
+    }
+
+    @DataBoundSetter
+    public void setVaultNamespace(String vaultNamespace) {
+        this.vaultNamespace = vaultNamespace;
     }
 
     /**
@@ -99,6 +121,21 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     public Integer getTimeout() {
         return this.timeout;
     }
+
+    @DataBoundSetter
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
+
+    public boolean isSkipSslVerification() {
+        return skipSslVerification;
+    }
+
+    @DataBoundSetter
+    public void setSkipSslVerification(boolean skipSslVerification) {
+        this.skipSslVerification = skipSslVerification;
+    }
+
 
     /**
      * Number of retries when reading a secret from vault
@@ -118,44 +155,6 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     }
 
 
-
-    @DataBoundSetter
-    public void setVaultUrl(String vaultUrl) {
-        this.vaultUrl = normalizeUrl(vaultUrl);
-    }
-
-    @DataBoundSetter
-    public void setVaultCredentialId(String vaultCredentialId) {
-        this.vaultCredentialId = vaultCredentialId;
-    }
-
-    @DataBoundSetter
-    public void setVaultNamespace(String vaultNamespace) {
-        this.vaultNamespace = vaultNamespace;
-    }
-
-    public boolean isFailIfNotFound() {
-        return failIfNotFound;
-    }
-
-    @DataBoundSetter
-    public void setFailIfNotFound(boolean failIfNotFound) {
-        this.failIfNotFound = failIfNotFound;
-    }
-
-    public boolean isSkipSslVerification() {
-        return skipSslVerification;
-    }
-
-    @DataBoundSetter
-    public void setSkipSslVerification(boolean skipSslVerification) {
-        this.skipSslVerification = skipSslVerification;
-    }
-
-    @DataBoundSetter
-    public void setTimeout(Integer timeout) {
-        this.timeout = timeout;
-    }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
