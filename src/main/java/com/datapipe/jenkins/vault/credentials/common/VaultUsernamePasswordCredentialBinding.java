@@ -74,7 +74,7 @@ public class VaultUsernamePasswordCredentialBinding extends MultiBinding<VaultUs
 
         @Override
         public String getDisplayName() {
-            return "Hashicorp Vault Username-Password Credentials";
+            return "Vault Username-Password Credentials";
         }
     }
 }
