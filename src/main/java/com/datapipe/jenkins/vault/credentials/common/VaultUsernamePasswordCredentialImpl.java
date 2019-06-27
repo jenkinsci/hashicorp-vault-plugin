@@ -1,5 +1,8 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.*;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -81,13 +84,15 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         }
 
         try {
-            VaultAccessor vaultAccessor = new VaultAccessor();
+            VaultConfig vaultConfig = new VaultConfig()
+                    .address(globalConfig.getConfiguration().getVaultUrl())
+                    .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build())
+                    .nameSpace(globalConfig.getConfiguration().getVaultNamespace())
+                    .openTimeout(globalConfig.getConfiguration().getTimeout())
+                    .readTimeout(globalConfig.getConfiguration().getTimeout());
             VaultCredential vaultCredential = retrieveVaultCredentials(globalConfig.getConfiguration().getVaultCredentialId());
-            vaultAccessor.init(globalConfig.getConfiguration().getVaultUrl(),
-                    vaultCredential,
-                    globalConfig.getConfiguration().isSkipSslVerification(),
-                    globalConfig.getConfiguration().getVaultNamespace());
 
+            VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential).init();
             Map<String, String> values = vaultAccessor.read(this.getPath(), this.getEngineVersion()).getData();
 
             return values.get(valueKey);

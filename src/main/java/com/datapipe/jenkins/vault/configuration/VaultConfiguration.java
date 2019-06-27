@@ -32,16 +32,19 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String vaultNamespace;
 
+    private Integer timeout;
+
     public VaultConfiguration() {
         // no args constructor
     }
 
     @DataBoundConstructor
-    public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound, String vaultNamespace) {
+    public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound, String vaultNamespace, Integer timeout) {
         this.vaultUrl = normalizeUrl(vaultUrl);
         this.vaultCredentialId = vaultCredentialId;
         this.failIfNotFound = failIfNotFound;
         this.vaultNamespace = vaultNamespace;
+        this.timeout = timeout;
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
@@ -49,6 +52,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultCredentialId = toCopy.getVaultCredentialId();
         this.failIfNotFound = toCopy.failIfNotFound;
         this.vaultNamespace = toCopy.vaultNamespace;
+        this.timeout = toCopy.timeout;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -81,6 +85,10 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return vaultNamespace;
     }
 
+    public Integer getTimeout() {
+        return this.timeout;
+    }
+
     @DataBoundSetter
     public void setVaultUrl(String vaultUrl) {
         this.vaultUrl = normalizeUrl(vaultUrl);
@@ -109,8 +117,14 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return skipSslVerification;
     }
 
+    @DataBoundSetter
     public void setSkipSslVerification(boolean skipSslVerification) {
         this.skipSslVerification = skipSslVerification;
+    }
+
+    @DataBoundSetter
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
     }
 
     @Extension

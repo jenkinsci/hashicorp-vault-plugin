@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
@@ -8,7 +7,6 @@ import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.response.VaultResponse;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,40 +16,23 @@ public class VaultAccessor implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private static final Logger LOGGER = Logger.getLogger(VaultAccessor.class.getName());
-
 	private transient Vault vault;
+    private VaultConfig config;
+    private VaultCredential credential;
 
-    private transient VaultConfig config;
-
-
-    public void init(String url) {
-        init(url, null, false);
+    public VaultAccessor() {
+        this.config = new VaultConfig();
+        this.credential = null;
     }
 
-    public void init(String url, boolean skipSslVerification) {
-        init(url, null, skipSslVerification);
+    public VaultAccessor(VaultConfig config, VaultCredential credential) {
+        this.config = config;
+        this.credential = credential;
     }
 
-    public void init(String url, VaultCredential credential) {
-        init(url, credential, false);
-    }
 
-    public void init(String url, VaultCredential credential, boolean skipSslVerification) {
-
-        LOGGER.log(Level.INFO, "Vault Accessor init: " + url + " with credential: " + credential);
-        init(url, credential, skipSslVerification, null);
-    }
-
-    public void init(String url, VaultCredential credential, boolean skipSslVerification, String vaultNamespace) {
+    public VaultAccessor init() {
         try {
-            config = new VaultConfig()
-                    .address(url)
-                    .sslConfig(new SslConfig().verify(skipSslVerification).build());
-
-            if (StringUtils.isNotEmpty(vaultNamespace)) {
-                config.nameSpace(vaultNamespace);
-            }
-
             config.build();
 
             if (credential == null)
@@ -61,6 +42,23 @@ public class VaultAccessor implements Serializable {
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
+        return this;
+    }
+
+    public VaultConfig getConfig() {
+        return config;
+    }
+
+    public void setConfig(VaultConfig config) {
+        this.config = config;
+    }
+
+    public VaultCredential getCredential() {
+        return credential;
+    }
+
+    public void setCredential(VaultCredential credential) {
+        this.credential = credential;
     }
 
     public LogicalResponse read(String path, Integer engineVersion) {

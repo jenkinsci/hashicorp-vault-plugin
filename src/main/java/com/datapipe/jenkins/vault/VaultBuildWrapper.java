@@ -23,6 +23,8 @@
  */
 package com.datapipe.jenkins.vault;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.VaultConfig;
 import com.google.common.annotations.VisibleForTesting;
 
 import com.bettercloud.vault.VaultException;
@@ -127,9 +129,23 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
         }
 
+        VaultConfig vaultConfig = null;
+        try {
+            vaultConfig = new VaultConfig()
+                    .address(configuration.getVaultUrl())
+                    .sslConfig(new SslConfig().verify(configuration.isSkipSslVerification()).build())
+                    .nameSpace(configuration.getVaultNamespace())
+                    .openTimeout(configuration.getTimeout())
+                    .readTimeout(configuration.getTimeout());
+        } catch (VaultException e) {
+            throw new VaultPluginException("Could not set up VaultConfig.", e);
+        }
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url, credential, configuration.isSkipSslVerification(), configuration.getVaultNamespace());
+        vaultAccessor.setConfig(vaultConfig);
+        vaultAccessor.setCredential(credential);
+        vaultAccessor.init();
+
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             try {
@@ -142,12 +158,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                     valuesToMask.add(values.get(value.getVaultKey()));
                     context.env(value.getEnvVar(), values.get(value.getVaultKey()));
                 }
-            }catch (VaultPluginException ex) {
+            } catch (VaultPluginException ex) {
                 VaultException e = (VaultException) ex.getCause();
-                if (e.getHttpStatusCode() == 404 && !configuration.isFailIfNotFound())
+                if (e.getHttpStatusCode() == 404 && !configuration.isFailIfNotFound()) {
                     logger.println("Vault credentials not found " + vaultSecret.getPath());
-                else
-                    throw new VaultPluginException("Vault credentials not found " + vaultSecret.getPath(), e);
+                } else {
+                    throw ex;
+                }
             }
         }
         return responses;

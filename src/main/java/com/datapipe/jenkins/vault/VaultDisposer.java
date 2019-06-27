@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault;
 
+import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
@@ -28,8 +29,8 @@ public class VaultDisposer extends SimpleBuildWrapper.Disposer {
 
     @Override
     public void tearDown(final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener) throws IOException, InterruptedException {
-        VaultAccessor vaultAccessor = new VaultAccessor();
-        vaultAccessor.init(vaultConfiguration.getVaultUrl(), vaultCredential);
+        VaultConfig vaultConfig = new VaultConfig().address(vaultConfiguration.getVaultUrl());
+        VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential).init();
         for (String leaseId : leaseIds) {
             if (leaseId != null && !leaseId.isEmpty()) {
                 vaultAccessor.revoke(leaseId);
