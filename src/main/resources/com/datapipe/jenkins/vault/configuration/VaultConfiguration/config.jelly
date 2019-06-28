@@ -13,7 +13,7 @@
     <f:entry title="Fail if path is not found" field="failIfNotFound" name="failIfNotFound">
         <f:checkbox/>
     </f:entry>
-    <f:entry title="Timeout" field="timeout" description="Connect/ Read timeout in secomnds.">
+    <f:entry title="Timeout" field="timeout" description="Timeout in seconds for reading a secret, after which the plugin will stop retrying">
         <f:number default="60"/>
     </f:entry>
 </j:jelly>

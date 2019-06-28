@@ -22,6 +22,9 @@ import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 
 public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements Serializable {
+    private static final int RETRY_INTERVAL_MILLISECONDS = 1000;
+    private static final int DEFAULT_TIMEOUT = 30;
+
     private String vaultUrl;
 
     private String vaultCredentialId;
@@ -32,7 +35,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String vaultNamespace;
 
-    private Integer timeout;
+    private Integer timeout = DEFAULT_TIMEOUT;
 
     public VaultConfiguration() {
         // no args constructor
@@ -44,7 +47,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultCredentialId = vaultCredentialId;
         this.failIfNotFound = failIfNotFound;
         this.vaultNamespace = vaultNamespace;
-        this.timeout = timeout;
+        this.timeout = (null != timeout) ? timeout : DEFAULT_TIMEOUT;
+
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
@@ -69,6 +73,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         if (StringUtils.isBlank(result.getVaultNamespace())) {
             result.setVaultNamespace(parent.getVaultNamespace());
         }
+        if (null == result.timeout) {
+            result.setTimeout(parent.getTimeout());
+        }
         result.failIfNotFound = failIfNotFound;
         return result;
     }
@@ -85,9 +92,32 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return vaultNamespace;
     }
 
+    /**
+     * Timeout in seconds for reading a secret from vault
+     * @return
+     */
     public Integer getTimeout() {
         return this.timeout;
     }
+
+    /**
+     * Number of retries when reading a secret from vault
+     * @return
+     */
+    public int getMaxRetries() {
+        final Integer to = (null != getTimeout()) ? getTimeout() : DEFAULT_TIMEOUT;
+        return (int) (to * 1000.0 / RETRY_INTERVAL_MILLISECONDS);
+    }
+
+    /**
+     * The time in milliseconds in between retries when reading a secret from vault
+     * @return
+     */
+    public int getRetryIntervalMilliseconds() {
+        return RETRY_INTERVAL_MILLISECONDS;
+    }
+
+
 
     @DataBoundSetter
     public void setVaultUrl(String vaultUrl) {

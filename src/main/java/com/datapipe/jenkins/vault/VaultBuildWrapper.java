@@ -134,9 +134,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             vaultConfig = new VaultConfig()
                     .address(configuration.getVaultUrl())
                     .sslConfig(new SslConfig().verify(configuration.isSkipSslVerification()).build())
-                    .nameSpace(configuration.getVaultNamespace())
-                    .openTimeout(configuration.getTimeout())
-                    .readTimeout(configuration.getTimeout());
+                    .nameSpace(configuration.getVaultNamespace());
         } catch (VaultException e) {
             throw new VaultPluginException("Could not set up VaultConfig.", e);
         }
@@ -144,6 +142,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         vaultAccessor.setConfig(vaultConfig);
         vaultAccessor.setCredential(credential);
+        vaultAccessor.setMaxRetries(configuration.getMaxRetries());
+        vaultAccessor.setRetryIntervalMilliseconds(configuration.getRetryIntervalMilliseconds());
         vaultAccessor.init();
 
         ArrayList<LogicalResponse> responses = new ArrayList<>();

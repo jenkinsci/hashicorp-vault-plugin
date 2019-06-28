@@ -20,6 +20,9 @@ public class VaultAccessor implements Serializable {
     private VaultConfig config;
     private VaultCredential credential;
 
+    private int maxRetries = 0;
+    private int retryIntervalMilliseconds = 1000;
+
     public VaultAccessor() {
         this.config = new VaultConfig();
         this.credential = null;
@@ -36,9 +39,9 @@ public class VaultAccessor implements Serializable {
             config.build();
 
             if (credential == null)
-                vault = new Vault(config);
+                vault = new Vault(config).withRetries(maxRetries, retryIntervalMilliseconds);
             else
-                vault = credential.authorizeWithVault(config);
+                vault = credential.authorizeWithVault(config).withRetries(maxRetries, retryIntervalMilliseconds);
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
@@ -59,6 +62,22 @@ public class VaultAccessor implements Serializable {
 
     public void setCredential(VaultCredential credential) {
         this.credential = credential;
+    }
+
+    public int getMaxRetries() {
+        return maxRetries;
+    }
+
+    public void setMaxRetries(int maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
+    public int getRetryIntervalMilliseconds() {
+        return retryIntervalMilliseconds;
+    }
+
+    public void setRetryIntervalMilliseconds(int retryIntervalMilliseconds) {
+        this.retryIntervalMilliseconds = retryIntervalMilliseconds;
     }
 
     public LogicalResponse read(String path, Integer engineVersion) {

@@ -87,12 +87,14 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
             VaultConfig vaultConfig = new VaultConfig()
                     .address(globalConfig.getConfiguration().getVaultUrl())
                     .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build())
-                    .nameSpace(globalConfig.getConfiguration().getVaultNamespace())
-                    .openTimeout(globalConfig.getConfiguration().getTimeout())
-                    .readTimeout(globalConfig.getConfiguration().getTimeout());
+                    .nameSpace(globalConfig.getConfiguration().getVaultNamespace());
             VaultCredential vaultCredential = retrieveVaultCredentials(globalConfig.getConfiguration().getVaultCredentialId());
 
-            VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential).init();
+            VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
+            vaultAccessor.setMaxRetries(globalConfig.getConfiguration().getMaxRetries());
+            vaultAccessor.setRetryIntervalMilliseconds(globalConfig.getConfiguration().getRetryIntervalMilliseconds());
+            vaultAccessor.init();
+
             Map<String, String> values = vaultAccessor.read(this.getPath(), this.getEngineVersion()).getData();
 
             return values.get(valueKey);
