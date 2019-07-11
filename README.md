@@ -50,6 +50,11 @@ You enter your `role-id` and `secret-id` there. The description helps to find yo
 
 The `path` field is the approle authentication path. This is, by default, "approle" and this will also be used if no path is specified here.
 
+#### Migrate current Jenkins Vault configuration to support a new version of plugin.
+After update a plugin from version `2.2.0` you can note - builds failed with an exception `java.lang.NullPointerException`. This steps will help you fix it:
+1. If you using AppRole auth method - you need to update Jenkins `Credential` store (in UI) for all kinds `Vault App Role Credential` and set `Path` field for your correct path or just leave the default `approle` and save. 
+2. Go to `Configure` of failed job and change Vault Engine in `Advanced Settings` and choose your version on KV Engine 1 or 2 from a select menu `K/V Engine Version` for ALL `Vault Secrets` and save.
+
 #### Vault Github Credential
 
 ![Github Credentia](docs/images/github_credential.png)
@@ -87,11 +92,23 @@ Let the code speak for itself:
 ```groovy
 node {
   // define the secrets and the env variables
+  // Up to version 2.2.0 of plugin it works, but just for KV version 1
   def secrets = [
       [$class: 'VaultSecret', path: 'secret/testing', secretValues: [
           [$class: 'VaultSecretValue', envVar: 'testing', vaultKey: 'value_one'],
           [$class: 'VaultSecretValue', envVar: 'testing_again', vaultKey: 'value_two']]],
       [$class: 'VaultSecret', path: 'secret/another_test', secretValues: [
+          [$class: 'VaultSecretValue', envVar: 'another_test', vaultKey: 'value']]]
+  ]
+  // For version above 2.2.0 you need set "engineVersion" variable
+  // regarding your Vault version - 1 or 2. Without it, this doesn't work.
+  // Please note, not need to add middle "/data/" path for KV 2 secrets,
+  // plugin will do it under a hood 
+  def secrets = [
+      [$class: 'VaultSecret', path: 'secret/testing', engineVersion: 2, secretValues: [
+          [$class: 'VaultSecretValue', envVar: 'testing', vaultKey: 'value_one'],
+          [$class: 'VaultSecretValue', envVar: 'testing_again', vaultKey: 'value_two']]],
+      [$class: 'VaultSecret', path: 'secret/another_test', engineVersion: 2, secretValues: [
           [$class: 'VaultSecretValue', envVar: 'another_test', vaultKey: 'value']]]
   ]
 
