@@ -111,6 +111,10 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
             Map<String, String> values = vaultAccessor.read(secretPath, engineVersion).getData();
 
+            if (!values.containsKey(secretKey)) {
+                throw new VaultPluginException("Key " + secretKey + " could not be found in path " + secretPath);
+            }
+
             return values.get(secretKey);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -193,12 +197,18 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
             String username = null;
             try {
-                username = getVaultSecret(path, passwordKey, engineVersion);
+                username = getVaultSecret(path, usernameKey, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
-            return FormValidation.ok("Successfully retrieved \n   username " + username);
+            try {
+                getVaultSecret(path, passwordKey, engineVersion);
+            } catch (Exception e) {
+                return FormValidation.error("FAILED to retrieve password key: \n" + e);
+            }
+
+            return FormValidation.ok("Successfully retrieved username " + username + " and the password");
         }
 
     }
