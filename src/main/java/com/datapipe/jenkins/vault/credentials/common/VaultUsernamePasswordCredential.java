@@ -7,7 +7,7 @@ import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
 
-@NameWith(value = VaultUsernamePasswordCredential.NameProvider.class, priority = 1)
+@NameWith(value = VaultUsernamePasswordCredential.NameProvider.class, priority = 32)
 public interface VaultUsernamePasswordCredential extends StandardUsernameCredentials, UsernamePasswordCredentials {
 
     String getDisplayName();
