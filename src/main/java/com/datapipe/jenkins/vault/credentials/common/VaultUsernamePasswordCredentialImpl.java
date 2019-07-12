@@ -86,8 +86,12 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         try {
             VaultConfig vaultConfig = new VaultConfig()
                     .address(globalConfig.getConfiguration().getVaultUrl())
-                    .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build())
-                    .nameSpace(globalConfig.getConfiguration().getVaultNamespace());
+                    .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build());
+
+            if (StringUtils.isNotEmpty(globalConfig.getConfiguration().getVaultNamespace())) {
+                    vaultConfig.nameSpace(globalConfig.getConfiguration().getVaultNamespace());
+            }
+
             VaultCredential vaultCredential = retrieveVaultCredentials(globalConfig.getConfiguration().getVaultCredentialId());
 
             VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
