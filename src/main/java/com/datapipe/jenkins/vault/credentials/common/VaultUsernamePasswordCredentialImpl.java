@@ -1,10 +1,11 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.bettercloud.vault.SslConfig;
-import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
-import com.cloudbees.plugins.credentials.*;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
@@ -33,7 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @SuppressWarnings("ALL")
-public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials implements VaultUsernamePasswordCredential, StandardUsernamePasswordCredentials {
+public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials implements VaultUsernamePasswordCredential {
 
     public static final String DEFAULT_USERNAME_KEY = "username";
     public static final String DEFAULT_PASSWORD_KEY = "password";
@@ -79,7 +80,7 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     }
 
     private static String getVaultSecret(String secretPath, String secretKey, Integer engineVersion) {
-        LOGGER.log(Level.INFO, "Retrieving vault secret path=" + secretPath + " key=" + secretKey + " engineVersion=" + engineVersion);
+        LOGGER.info("Retrieving vault secret path=" + secretPath + " key=" + secretKey + " engineVersion=" + engineVersion);
 
         GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
 
@@ -94,7 +95,8 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         try {
             VaultConfig vaultConfig = new VaultConfig()
                     .address(globalConfig.getConfiguration().getVaultUrl())
-                    .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build());
+                    .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build())
+                    .engineVersion(engineVersion);
 
             if (StringUtils.isNotEmpty(globalConfig.getConfiguration().getVaultNamespace())) {
                 vaultConfig.nameSpace(globalConfig.getConfiguration().getVaultNamespace());
