@@ -18,11 +18,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.security.ACL;
+import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.util.Collections;
 import java.util.List;
@@ -73,6 +75,12 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     }
 
     private String getValue(String valueKey) {
+        return getVaultSecret(this.getPath(), valueKey, this.getEngineVersion());
+    }
+
+    private static String getVaultSecret(String secretPath, String secretKey, Integer engineVersion) {
+        LOGGER.log(Level.INFO, "Retrieving vault secret path=" + secretPath + " key=" + secretKey + " engineVersion=" + engineVersion);
+
         GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
 
 
@@ -89,7 +97,7 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
                     .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build());
 
             if (StringUtils.isNotEmpty(globalConfig.getConfiguration().getVaultNamespace())) {
-                    vaultConfig.nameSpace(globalConfig.getConfiguration().getVaultNamespace());
+                vaultConfig.nameSpace(globalConfig.getConfiguration().getVaultNamespace());
             }
 
             VaultCredential vaultCredential = retrieveVaultCredentials(globalConfig.getConfiguration().getVaultCredentialId());
@@ -99,19 +107,19 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
             vaultAccessor.setRetryIntervalMilliseconds(globalConfig.getConfiguration().getRetryIntervalMilliseconds());
             vaultAccessor.init();
 
-            Map<String, String> values = vaultAccessor.read(this.getPath(), this.getEngineVersion()).getData();
+            Map<String, String> values = vaultAccessor.read(secretPath, engineVersion).getData();
 
-            return values.get(valueKey);
+            return values.get(secretKey);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private VaultCredential retrieveVaultCredentials(String id) {
+    private static VaultCredential retrieveVaultCredentials(String id) {
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException("The credential id was not configured - please specify the credentials to use.");
         } else {
-            LOGGER.log(Level.INFO, "Using credential ID : " + id );
+            LOGGER.log(Level.INFO, "Retrieving vault credential ID : " + id );
         }
         List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class,
                 Jenkins.getInstance(),
@@ -167,12 +175,29 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         this.engineVersion = engineVersion;
     }
 
-    @Extension
-    public static class DescriptorImpl extends CredentialsDescriptor {
+    @Extension(ordinal = 1)
+    public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
         @Override
         public String getDisplayName() {
             return "Vault Username-Password Credential";
         }
+
+        public FormValidation doTestConnection(
+                @QueryParameter("path") String path,
+                @QueryParameter("usernameKey") String usernameKey,
+                @QueryParameter("passwordKey") String passwordKey,
+                @QueryParameter("engineVersion") Integer engineVersion) {
+
+            String username = null;
+            try {
+                username = getVaultSecret(path, passwordKey, engineVersion);
+            } catch (Exception e) {
+                return FormValidation.error("FAILED to retrieve username key: \n" + e);
+            }
+
+            return FormValidation.ok("Successfully retrieved \n   username " + username);
+        }
+
     }
 }
