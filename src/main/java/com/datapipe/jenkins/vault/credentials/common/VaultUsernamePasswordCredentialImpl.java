@@ -80,6 +80,11 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     }
 
     private static String getVaultSecret(String secretPath, String secretKey, Integer engineVersion) {
+        if (Jenkins.getInstanceOrNull() == null) {
+            LOGGER.warning("Cannot retrieve secret becuase Jenkins.instance is not available");
+            return null;
+        }
+
         LOGGER.info("Retrieving vault secret path=" + secretPath + " key=" + secretKey + " engineVersion=" + engineVersion);
 
         GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
