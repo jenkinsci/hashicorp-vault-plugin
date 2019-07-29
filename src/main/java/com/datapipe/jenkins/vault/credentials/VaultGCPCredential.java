@@ -47,7 +47,7 @@ public class VaultGCPCredential extends AbstractVaultTokenCredential {
         }
 
         try {
-            return vault.auth().loginByGCP(role, jwt).getAuthClientToken();
+            return vault.withRetries(5, 500).auth().loginByGCP(role, jwt).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }
