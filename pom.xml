@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>2.25</version>
+    <version>3.48</version>
     <relativePath />
   </parent>
   <groupId>com.datapipe.jenkins.plugins</groupId>
@@ -12,9 +12,9 @@
   <version>2.2.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <properties>
-    <jenkins.version>2.32.1</jenkins.version>
+    <jenkins.version>2.60.3</jenkins.version>
     <java.level>8</java.level>
-    <jenkins-test-harness.version>2.19</jenkins-test-harness.version>
+    <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
   </properties>
   <name>HashiCorp Vault Plugin</name>
   <description>Build Wrapper for reading secrets in a HashiCorp Vault</description>
@@ -60,21 +60,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.19.1</version>
           <configuration>
             <includes>
               <include>**/*Test.java</include>
               <include>**/*Spec.java</include>
               <include>**/*IT.java</include>
             </includes>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.jenkins-ci.tools</groupId>
-          <artifactId>maven-hpi-plugin</artifactId>
-          <extensions>true</extensions>
-          <configuration>
-            <compatibleSinceVersion>2.0.0</compatibleSinceVersion>
           </configuration>
         </plugin>
       </plugins>
@@ -93,17 +84,6 @@
       <artifactId>workflow-api</artifactId>
       <version>2.1</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.jenkins-ci.plugins.workflow</groupId>
-          <artifactId>workflow-step-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-scm-step</artifactId>
-      <version>2.4</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -128,7 +108,6 @@
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-step-api</artifactId>
       <version>2.10</version>
-      <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -167,15 +146,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.7.21</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
-  <reporting>
-    <plugins>
-      <plugin>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.19.1</version>
-      </plugin>
-    </plugins>
-  </reporting>
 </project>
