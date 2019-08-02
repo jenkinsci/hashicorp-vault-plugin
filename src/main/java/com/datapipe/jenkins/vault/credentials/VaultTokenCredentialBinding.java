@@ -36,8 +36,8 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     private final String addrVariable;
     private final String tokenVariable;
     private final String vaultAddr;
-    private String vaultNamespace;
-    private String namespaceVariable;
+    private String vaultNamespace = "";
+    private String namespaceVariable = DEFAULT_VAULT_NAMESPACE_VARIABLE_NAME;
 
     /**
      *
@@ -61,7 +61,7 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
 
     @DataBoundSetter
     public void setVaultNamespace(String vaultNamespace) {
-        this.vaultNamespace = vaultNamespace;
+        this.vaultNamespace = StringUtils.defaultIfBlank(vaultNamespace, "");
     }
 
     @NonNull
@@ -99,9 +99,8 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
         AbstractVaultTokenCredential credentials = getCredentials(build);
         Map<String,String> m = new HashMap<String,String>();
         m.put(addrVariable, vaultAddr);
-        m.put(namespaceVariable, namespaceVariable);
+        m.put(namespaceVariable, vaultNamespace);
         m.put(tokenVariable, getToken(credentials));
-
         return new MultiEnvironment(m);
     }
 

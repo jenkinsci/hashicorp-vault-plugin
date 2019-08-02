@@ -68,7 +68,11 @@ public class VaultUsernamePasswordCredentialIT {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                VaultUsernamePasswordCredentialImpl vup = new VaultUsernamePasswordCredentialImpl(null, credentialsId, "secret/custom", "name", "alias", "1", "Test Credentials");
+                VaultUsernamePasswordCredentialImpl vup = new VaultUsernamePasswordCredentialImpl(null, credentialsId, "Test Credentials");
+                vup.setPath("secret/custom");
+                vup.setUsernameKey("name");
+                vup.setPasswordKey("alias");
+                vup.setEngineVersion(1);
 
                 VaultUsernamePasswordCredentialImpl vup_spy = spy(vup);
                 doReturn(credentialsId).when(vup_spy).getId();
@@ -95,14 +99,16 @@ public class VaultUsernamePasswordCredentialIT {
     @Test
     public void shouldFailIfMissingCredentials() {
         final String credentialsId = "cloudfoundry";
-        final String invalidCredentialId = "nonexistentCredId";
-        final String vaultAddr = "https://localhost:8200";
         final String token = "fakeToken";
         final String jobId = "testJob";
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                VaultUsernamePasswordCredential c = new VaultUsernamePasswordCredentialImpl(null, credentialsId, "secret/cloudfoundry", null, null, "1", "Test Credentials");
+                VaultUsernamePasswordCredentialImpl c = new VaultUsernamePasswordCredentialImpl(null, credentialsId, "Test Credentials");
+                c.setPath("secret/cloudfoundry");
+                c.setUsernameKey(null);
+                c.setPasswordKey(null);
+                c.setEngineVersion(1);
                 CredentialsProvider.lookupStores(story.j.jenkins).iterator().next().addCredentials(Domain.global(), c);
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
                 p.setDefinition(new CpsFlowDefinition(""
