@@ -235,16 +235,4 @@ public class VaultSecretSourceTest {
         context.getSecretSources().forEach(SecretSource::init);
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("re-auth-test"));
     }
-
-    // TODO: used to check for backwards compatibility. Deprecate!
-    @Test
-    @ConfiguredWithCode("vault.yml")
-    @EnvsFromFile(VAULT_APPROLE_FILE)
-    @Envs({
-        @Env(name = "CASC_VAULT_PATH", value = VAULT_PATH_KV1_1 + "," + VAULT_PATH_KV1_2),
-        @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "1")
-    })
-    public void kv2WithUserDeprecatedPath() {
-        assertThat(SecretSourceResolver.resolve(context, "${key3}"), equalTo("789"));
-    }
 }
