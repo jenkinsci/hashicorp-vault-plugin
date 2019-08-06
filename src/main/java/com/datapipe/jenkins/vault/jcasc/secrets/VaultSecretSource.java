@@ -58,9 +58,10 @@ public class VaultSecretSource extends SecretSource {
         Optional<String> vaultEngineVersionOpt = getVariable(CASC_VAULT_ENGINE_VERSION);
         Optional<String> vaultUrl = getVariable(CASC_VAULT_URL);
         Optional<String> vaultNamespace = getVariable(CASC_VAULT_NAMESPACE);
-        Optional<String[]> vaultPaths = getCommaSeparatedVariables(CASC_VAULT_PATHS)
-                .map(Optional::of)
-                .orElseGet(() -> getCommaSeparatedVariables(CASC_VAULT_PATH)); // TODO: deprecate!
+        Optional<String[]> vaultPaths = getCommaSeparatedVariables(CASC_VAULT_PATHS);
+        getVariable(CASC_VAULT_PATH).ifPresent(s -> LOGGER
+            .log(Level.SEVERE, "{0} is deprecated, please switch to {1}",
+                new Object[]{CASC_VAULT_PATH, CASC_VAULT_PATHS}));
 
         // Check mandatory variables are set
         if (!vaultUrl.isPresent() || !vaultPaths.isPresent()) return;
@@ -193,11 +194,7 @@ public class VaultSecretSource extends SecretSource {
     }
 
     private Optional<String[]> getCommaSeparatedVariables(String key) {
-        Optional<String[]> strings = getVariable(key).map(str -> str.split(","));
-        if (key.equals(CASC_VAULT_PATH) && strings.isPresent())
-             LOGGER.log(Level.WARNING, "[Deprecation Warning] CASC_VAULT_PATH is deprecated. " +
-                    "Please use CASC_VAULT_PATHS instead."); // TODO: deprecate!
-        return strings;
+        return getVariable(key).map(str -> str.split(","));
     }
 
     @Override
