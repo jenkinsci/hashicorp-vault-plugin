@@ -28,12 +28,12 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
-import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
 
 import java.util.List;
+
+import static hudson.Util.fixEmptyAndTrim;
 
 /**
  * Represents a Vault secret.
@@ -48,7 +48,7 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
   @DataBoundConstructor
   public VaultSecret(String path, List<VaultSecretValue> secretValues) {
-    this.path = path;
+    this.path = fixEmptyAndTrim(path);
     this.secretValues = secretValues;
   }
 

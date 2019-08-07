@@ -4,10 +4,15 @@
     <f:entry title="Vault URL">
         <f:textbox field="vaultUrl" name="vaultUrl"/>
     </f:entry>
-    <f:entry title="Vault Credential" field="vaultCredentialId" name="vaultCredentialId">
+    <f:entry title="Vault Credential" field="vaultCredentialId">
         <c:select/>
     </f:entry>
-    <f:entry title="Fail if path is not found" field="failIfNotFound" name="failIfNotFound">
-        <f:checkbox/>
-    </f:entry>
+    <f:advanced>
+        <f:entry title="Fail if path is not found" field="failIfNotFound">
+            <f:checkbox default="${descriptor.DEFAULT_FAIL_NOT_FOUND}"/>
+        </f:entry>
+        <f:entry title="Skip SSL verification" field="skipSslVerification">
+            <f:checkbox default="${descriptor.DEFAULT_SKIP_SSL_VERIFICATION}"/>
+        </f:entry>
+    </f:advanced>
 </j:jelly>
