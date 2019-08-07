@@ -21,20 +21,23 @@ import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 
+import static hudson.Util.fixEmptyAndTrim;
+
 public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements Serializable {
     private String vaultUrl;
 
     private String vaultCredentialId;
 
-    private boolean failIfNotFound = true;
+    private boolean failIfNotFound = DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
 
-    private boolean skipSslVerification = false;
+    private boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
 
+    @DataBoundConstructor
     public VaultConfiguration() {
         // no args constructor
     }
 
-    @DataBoundConstructor
+    @Deprecated
     public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound) {
         this.vaultUrl = normalizeUrl(vaultUrl);
         this.vaultCredentialId = vaultCredentialId;
@@ -45,6 +48,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultUrl = toCopy.getVaultUrl();
         this.vaultCredentialId = toCopy.getVaultCredentialId();
         this.failIfNotFound = toCopy.failIfNotFound;
+        this.skipSslVerification = toCopy.skipSslVerification;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -72,12 +76,12 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     @DataBoundSetter
     public void setVaultUrl(String vaultUrl) {
-        this.vaultUrl = normalizeUrl(vaultUrl);
+        this.vaultUrl = normalizeUrl(fixEmptyAndTrim(vaultUrl));
     }
 
     @DataBoundSetter
     public void setVaultCredentialId(String vaultCredentialId) {
-        this.vaultCredentialId = vaultCredentialId;
+        this.vaultCredentialId = fixEmptyAndTrim(vaultCredentialId);
     }
 
     public boolean isFailIfNotFound() {
@@ -93,12 +97,18 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return skipSslVerification;
     }
 
+    @DataBoundSetter
     public void setSkipSslVerification(boolean skipSslVerification) {
         this.skipSslVerification = skipSslVerification;
     }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
+
+        public static final boolean DEFAULT_FAIL_NOT_FOUND = true;
+
+        public static final boolean DEFAULT_SKIP_SSL_VERIFICATION = false;
+
         @Override
         public String getDisplayName() {
             return "Vault Configuration";
