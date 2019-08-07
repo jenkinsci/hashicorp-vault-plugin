@@ -11,10 +11,16 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 import org.testcontainers.utility.TestEnvironment;
 import org.testcontainers.vault.VaultContainer;
+
+import static com.github.dockerjava.api.model.Capability.IPC_LOCK;
+import static org.apache.commons.io.FileUtils.writeStringToFile;
+import static org.testcontainers.utility.MountableFile.forHostPath;
 
 @SuppressWarnings("WeakerAccess")
 class VaultTestUtil {
@@ -33,6 +39,7 @@ class VaultTestUtil {
     public static final String VAULT_PATH_KV2_AUTH_TEST = "kv-v2/auth-test";
     public static final String VAULT_APPROLE_FILE = "JCasC_temp_approle_secret.prop";
     private static boolean configured = false;
+    private static Network network;
 
     public static void runCommand(VaultContainer container, final String... command)
         throws IOException, InterruptedException {
@@ -49,18 +56,43 @@ class VaultTestUtil {
     }
 
     public static VaultContainer createVaultContainer() {
-        if (!hasDockerDaemon()) return null;
+        if (!hasDockerDaemon()) {
+            return null;
+        }
+        network = Network.newNetwork();
         return new VaultContainer<>(VaultTestUtil.VAULT_DOCKER_IMAGE)
-                .withVaultToken(VaultTestUtil.VAULT_ROOT_TOKEN)
-                .withCopyFileToContainer(MountableFile.forHostPath(
-                        VaultTestUtil.class.getResource("vaultTest_adminPolicy.hcl").getPath()),
-                        "/admin.hcl")
-                .withVaultPort(8200)
-                .waitingFor(Wait.forHttp("/v1/sys/seal-status").forStatusCode(200));
+            .withVaultToken(VaultTestUtil.VAULT_ROOT_TOKEN)
+            .withNetwork(network)
+            .withNetworkAliases("vault")
+            .withCopyFileToContainer(forHostPath(
+                VaultTestUtil.class.getResource("vaultTest_adminPolicy.hcl").getPath()),
+                "/admin.hcl")
+            .withVaultPort(8200)
+            .waitingFor(Wait.forHttp("/v1/sys/seal-status").forStatusCode(200));
+    }
+
+    public static VaultContainer createVaultAgentContainer(
+        Path roleIDPath,
+        Path secretIDPath) {
+        return new VaultContainer<>("vault:1.2.1")
+            .withNetwork(network)
+            .withCreateContainerCmdModifier(cmd -> cmd.withCapAdd(IPC_LOCK))
+            .withCopyFileToContainer(forHostPath(
+                VaultTestUtil.class.getResource("vaultTest_agent.hcl").getPath()),
+                "/agent.hcl")
+            .withCopyFileToContainer(forHostPath(roleIDPath),
+                "/home/vault/role_id")
+            .withCopyFileToContainer(forHostPath(secretIDPath),
+                "/home/vault/secret_id")
+            .withCommand("vault agent -config=/agent.hcl -address=http://vault:8200")
+            .withVaultPort(8100)
+            .waitingFor(Wait.forLogMessage(".*renewed auth token.*", 1));
     }
 
     public static void configureVaultContainer(VaultContainer container) {
-        if (configured) return;
+        if (configured) {
+            return;
+        }
         try {
             // Create Secret Backends
             runCommand(container, "vault", "secrets", "enable", "-path=kv-v2",
@@ -99,6 +131,10 @@ class VaultTestUtil {
             File file = filePath.toFile();
             FileOutputStream fos = new FileOutputStream(file);
             properties.store(fos, null);
+            Path roleIDPath = Paths.get(System.getProperty("java.io.tmpdir"), "role_id");
+            Path secretIDPath = Paths.get(System.getProperty("java.io.tmpdir"), "secret_id");
+            writeStringToFile(roleIDPath.toFile(), roleID);
+            writeStringToFile(secretIDPath.toFile(), secretID);
 
             // add secrets for v1 and v2
             runCommand(container, "vault", "kv", "put", VAULT_PATH_KV1_1, "key1=123",
@@ -110,6 +146,10 @@ class VaultTestUtil {
             runCommand(container, "vault", "kv", "put", VAULT_PATH_KV2_3, "key2=321");
             runCommand(container, "vault", "kv", "put", VAULT_PATH_KV2_AUTH_TEST,
                 "key1=auth-test");
+            VaultContainer vaultAgentContainer = createVaultAgentContainer(roleIDPath,
+                secretIDPath);
+            assert vaultAgentContainer != null;
+            vaultAgentContainer.start();
             LOGGER.log(Level.INFO, "Vault is configured");
             configured = true;
         } catch (Exception e) {

@@ -235,4 +235,15 @@ public class VaultSecretSourceTest {
         context.getSecretSources().forEach(SecretSource::init);
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("re-auth-test"));
     }
+
+    @Test
+    @ConfiguredWithCode("vault.yml")
+    @Envs({
+        @Env(name = "CASC_VAULT_AGENT_ADDR", value = "http://localhost:8100"),
+        @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_KV1_1 + "," + VAULT_PATH_KV1_2),
+        @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "1")
+    })
+    public void kv1WithAgent() {
+        assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+    }
 }
