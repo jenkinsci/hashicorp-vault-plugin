@@ -41,6 +41,7 @@ import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -193,6 +194,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
      * that it can be accessed from views.
      */
     @Extension
+    @Symbol("withVault")
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         public DescriptorImpl() {
             super(VaultBuildWrapper.class);
