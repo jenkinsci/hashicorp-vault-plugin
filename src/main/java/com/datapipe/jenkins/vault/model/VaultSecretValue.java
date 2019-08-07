@@ -23,11 +23,16 @@
  */
 package com.datapipe.jenkins.vault.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import static hudson.Util.fixEmptyAndTrim;
 
 /**
  * @author Peter Tierno {@literal <}ptierno{@literal @}datapipe.com{@literal >}
@@ -36,20 +41,34 @@ public class VaultSecretValue
     extends AbstractDescribableImpl<VaultSecretValue> {
 
   private String envVar;
-  private String vaultKey;
+  private final String vaultKey;
 
-  @DataBoundConstructor
-  public VaultSecretValue(String envVar, String vaultKey) {
-    this.envVar = envVar;
-    this.vaultKey = vaultKey;
+  @Deprecated
+  public VaultSecretValue(String envVar, @NonNull String vaultKey) {
+    this.envVar = fixEmptyAndTrim(envVar);
+    this.vaultKey = fixEmptyAndTrim(vaultKey);
   }
 
+  @DataBoundConstructor
+  public VaultSecretValue(@NonNull String vaultKey) {
+    this.vaultKey = fixEmptyAndTrim(vaultKey);
+  }
+
+  @DataBoundSetter
+  public void setEnvVar(String envVar) {
+    this.envVar = envVar;
+  }
+
+  /**
+   *
+   * @return envVar if value is not empty otherwise return vaultKey
+   */
   public String getEnvVar() {
-    return this.envVar;
+    return StringUtils.isEmpty(envVar) ? vaultKey : envVar;
   }
 
   public String getVaultKey() {
-    return this.vaultKey;
+    return vaultKey;
   }
 
   @Extension
