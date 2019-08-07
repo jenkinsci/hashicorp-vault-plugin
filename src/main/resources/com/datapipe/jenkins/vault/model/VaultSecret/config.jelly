@@ -6,7 +6,7 @@
   </f:entry>
 
   <f:entry>
-    <f:repeatableProperty field="secretValues" minimum="1" add="Add a key/value pair"></f:repeatableProperty>
+    <f:repeatableProperty field="secretValues" minimum="1" add="Add a key/value pair" />
   </f:entry>
 
   <f:entry title="">
@@ -17,7 +17,7 @@
 
   <f:advanced title="Advanced Settings">
     <f:entry field="engineVersion" title="K/V Engine Version">
-      <f:select />
+      <f:select default="${descriptor.DEFAULT_ENGINE_VERSION}" />
     </f:entry>
   </f:advanced>
 
