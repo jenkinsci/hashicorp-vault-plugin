@@ -43,7 +43,7 @@ import java.util.List;
 public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
   private String path;
-  private Integer engineVersion;
+  private Integer engineVersion = DescriptorImpl.DEFAULT_ENGINE_VERSION;
   private List<VaultSecretValue> secretValues;
 
   @DataBoundConstructor
@@ -72,29 +72,18 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
   @Extension
   public static final class DescriptorImpl extends Descriptor<VaultSecret> {
 
-    private Integer engineVersion;
-
-    public Integer getEngineVersion() {
-      return this.engineVersion;
-    }
+    public static final int DEFAULT_ENGINE_VERSION = 2;
 
     @Override
     public String getDisplayName() {
       return "Vault Secret";
     }
 
-    @Override
-    public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-      this.engineVersion = Integer.parseInt(formData.getString("engineVersion"));
-
-      save();
-      return false;
-    }
-
+    @SuppressWarnings("unused") // used by stapler
     public ListBoxModel doFillEngineVersionItems() {
       return new ListBoxModel(
-              new Option("2", "2"),
-              new Option("1", "1")
+          new Option("1", "1"),
+          new Option("2", "2")
       );
     }
 
