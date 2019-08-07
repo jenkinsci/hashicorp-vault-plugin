@@ -138,10 +138,11 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 responses.add(response);
                 Map<String, String> values = response.getData();
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-                    if (values.get(value.getVaultKey()) == null || values.get(value.getVaultKey()).trim().isEmpty())
+                    String secret = values.get(value.getVaultKey());
+                    if (StringUtils.isBlank(secret))
                         throw new IllegalArgumentException("Vault Secret " + value.getVaultKey() + " at " + vaultSecret.getPath() + " is either null or empty. Please check the Secret in Vault.");
-                    valuesToMask.add(values.get(value.getVaultKey()));
-                    context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+                    valuesToMask.add(secret);
+                    context.env(value.getEnvVar(), secret);
                 }
             }catch (VaultPluginException ex) {
                 VaultException e = (VaultException) ex.getCause();
