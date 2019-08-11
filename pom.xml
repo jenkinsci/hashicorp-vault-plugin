@@ -83,8 +83,9 @@
               <rules>
                 <requireUpperBoundDeps>
                   <excludes combine.children="append">
-                    <!-- Docker Java API Plugin issues, https://issues.jenkins.io/browse/JENKINS-49369 -->
+                    <!-- Excluded as they are needed for test scope with test containers -->
                     <exclude>org.apache.commons:commons-compress</exclude>
+                    <exclude>org.slf4j:slf4j-api</exclude>
                   </excludes>
                 </requireUpperBoundDeps>
               </rules>
