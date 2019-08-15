@@ -31,7 +31,7 @@ install:
 
 script:
   - |
-    mvn -Penable-jacoco clean install jacoco:report -B \
+    mvn clean install -B \
       -Djava.level=$JAVA_LEVEL \
       $MVN_FLAG -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
