@@ -72,7 +72,7 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
   @Extension
   public static final class DescriptorImpl extends Descriptor<VaultSecret> {
 
-    public static final int DEFAULT_ENGINE_VERSION = 2;
+    public static final int DEFAULT_ENGINE_VERSION = 1;
 
     @Override
     public String getDisplayName() {
