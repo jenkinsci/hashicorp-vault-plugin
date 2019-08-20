@@ -1,7 +1,9 @@
 package com.datapipe.jenkins.vault.it;
 
+import static hudson.Functions.isWindows;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -27,6 +29,8 @@ import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 
+import hudson.tasks.BatchFile;
+import hudson.tasks.CommandInterpreter;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -56,6 +60,7 @@ public class VaultConfigurationIT {
 
    public static final String GLOBAL_CREDENTIALS_ID_1 = "global-1";
    public static final String GLOBAL_CREDENTIALS_ID_2 = "global-2";
+   public static final Integer GLOBAL_ENGINE_VERSION_2 = 2;
 
    private Credentials GLOBAL_CREDENTIAL_1;
    private Credentials GLOBAL_CREDENTIAL_2;
@@ -67,7 +72,13 @@ public class VaultConfigurationIT {
    @Before
    public void setupJenkins() throws IOException {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
-      globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1, false));
+      assertThat(globalConfig, is(notNullValue()));
+      VaultConfiguration vaultConfiguration = new VaultConfiguration();
+      vaultConfiguration.setVaultUrl("http://global-vault-url.com");
+      vaultConfiguration.setVaultCredentialId(GLOBAL_CREDENTIALS_ID_1);
+      vaultConfiguration.setFailIfNotFound(false);
+      vaultConfiguration.setEngineVersion(GLOBAL_ENGINE_VERSION_2);
+      globalConfig.setConfiguration(vaultConfiguration);
 
       globalConfig.save();
 
@@ -81,13 +92,13 @@ public class VaultConfigurationIT {
       this.project = jenkins.createFreeStyleProject("test");
    }
 
-   private VaultAccessor mockVaultAccessor() {
+   private VaultAccessor mockVaultAccessor(Integer engineVersion) {
       VaultAccessor vaultAccessor = mock(VaultAccessor.class);
       Map<String, String> returnValue = new HashMap<>();
       returnValue.put("key1", "some-secret");
       LogicalResponse resp = mock(LogicalResponse.class);
       when(resp.getData()).thenReturn(returnValue);
-      when(vaultAccessor.read("secret/path1", 2)).thenReturn(resp);
+      when(vaultAccessor.read("secret/path1", engineVersion)).thenReturn(resp);
       return vaultAccessor;
    }
 
@@ -102,26 +113,45 @@ public class VaultConfigurationIT {
       return secrets;
    }
 
+   public static CommandInterpreter echoSecret() {
+       CommandInterpreter command;
+       if (isWindows()) {
+           command = new BatchFile("echo %envVar1%");
+       } else {
+           command = new Shell("echo $envVar1");
+       }
+       return command;
+   }
+
+   public static String getShellString() {
+       return isWindows() ? "bat" : "sh";
+   }
+
+    public static String getVariable(String v) {
+        return isWindows() ? "%" + v + "%" : "$" + v;
+    }
+
    @Test
    public void shouldUseGlobalConfiguration() throws Exception {
       List<VaultSecret> secrets = standardSecrets();
 
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
+      VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
       vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
       this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+      this.project.getBuildersList().add(echoSecret());
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
       assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://global-vault-url.com"));
       assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(GLOBAL_CREDENTIALS_ID_1));
+      assertThat(vaultBuildWrapper.getConfiguration().getEngineVersion(), is(GLOBAL_ENGINE_VERSION_2));
 
       jenkins.assertBuildStatus(Result.SUCCESS, build);
       jenkins.assertLogContains("echo ****", build);
       jenkins.assertLogNotContains("some-secret", build);
       verify(mockAccessor, times(1)).init("http://global-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_1, false);
-      verify(mockAccessor, times(1)).read("secret/path1", 2);
+      verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
    }
 
     @Test
@@ -129,21 +159,27 @@ public class VaultConfigurationIT {
        List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-        VaultAccessor mockAccessor = mockVaultAccessor();
+        VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
-        vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", GLOBAL_CREDENTIALS_ID_2, false));
-        this.project.getBuildersList().add(new Shell("echo $envVar1"));
+        VaultConfiguration vaultConfiguration = new VaultConfiguration();
+        vaultConfiguration.setVaultUrl("http://job-vault-url.com");
+        vaultConfiguration.setVaultCredentialId(GLOBAL_CREDENTIALS_ID_2);
+        vaultConfiguration.setFailIfNotFound(false);
+        vaultConfiguration.setEngineVersion(GLOBAL_ENGINE_VERSION_2);
+        vaultBuildWrapper.setConfiguration(vaultConfiguration);
+        this.project.getBuildersList().add(echoSecret());
 
         FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://job-vault-url.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(), is(GLOBAL_CREDENTIALS_ID_2));
+        assertThat(vaultBuildWrapper.getConfiguration().getEngineVersion(), is(GLOBAL_ENGINE_VERSION_2));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_2, false);
-        verify(mockAccessor, times(1)).read("secret/path1", 2);
+        verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
     }
@@ -151,7 +187,7 @@ public class VaultConfigurationIT {
     @Test
     public void shouldDealWithTokenBasedCredential() throws Exception {
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(standardSecrets());
-       VaultAccessor mockAccessor = mockVaultAccessor();
+       VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
        vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
        Credentials credential = new VaultTokenCredential(CredentialsScope.GLOBAL, "token-1", "description", Secret.fromString("test-token"));
@@ -159,7 +195,7 @@ public class VaultConfigurationIT {
 
        this.project.getBuildWrappersList().add(vaultBuildWrapper);
        vaultBuildWrapper.setConfiguration(new VaultConfiguration("http://job-vault-url.com", "token-1", false));
-       this.project.getBuildersList().add(new Shell("echo $envVar1"));
+       this.project.getBuildersList().add(echoSecret());
 
        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
@@ -168,7 +204,7 @@ public class VaultConfigurationIT {
 
        jenkins.assertBuildStatus(Result.SUCCESS, build);
        verify(mockAccessor, times(1)).init("http://job-vault-url.com", (VaultCredential) credential, false);
-       verify(mockAccessor, times(1)).read("secret/path1", 2);
+       verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
        jenkins.assertLogContains("echo ****", build);
        jenkins.assertLogNotContains("some-secret", build);
     }
@@ -184,7 +220,7 @@ public class VaultConfigurationIT {
               "                   vaultSecrets: [\n" +
               "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: [\n" +
               "                            [$class: 'VaultSecretValue', envVar: 'envVar1', vaultKey: 'key1']]]]]) {\n" +
-              "            sh \"echo ${env.envVar1}\"\n" +
+              "            "+ getShellString() +" \"echo ${env.envVar1}\"\n" +
               "      }\n" +
               "}", true));
 
@@ -198,6 +234,7 @@ public class VaultConfigurationIT {
    @Test
    public void shouldFailIfCredentialsNotConfigured() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      assertThat(globalConfig, is(notNullValue()));
       globalConfig.setConfiguration(new VaultConfiguration("http://global-vault-url.com", null, false));
 
       globalConfig.save();
@@ -205,11 +242,11 @@ public class VaultConfigurationIT {
       List<VaultSecret> secrets = standardSecrets();
 
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
+      VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
       vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
       this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+      this.project.getBuildersList().add(echoSecret());
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
@@ -222,6 +259,7 @@ public class VaultConfigurationIT {
    @Test
    public void shouldFailIfUrlNotConfigured() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      assertThat(globalConfig, is(notNullValue()));
       globalConfig.setConfiguration(new VaultConfiguration(null, GLOBAL_CREDENTIALS_ID_2, false));
 
       globalConfig.save();
@@ -229,11 +267,11 @@ public class VaultConfigurationIT {
       List<VaultSecret> secrets = standardSecrets();
 
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
+      VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
       vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
       this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+      this.project.getBuildersList().add(echoSecret());
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
@@ -246,17 +284,18 @@ public class VaultConfigurationIT {
    @Test
    public void shouldFailIfNoConfigurationExists() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      assertThat(globalConfig, is(notNullValue()));
       globalConfig.setConfiguration(null);
 
       globalConfig.save();
       List<VaultSecret> secrets = standardSecrets();
 
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
+      VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
       vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
       this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+      this.project.getBuildersList().add(echoSecret());
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 
@@ -269,6 +308,7 @@ public class VaultConfigurationIT {
    @Test
    public void shouldFailIfCredentialsDoNotExist() throws Exception {
       GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+      assertThat(globalConfig, is(notNullValue()));
       globalConfig.setConfiguration(new VaultConfiguration("http://example.com", "some-made-up-ID", false));
 
       globalConfig.save();
@@ -276,11 +316,11 @@ public class VaultConfigurationIT {
       List<VaultSecret> secrets = standardSecrets();
 
       VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-      VaultAccessor mockAccessor = mockVaultAccessor();
+      VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
       vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
       this.project.getBuildWrappersList().add(vaultBuildWrapper);
-      this.project.getBuildersList().add(new Shell("echo $envVar1"));
+      this.project.getBuildersList().add(echoSecret());
 
       FreeStyleBuild build = this.project.scheduleBuild2(0).get();
 

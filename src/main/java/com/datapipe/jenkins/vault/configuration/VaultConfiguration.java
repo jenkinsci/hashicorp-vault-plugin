@@ -5,7 +5,11 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.util.ListBoxModel.Option;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -32,6 +36,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
 
+    private Integer engineVersion;
+
     @DataBoundConstructor
     public VaultConfiguration() {
         // no args constructor
@@ -39,9 +45,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     @Deprecated
     public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound) {
-        this.vaultUrl = normalizeUrl(vaultUrl);
-        this.vaultCredentialId = vaultCredentialId;
-        this.failIfNotFound = failIfNotFound;
+        setVaultUrl(vaultUrl);
+        setVaultCredentialId(vaultCredentialId);
+        setFailIfNotFound(failIfNotFound);
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
@@ -49,6 +55,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultCredentialId = toCopy.getVaultCredentialId();
         this.failIfNotFound = toCopy.failIfNotFound;
         this.skipSslVerification = toCopy.skipSslVerification;
+        this.engineVersion = toCopy.engineVersion;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -61,6 +68,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         }
         if (StringUtils.isBlank(result.getVaultUrl())) {
             result.setVaultUrl(parent.getVaultUrl());
+        }
+        if (result.engineVersion == null) {
+            result.engineVersion = parent.getEngineVersion();
         }
         result.failIfNotFound = failIfNotFound;
         return result;
@@ -102,6 +112,15 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.skipSslVerification = skipSslVerification;
     }
 
+    public Integer getEngineVersion() {
+        return engineVersion;
+    }
+
+    @DataBoundSetter
+    public void setEngineVersion(Integer engineVersion) {
+        this.engineVersion = engineVersion;
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
 
@@ -109,11 +128,15 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
         public static final boolean DEFAULT_SKIP_SSL_VERIFICATION = false;
 
+        public static final int DEFAULT_ENGINE_VERSION = 2;
+
         @Override
+        @NonNull
         public String getDisplayName() {
             return "Vault Configuration";
         }
 
+        @SuppressWarnings("unused") // used by stapler
         public ListBoxModel doFillVaultCredentialIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
             // This is needed for folders: credentials bound to a folder are
             // realized through domain requirements
@@ -121,6 +144,24 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
             return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item,
                     VaultCredential.class, domainRequirements);
         }
+
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+            return engineVersions(context);
+        }
+    }
+
+    @Restricted(NoExternalUse.class)
+    public static ListBoxModel engineVersions(Item context) {
+        ListBoxModel options = new ListBoxModel(
+            new Option("2", "2"),
+            new Option("1", "1")
+        );
+        if (context != null) {
+            Option option = new Option("Default", "");
+            options.add(0, option);
+        }
+        return options;
     }
 
     private String normalizeUrl(String url) {

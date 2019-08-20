@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.response.LogicalResponse;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import hudson.FilePath;

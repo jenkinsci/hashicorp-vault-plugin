@@ -26,13 +26,15 @@ package com.datapipe.jenkins.vault.model;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.util.ListBoxModel;
-import hudson.util.ListBoxModel.Option;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import java.util.List;
 
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 import static hudson.Util.fixEmptyAndTrim;
 
 /**
@@ -43,7 +45,7 @@ import static hudson.Util.fixEmptyAndTrim;
 public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
   private String path;
-  private Integer engineVersion = DescriptorImpl.DEFAULT_ENGINE_VERSION;
+  private Integer engineVersion;
   private List<VaultSecretValue> secretValues;
 
   @DataBoundConstructor
@@ -72,19 +74,14 @@ public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
   @Extension
   public static final class DescriptorImpl extends Descriptor<VaultSecret> {
 
-    public static final int DEFAULT_ENGINE_VERSION = 2;
-
     @Override
     public String getDisplayName() {
       return "Vault Secret";
     }
 
     @SuppressWarnings("unused") // used by stapler
-    public ListBoxModel doFillEngineVersionItems() {
-      return new ListBoxModel(
-          new Option("1", "1"),
-          new Option("2", "2")
-      );
+    public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+      return engineVersions(context);
     }
 
   }
