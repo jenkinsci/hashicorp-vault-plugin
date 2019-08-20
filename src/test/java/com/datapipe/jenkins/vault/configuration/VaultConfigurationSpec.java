@@ -42,7 +42,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void childShouldPartlyOverwriteParent(){
+    public void childShouldPartlyOverwriteParent() {
         VaultConfiguration parent = completeTestConfig("parent");
         VaultConfiguration child = urlOnlyConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -59,7 +59,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void emptyChildShouldBeOverriden(){
+    public void emptyChildShouldBeOverriden() {
         VaultConfiguration parent = completeTestConfig("parent");
         VaultConfiguration child = new VaultConfiguration();
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -69,7 +69,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void emptyParentShouldBeIgnored(){
+    public void emptyParentShouldBeIgnored() {
         VaultConfiguration parent = new VaultConfiguration();
         VaultConfiguration child = completeTestConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -97,9 +97,5 @@ public class VaultConfigurationSpec {
     public void shouldStoreFailureHandling() {
         VaultConfiguration parent = new VaultConfiguration("http://vault-url.com/", null, false);
         assertThat(parent.isFailIfNotFound(), is(false));
-    }
-
-    public void shouldCorrectlyShowIfEmpty() {
-
     }
 }

@@ -8,13 +8,13 @@ import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.response.VaultResponse;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-
 import java.io.Serializable;
 
 public class VaultAccessor implements Serializable {
-	private static final long serialVersionUID = 1L;
 
-	private transient Vault vault;
+    private static final long serialVersionUID = 1L;
+
+    private transient Vault vault;
 
     private transient VaultConfig config;
 
@@ -34,13 +34,14 @@ public class VaultAccessor implements Serializable {
     public void init(String url, VaultCredential credential, boolean skipSslVerification) {
         try {
             config = new VaultConfig()
-                    .address(url)
-                    .sslConfig(new SslConfig().verify(skipSslVerification).build())
-                    .build();
-            if (credential == null)
+                .address(url)
+                .sslConfig(new SslConfig().verify(skipSslVerification).build())
+                .build();
+            if (credential == null) {
                 vault = new Vault(config);
-            else
+            } else {
                 vault = credential.authorizeWithVault(config);
+            }
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
@@ -51,7 +52,8 @@ public class VaultAccessor implements Serializable {
             this.config.engineVersion(engineVersion);
             return vault.logical().read(path);
         } catch (VaultException e) {
-            throw new VaultPluginException("could not read from vault: " + e.getMessage() + " at path: " + path, e);
+            throw new VaultPluginException(
+                "could not read from vault: " + e.getMessage() + " at path: " + path, e);
         }
     }
 
@@ -59,7 +61,8 @@ public class VaultAccessor implements Serializable {
         try {
             return vault.leases().revoke(leaseId);
         } catch (VaultException e) {
-            throw new VaultPluginException("could not revoke vault lease (" + leaseId + "):" + e.getMessage());
+            throw new VaultPluginException(
+                "could not revoke vault lease (" + leaseId + "):" + e.getMessage());
         }
     }
 }
