@@ -40,6 +40,7 @@ import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 
+import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -66,6 +67,8 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.tasks.SimpleBuildWrapper;
+
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
     private VaultConfiguration configuration;
@@ -134,7 +137,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             try {
-                LogicalResponse response = vaultAccessor.read(vaultSecret.getPath(), vaultSecret.getEngineVersion());
+                Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
+                    .orElse(configuration.getEngineVersion());
+                LogicalResponse response = vaultAccessor.read(vaultSecret.getPath(), engineVersion);
                 responses.add(response);
                 Map<String, String> values = response.getData();
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
@@ -180,6 +185,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
         if (configuration == null) {
             throw new VaultPluginException("No configuration found - please configure the VaultPlugin.");
+        }
+        if (configuration.getEngineVersion() == null) {
+            configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
         }
     }
 

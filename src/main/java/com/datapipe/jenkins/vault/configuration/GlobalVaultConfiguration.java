@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.configuration;
 
+import com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl;
 import hudson.Extension;
 import hudson.model.Item;
 import jenkins.model.GlobalConfiguration;
@@ -39,6 +40,9 @@ public class GlobalVaultConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setConfiguration(VaultConfiguration configuration) {
         this.configuration = configuration;
+        if (this.configuration != null && this.configuration.getEngineVersion() == null) {
+            this.configuration.setEngineVersion(DescriptorImpl.DEFAULT_ENGINE_VERSION);
+        }
         save();
     }
 
@@ -50,6 +54,13 @@ public class GlobalVaultConfiguration extends GlobalConfiguration {
         public VaultConfiguration forJob(@Nonnull Item job) {
             return GlobalVaultConfiguration.get().getConfiguration();
         }
+    }
+
+    protected Object readResolve() {
+        if (configuration != null && configuration.getEngineVersion() == null) {
+            configuration.setEngineVersion(DescriptorImpl.DEFAULT_ENGINE_VERSION);
+        }
+        return this;
     }
 
 }
