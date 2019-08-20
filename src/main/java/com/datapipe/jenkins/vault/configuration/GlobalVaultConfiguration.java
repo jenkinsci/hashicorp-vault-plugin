@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.configuration;
 
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
 import jenkins.model.GlobalConfiguration;
@@ -8,15 +9,15 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.annotation.Nonnull;
-
 @Extension
 public class GlobalVaultConfiguration extends GlobalConfiguration {
+
     private VaultConfiguration configuration;
 
-    @Nonnull
+    @NonNull
     public static GlobalVaultConfiguration get() {
-        GlobalVaultConfiguration instance = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration instance = GlobalConfiguration.all()
+            .get(GlobalVaultConfiguration.class);
         if (instance == null) {
             throw new IllegalStateException();
         }
@@ -49,9 +50,9 @@ public class GlobalVaultConfiguration extends GlobalConfiguration {
     @Extension(ordinal = 0)
     public static class ForJob extends VaultConfigResolver {
 
-        @Nonnull
+        @NonNull
         @Override
-        public VaultConfiguration forJob(@Nonnull Item job) {
+        public VaultConfiguration forJob(@NonNull Item job) {
             return GlobalVaultConfiguration.get().getConfiguration();
         }
     }

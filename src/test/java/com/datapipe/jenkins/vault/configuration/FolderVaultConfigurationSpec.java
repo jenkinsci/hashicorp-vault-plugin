@@ -3,18 +3,17 @@ package com.datapipe.jenkins.vault.configuration;
 import com.cloudbees.hudson.plugins.folder.AbstractFolder;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.ItemGroup;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TopLevelItem;
 import hudson.util.DescribableList;
+import java.util.SortedMap;
 import jenkins.model.Jenkins;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import javax.annotation.Nonnull;
-import java.util.SortedMap;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfigurationSpec.completeTestConfig;
 import static org.hamcrest.Matchers.nullValue;
@@ -30,7 +29,8 @@ public class FolderVaultConfigurationSpec {
         return new FolderVaultConfiguration(completeTestConfig(identifier));
     }
 
-    private FolderVaultConfiguration completeTestConfigFolder(String identifier, Integer engineVersion) {
+    private FolderVaultConfiguration completeTestConfigFolder(String identifier,
+        Integer engineVersion) {
         return new FolderVaultConfiguration(completeTestConfig(identifier, engineVersion));
     }
 
@@ -48,10 +48,12 @@ public class FolderVaultConfigurationSpec {
     @Test
     public void resolverShouldCorrectlyMerge() {
         final DescribableList firstFolderProperties = mock(DescribableList.class);
-        when(firstFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent", null));
+        when(firstFolderProperties.get(FolderVaultConfiguration.class))
+            .thenReturn(completeTestConfigFolder("firstParent", null));
 
         final DescribableList secondFolderProperties = mock(DescribableList.class);
-        when(secondFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("secondParent", 2));
+        when(secondFolderProperties.get(FolderVaultConfiguration.class))
+            .thenReturn(completeTestConfigFolder("secondParent", 2));
 
         final AbstractFolder secondParent = generateMockFolder(secondFolderProperties, null);
 
@@ -61,7 +63,8 @@ public class FolderVaultConfigurationSpec {
 
         VaultConfiguration result = new FolderVaultConfiguration.ForJob().forJob(job);
 
-        VaultConfiguration expected = completeTestConfig("firstParent", null).mergeWithParent(completeTestConfig("secondParent", 2));
+        VaultConfiguration expected = completeTestConfig("firstParent", null)
+            .mergeWithParent(completeTestConfig("secondParent", 2));
 
         assertThat(result.getVaultCredentialId(), is(expected.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(expected.getVaultUrl()));
@@ -73,7 +76,8 @@ public class FolderVaultConfigurationSpec {
     public void resolverShouldHandleAbsentConfigurationOnFolders() {
 
         final DescribableList firstFolderProperties = mock(DescribableList.class);
-        when(firstFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent"));
+        when(firstFolderProperties.get(FolderVaultConfiguration.class))
+            .thenReturn(completeTestConfigFolder("firstParent"));
 
         final DescribableList secondFolderProperties = mock(DescribableList.class);
         when(secondFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(null);
@@ -83,7 +87,6 @@ public class FolderVaultConfigurationSpec {
         final AbstractFolder firstParent = generateMockFolder(firstFolderProperties, secondParent);
 
         final Job job = generateMockJob(firstParent);
-
 
         VaultConfiguration result = new FolderVaultConfiguration.ForJob().forJob(job);
 
@@ -96,41 +99,42 @@ public class FolderVaultConfigurationSpec {
 
     private Job generateMockJob(final AbstractFolder firstParent) {
         return new Job(firstParent, "test-job") {
-                @Override
-                public boolean isBuildable() {
-                    return true;
-                }
+            @Override
+            public boolean isBuildable() {
+                return true;
+            }
 
-                @Override
-                protected SortedMap _getRuns() {
-                    return null;
-                }
+            @Override
+            protected SortedMap _getRuns() {
+                return null;
+            }
 
-                @Override
-                protected void removeRun(Run run) {
+            @Override
+            protected void removeRun(Run run) {
 
-                }
+            }
 
-                @Nonnull
-                @Override
-                public ItemGroup getParent() {
-                    return firstParent;
-                }
-            };
+            @NonNull
+            @Override
+            public ItemGroup getParent() {
+                return firstParent;
+            }
+        };
     }
 
-    private AbstractFolder generateMockFolder(final DescribableList firstFolderProperties, final AbstractFolder parentToReturn) {
+    private AbstractFolder generateMockFolder(final DescribableList firstFolderProperties,
+        final AbstractFolder parentToReturn) {
         return new AbstractFolder<TopLevelItem>(null, null) {
-                @Nonnull
-                @Override
-                public ItemGroup getParent() {
-                    return parentToReturn;
-                }
+            @NonNull
+            @Override
+            public ItemGroup getParent() {
+                return parentToReturn;
+            }
 
-                @Override
-                public DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> getProperties() {
-                    return firstFolderProperties;
-                }
-            };
+            @Override
+            public DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> getProperties() {
+                return firstFolderProperties;
+            }
+        };
     }
 }

@@ -4,9 +4,16 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
-
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.model.Item;
+import hudson.security.ACL;
+import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
+import java.io.Serializable;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -15,19 +22,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.io.Serializable;
-import java.util.List;
-
-import hudson.Extension;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
-import hudson.model.Item;
-import hudson.security.ACL;
-import hudson.util.ListBoxModel;
-
 import static hudson.Util.fixEmptyAndTrim;
 
-public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements Serializable {
+public class VaultConfiguration
+    extends AbstractDescribableImpl<VaultConfiguration>
+    implements Serializable {
+
     private String vaultUrl;
 
     private String vaultCredentialId;
@@ -137,12 +137,13 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         }
 
         @SuppressWarnings("unused") // used by stapler
-        public ListBoxModel doFillVaultCredentialIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
+        public ListBoxModel doFillVaultCredentialIdItems(@AncestorInPath Item item,
+            @QueryParameter String uri) {
             // This is needed for folders: credentials bound to a folder are
             // realized through domain requirements
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(uri).build();
             return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item,
-                    VaultCredential.class, domainRequirements);
+                VaultCredential.class, domainRequirements);
         }
 
         @SuppressWarnings("unused") // used by stapler
@@ -165,7 +166,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     }
 
     private String normalizeUrl(String url) {
-        if(url == null) {
+        if (url == null) {
             return null;
         }
 

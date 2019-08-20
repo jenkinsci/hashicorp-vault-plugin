@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.exception;
 
-public class VaultPluginException extends  RuntimeException {
+public class VaultPluginException extends RuntimeException {
+
     public VaultPluginException(String message) {
         super(message);
     }

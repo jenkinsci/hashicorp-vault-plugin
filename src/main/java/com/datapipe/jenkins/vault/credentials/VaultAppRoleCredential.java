@@ -1,34 +1,36 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.Secret;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
-    private final @Nonnull Secret secretId;
 
-    private final @Nonnull String roleId;
+    private final @NonNull
+    Secret secretId;
+
+    private final @NonNull
+    String roleId;
 
     private final String path;
 
     @DataBoundConstructor
-    public VaultAppRoleCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id, @CheckForNull String description, @Nonnull String roleId, @Nonnull Secret secretId, String path) {
+    public VaultAppRoleCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
+        @CheckForNull String description, @NonNull String roleId, @NonNull Secret secretId,
+        String path) {
         super(scope, id, description);
         this.secretId = secretId;
         this.roleId = roleId;
         if (path == null) {
-          this.path = "approle";
+            this.path = "approle";
         } else {
-          this.path = path;
+            this.path = path;
         }
     }
 
@@ -47,7 +49,8 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
     @Override
     public String getToken(Vault vault) {
         try {
-            return vault.auth().loginByAppRole(path, roleId, Secret.toString(secretId)).getAuthClientToken();
+            return vault.auth().loginByAppRole(path, roleId, Secret.toString(secretId))
+                .getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }
@@ -56,7 +59,9 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
     @Extension
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
-        @Override public String getDisplayName() {
+        @NonNull
+        @Override
+        public String getDisplayName() {
             return "Vault App Role Credential";
         }
 

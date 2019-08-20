@@ -1,4 +1,4 @@
-/**
+/*
  * The MIT License (MIT)
  *
  * Copyright (c) 2016 Datapipe, Inc.
@@ -28,11 +28,10 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.util.ListBoxModel;
+import java.util.List;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-
-import java.util.List;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 import static hudson.Util.fixEmptyAndTrim;
@@ -44,46 +43,46 @@ import static hudson.Util.fixEmptyAndTrim;
  */
 public class VaultSecret extends AbstractDescribableImpl<VaultSecret> {
 
-  private String path;
-  private Integer engineVersion;
-  private List<VaultSecretValue> secretValues;
+    private String path;
+    private Integer engineVersion;
+    private List<VaultSecretValue> secretValues;
 
-  @DataBoundConstructor
-  public VaultSecret(String path, List<VaultSecretValue> secretValues) {
-    this.path = fixEmptyAndTrim(path);
-    this.secretValues = secretValues;
-  }
-
-  @DataBoundSetter
-  public void setEngineVersion(Integer engineVersion) {
-    this.engineVersion = engineVersion;
-  }
-
-  public String getPath() {
-    return this.path;
-  }
-
-  public Integer getEngineVersion() {
-    return this.engineVersion;
-  }
-
-  public List<VaultSecretValue> getSecretValues() {
-    return this.secretValues;
-  }
-
-  @Extension
-  public static final class DescriptorImpl extends Descriptor<VaultSecret> {
-
-    @Override
-    public String getDisplayName() {
-      return "Vault Secret";
+    @DataBoundConstructor
+    public VaultSecret(String path, List<VaultSecretValue> secretValues) {
+        this.path = fixEmptyAndTrim(path);
+        this.secretValues = secretValues;
     }
 
-    @SuppressWarnings("unused") // used by stapler
-    public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
-      return engineVersions(context);
+    @DataBoundSetter
+    public void setEngineVersion(Integer engineVersion) {
+        this.engineVersion = engineVersion;
     }
 
-  }
+    public String getPath() {
+        return this.path;
+    }
+
+    public Integer getEngineVersion() {
+        return this.engineVersion;
+    }
+
+    public List<VaultSecretValue> getSecretValues() {
+        return this.secretValues;
+    }
+
+    @Extension
+    public static final class DescriptorImpl extends Descriptor<VaultSecret> {
+
+        @Override
+        public String getDisplayName() {
+            return "Vault Secret";
+        }
+
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+            return engineVersions(context);
+        }
+
+    }
 
 }
