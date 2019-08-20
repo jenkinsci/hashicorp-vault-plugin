@@ -8,14 +8,14 @@
         <c:select/>
     </f:entry>
     <f:advanced>
+        <f:entry field="engineVersion" title="K/V Engine Version">
+            <f:select />
+        </f:entry>
         <f:entry title="Fail if path is not found" field="failIfNotFound">
             <f:checkbox default="${descriptor.DEFAULT_FAIL_NOT_FOUND}"/>
         </f:entry>
         <f:entry title="Skip SSL verification" field="skipSslVerification">
             <f:checkbox default="${descriptor.DEFAULT_SKIP_SSL_VERIFICATION}"/>
-        </f:entry>
-        <f:entry field="engineVersion" title="K/V Engine Version">
-            <f:select />
         </f:entry>
     </f:advanced>
 </j:jelly>
