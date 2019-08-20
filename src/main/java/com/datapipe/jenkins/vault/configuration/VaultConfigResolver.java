@@ -6,6 +6,6 @@ import hudson.model.Item;
 
 public abstract class VaultConfigResolver implements ExtensionPoint {
 
-    public abstract @NonNull
-    VaultConfiguration forJob(@NonNull Item job);
+    @NonNull
+    public abstract VaultConfiguration forJob(@NonNull Item job);
 }

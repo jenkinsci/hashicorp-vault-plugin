@@ -24,8 +24,9 @@ import org.kohsuke.stapler.QueryParameter;
 
 import static hudson.Util.fixEmptyAndTrim;
 
-public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements
-    Serializable {
+public class VaultConfiguration
+    extends AbstractDescribableImpl<VaultConfiguration>
+    implements Serializable {
 
     private String vaultUrl;
 
