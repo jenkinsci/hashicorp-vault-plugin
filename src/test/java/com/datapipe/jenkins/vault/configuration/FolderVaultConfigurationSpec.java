@@ -30,6 +30,10 @@ public class FolderVaultConfigurationSpec {
         return new FolderVaultConfiguration(completeTestConfig(identifier));
     }
 
+    private FolderVaultConfiguration completeTestConfigFolder(String identifier, Integer engineVersion) {
+        return new FolderVaultConfiguration(completeTestConfig(identifier, engineVersion));
+    }
+
     @Test
     public void resolverShouldNotFailIfNotInFolder() {
         VaultConfigResolver folderResolver = new FolderVaultConfiguration.ForJob();
@@ -44,10 +48,10 @@ public class FolderVaultConfigurationSpec {
     @Test
     public void resolverShouldCorrectlyMerge() {
         final DescribableList firstFolderProperties = mock(DescribableList.class);
-        when(firstFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent"));
+        when(firstFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("firstParent", null));
 
         final DescribableList secondFolderProperties = mock(DescribableList.class);
-        when(secondFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("secondParent"));
+        when(secondFolderProperties.get(FolderVaultConfiguration.class)).thenReturn(completeTestConfigFolder("secondParent", 2));
 
         final AbstractFolder secondParent = generateMockFolder(secondFolderProperties, null);
 
@@ -57,10 +61,11 @@ public class FolderVaultConfigurationSpec {
 
         VaultConfiguration result = new FolderVaultConfiguration.ForJob().forJob(job);
 
-        VaultConfiguration expected = completeTestConfig("firstParent").mergeWithParent(completeTestConfig("secondParent"));
+        VaultConfiguration expected = completeTestConfig("firstParent", null).mergeWithParent(completeTestConfig("secondParent", 2));
 
         assertThat(result.getVaultCredentialId(), is(expected.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(expected.getVaultUrl()));
+        assertThat(result.getEngineVersion(), is(expected.getEngineVersion()));
     }
 
 
@@ -86,6 +91,7 @@ public class FolderVaultConfigurationSpec {
 
         assertThat(result.getVaultCredentialId(), is(expected.getVaultCredentialId()));
         assertThat(result.getVaultUrl(), is(expected.getVaultUrl()));
+        assertThat(result.getEngineVersion(), is(expected.getEngineVersion()));
     }
 
     private Job generateMockJob(final AbstractFolder firstParent) {

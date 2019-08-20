@@ -17,6 +17,9 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
+import static hudson.Functions.isWindows;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -44,7 +47,7 @@ public class VaultTokenCredentialBindingIT {
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
                         + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '" + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                        + "      sh 'echo \"$VAULT_ADDR:$VAULT_TOKEN\" > script'\n"
+                        + "      "+ getShellString() +" 'echo "+ getVariable("VAULT_ADDR") +":"+ getVariable("VAULT_TOKEN") +" > script'\n"
                         + "  }\n"
                         + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -71,7 +74,7 @@ public class VaultTokenCredentialBindingIT {
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
                         + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '" + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                        + "      sh 'echo \"$VAULT_ADDR:$VAULT_TOKEN\" > script'\n"
+                        + "      "+ getShellString() +" 'echo "+ getVariable("VAULT_ADDR") +":"+ getVariable("VAULT_TOKEN") +" > script'\n"
                         + "  }\n"
                         + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -99,7 +102,7 @@ public class VaultTokenCredentialBindingIT {
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
                         + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '" + invalidCredentialId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                        + "      sh 'echo \"$VAULT_ADDR:$VAULT_TOKEN\" > script'\n"
+                        + "      "+ getShellString() +" 'echo "+ getVariable("VAULT_ADDR") +":"+ getVariable("VAULT_TOKEN") +" > script'\n"
                         + "  }\n"
                         + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -124,7 +127,7 @@ public class VaultTokenCredentialBindingIT {
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
                         + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '" + credentialsId + "']]) {\n"
-                        + "      sh 'echo \"$VAULT_ADDR:$VAULT_TOKEN\" > script'\n"
+                        + "      "+ getShellString() +" 'echo \""+ getVariable("VAULT_ADDR") +":"+ getVariable("VAULT_TOKEN") +"\" > script'\n"
                         + "  }\n"
                         + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -149,7 +152,7 @@ public class VaultTokenCredentialBindingIT {
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
                         + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'FOO', tokenVariable: 'BAR', credentialsId: '" + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                        + "      sh 'echo \"$FOO:$BAR\" > script'\n"
+                        + "      "+ getShellString() +" 'echo "+ getVariable("FOO") +":"+ getVariable("BAR") +" > script'\n"
                         + "  }\n"
                         + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -176,7 +179,7 @@ public class VaultTokenCredentialBindingIT {
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
                         + "  withCredentials([[$class: 'VaultTokenCredentialBinding', credentialsId: '" + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                        + "      sh 'echo \"$VAULT_ADDR:$VAULT_TOKEN\" > script'\n"
+                        + "      "+ getShellString() +" 'echo "+ getVariable("VAULT_ADDR") +":"+ getVariable("VAULT_TOKEN") +" > script'\n"
                         + "  }\n"
                         + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();

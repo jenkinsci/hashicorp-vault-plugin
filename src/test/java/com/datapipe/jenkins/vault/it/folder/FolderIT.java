@@ -4,6 +4,8 @@ import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTI
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_2;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.JENKINSFILE_URL;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.echoSecret;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +51,6 @@ import java.util.Map;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
-import hudson.tasks.Shell;
 import jenkins.model.GlobalConfiguration;
 
 public class FolderIT {
@@ -137,7 +138,7 @@ public class FolderIT {
         this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
-        this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
+        this.projectInFolder1.getBuildersList().add(echoSecret());
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
@@ -161,7 +162,7 @@ public class FolderIT {
         this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
-        this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
+        this.projectInFolder1.getBuildersList().add(echoSecret());
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         verify(mockAccessor, times(1)).init("http://folder1.com", (VaultCredential)FOLDER_1_CREDENTIAL, false);
@@ -185,7 +186,7 @@ public class FolderIT {
         this.folder1.addProperty(new FolderVaultConfiguration(new VaultConfiguration("http://folder1.com", FOLDER_2_CREDENTIALS_ID, false)));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
-        this.projectInFolder1.getBuildersList().add(new Shell("echo $envVar1"));
+        this.projectInFolder1.getBuildersList().add(echoSecret());
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
@@ -209,7 +210,7 @@ public class FolderIT {
                 "                   vaultSecrets: [\n" +
                 "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: [\n" +
                 "                            [$class: 'VaultSecretValue', envVar: 'envVar1', vaultKey: 'key1']]]]]) {\n" +
-                "            sh \"echo ${env.envVar1}\"\n" +
+                "            "+ getShellString() +" \"echo ${env.envVar1}\"\n" +
                 "      }\n" +
                 "}", true));
 

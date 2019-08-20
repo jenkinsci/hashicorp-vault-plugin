@@ -7,11 +7,16 @@ import static org.junit.Assert.assertThat;
 
 public class VaultConfigurationSpec {
 
-    public static VaultConfiguration completeTestConfig(String identifier) {
+    public static VaultConfiguration completeTestConfig(String identifier, Integer engineVersion) {
         VaultConfiguration result = new VaultConfiguration();
         result.setVaultUrl("http://example.com/" + identifier);
         result.setVaultCredentialId("credential" + identifier);
+        result.setEngineVersion(engineVersion);
         return result;
+    }
+
+    public static VaultConfiguration completeTestConfig(String identifier) {
+        return completeTestConfig(identifier, 2);
     }
 
     public static VaultConfiguration urlOnlyConfig(String identifier) {
