@@ -20,22 +20,26 @@ public class VaultAccessor implements Serializable {
 
 
     public void init(String url) {
-        init(url, null, false);
+        init(url, null, false, null);
     }
 
     public void init(String url, boolean skipSslVerification) {
-        init(url, null, skipSslVerification);
+        init(url, null, skipSslVerification, null);
     }
 
     public void init(String url, VaultCredential credential) {
-        init(url, credential, false);
+        init(url, credential, false, null);
     }
 
     public void init(String url, VaultCredential credential, boolean skipSslVerification) {
+        init(url, credential, skipSslVerification, null);
+    }
+
+    public void init(String url, VaultCredential credential, boolean skipSslVerification, String vaultCACert) {
         try {
             config = new VaultConfig()
                 .address(url)
-                .sslConfig(new SslConfig().verify(skipSslVerification).build())
+                .sslConfig(new SslConfig().pemUTF8(vaultCACert).verify(skipSslVerification).build())
                 .build();
             if (credential == null) {
                 vault = new Vault(config);

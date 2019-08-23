@@ -14,6 +14,9 @@
     <f:entry title="Fail if path is not found" field="failIfNotFound">
       <f:checkbox default="${descriptor.DEFAULT_FAIL_NOT_FOUND}"/>
     </f:entry>
+    <f:entry title="Vault CA Certificate" field="vaultCACert">
+      <f:textarea />
+    </f:entry>
     <f:entry title="Skip SSL verification" field="skipSslVerification">
       <f:checkbox default="${descriptor.DEFAULT_SKIP_SSL_VERIFICATION}"/>
     </f:entry>

@@ -121,6 +121,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     private List<LogicalResponse> provideEnvironmentVariablesFromVault(Context context, Run build) {
         String url = getConfiguration().getVaultUrl();
+        final String vaultCACert = getConfiguration().getVaultCACert();
 
         if (StringUtils.isBlank(url)) {
             throw new VaultPluginException(
@@ -129,7 +130,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
+        vaultAccessor.init(url, credential, configuration.isSkipSslVerification(), vaultCACert);
         ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
             try {

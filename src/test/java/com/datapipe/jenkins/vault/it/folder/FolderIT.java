@@ -154,7 +154,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
+            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false, null);
         verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 
@@ -174,7 +174,7 @@ public class FolderIT {
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
+            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false, null);
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(),
             is(FOLDER_1_CREDENTIALS_ID));
         assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
@@ -182,7 +182,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
+            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false, null);
         verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 

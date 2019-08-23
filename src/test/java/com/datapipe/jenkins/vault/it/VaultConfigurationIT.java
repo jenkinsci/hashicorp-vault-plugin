@@ -153,7 +153,7 @@ public class VaultConfigurationIT {
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
         verify(mockAccessor, times(1))
-            .init("http://global-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_1, false);
+            .init("http://global-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_1, false, null);
         verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
     }
 
@@ -185,7 +185,7 @@ public class VaultConfigurationIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         verify(mockAccessor, times(1))
-            .init("http://job-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_2, false);
+            .init("http://job-vault-url.com", (VaultCredential) GLOBAL_CREDENTIAL_2, false, null);
         verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
@@ -215,7 +215,7 @@ public class VaultConfigurationIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         verify(mockAccessor, times(1))
-            .init("http://job-vault-url.com", (VaultCredential) credential, false);
+            .init("http://job-vault-url.com", (VaultCredential) credential, false, null);
         verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
