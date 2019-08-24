@@ -17,7 +17,7 @@
     <jenkins.version>2.60.3</jenkins.version>
     <java.level>8</java.level>
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
-    <configuration-as-code.version>1.25</configuration-as-code.version>
+    <configuration-as-code.version>1.28</configuration-as-code.version>
   </properties>
   <name>HashiCorp Vault Plugin</name>
   <description>Build Wrapper for reading secrets in a HashiCorp Vault</description>
