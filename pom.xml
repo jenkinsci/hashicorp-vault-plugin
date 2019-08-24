@@ -34,6 +34,10 @@
   </licenses>
   <developers>
     <developer>
+      <id>casz</id>
+      <name>Joseph Petersen</name>
+    </developer>
+    <developer>
       <id>ptierno</id>
       <name>Peter A. Tierno</name>
       <email>ptierno@datapipe.com</email>
