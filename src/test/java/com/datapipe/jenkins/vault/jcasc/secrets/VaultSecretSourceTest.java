@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.jcasc.secrets;
 
 
+import hudson.model.Result;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorException;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
@@ -17,6 +18,10 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -52,11 +57,13 @@ public class VaultSecretSourceTest {
     @ClassRule
     public static VaultContainer vaultContainer = createVaultContainer();
 
+    public final static JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
+
     @Rule
     public RuleChain chain = RuleChain
         .outerRule(new EnvVarsRule()
             .set("CASC_VAULT_FILE", getClass().getResource("vaultTest_cascFile").getPath()))
-        .around(new JenkinsConfiguredWithCodeRule());
+        .around(j);
 
     private ConfigurationContext context;
 
@@ -234,5 +241,32 @@ public class VaultSecretSourceTest {
         // SecretSource.init is normally called on configure
         context.getSecretSources().forEach(SecretSource::init);
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("re-auth-test"));
+    }
+
+    @Test
+    @ConfiguredWithCode("vault.yml")
+    @Envs({
+        @Env(name = "CASC_VAULT_AGENT_ADDR", value = "http://localhost:8100"),
+        @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_KV1_1 + "," + VAULT_PATH_KV1_2),
+        @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "1")
+    })
+    public void kv1WithAgent() {
+        assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+    }
+
+    @Test
+    @ConfiguredWithCode("vault.yml")
+    @Envs({
+        @Env(name = "CASC_VAULT_AGENT_ADDR", value = "http://localhost:8100")
+    })
+    public void vaultReturns404() throws Exception {
+        WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
+        String pipelineText =  IOUtils.toString(getClass().getResourceAsStream("pipeline.groovy"));
+        pipeline.setDefinition(new CpsFlowDefinition(pipelineText, true));
+
+        WorkflowRun build = pipeline.scheduleBuild2(0).get();
+
+        j.assertBuildStatus(Result.FAILURE, build);
+        j.assertLogContains("Vault credentials not found for secret/testing", build);
     }
 }

@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault;
 
 import com.bettercloud.vault.response.LogicalResponse;
+import com.bettercloud.vault.rest.RestResponse;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
@@ -52,7 +53,11 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
                 Map<String, String> returnValue = new HashMap<>();
                 returnValue.put("key1", "some-secret");
                 LogicalResponse resp = mock(LogicalResponse.class);
+                RestResponse rest = mock(RestResponse.class);
                 when(resp.getData()).thenReturn(returnValue);
+                when(resp.getData()).thenReturn(returnValue);
+                when(resp.getRestResponse()).thenReturn(rest);
+                when(rest.getStatus()).thenReturn(200);
                 return resp;
             }
         });
