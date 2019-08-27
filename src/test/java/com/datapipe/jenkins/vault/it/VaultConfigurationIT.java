@@ -2,6 +2,7 @@ package com.datapipe.jenkins.vault.it;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.response.LogicalResponse;
+import com.bettercloud.vault.rest.RestResponse;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
@@ -96,7 +97,10 @@ public class VaultConfigurationIT {
         Map<String, String> returnValue = new HashMap<>();
         returnValue.put("key1", "some-secret");
         LogicalResponse resp = mock(LogicalResponse.class);
+        RestResponse rest = mock(RestResponse.class);
         when(resp.getData()).thenReturn(returnValue);
+        when(resp.getRestResponse()).thenReturn(rest);
+        when(rest.getStatus()).thenReturn(200);
         when(vaultAccessor.read("secret/path1", engineVersion)).thenReturn(resp);
         return vaultAccessor;
     }

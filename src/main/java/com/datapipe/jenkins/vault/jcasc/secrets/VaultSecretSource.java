@@ -30,6 +30,7 @@ public class VaultSecretSource extends SecretSource {
     private static final String CASC_VAULT_PW = "CASC_VAULT_PW";
     private static final String CASC_VAULT_USER = "CASC_VAULT_USER";
     private static final String CASC_VAULT_URL = "CASC_VAULT_URL";
+    private static final String CASC_VAULT_AGENT_ADDR = "CASC_VAULT_AGENT_ADDR";
     private static final String CASC_VAULT_MOUNT = "CASC_VAULT_MOUNT";
     private static final String CASC_VAULT_TOKEN = "CASC_VAULT_TOKEN";
     private static final String CASC_VAULT_APPROLE = "CASC_VAULT_APPROLE";
@@ -47,6 +48,7 @@ public class VaultSecretSource extends SecretSource {
     private VaultAuthenticator vaultAuthenticator;
     private String[] vaultPaths;
     private Properties prop;
+    private boolean usingVaultAgent;
 
     private void configureVault() {
         // Read config file/env
@@ -56,7 +58,9 @@ public class VaultSecretSource extends SecretSource {
 
         // Parse variables
         Optional<String> vaultEngineVersionOpt = getVariable(CASC_VAULT_ENGINE_VERSION);
-        Optional<String> vaultUrl = getVariable(CASC_VAULT_URL);
+        Optional<String> vaultUrl = getVariable(CASC_VAULT_AGENT_ADDR)
+            .map(Optional::of)
+            .orElseGet(() -> getVariable(CASC_VAULT_URL));
         Optional<String> vaultNamespace = getVariable(CASC_VAULT_NAMESPACE);
         Optional<String[]> vaultPaths = getCommaSeparatedVariables(CASC_VAULT_PATHS);
         getVariable(CASC_VAULT_PATH).ifPresent(s -> LOGGER
@@ -65,6 +69,8 @@ public class VaultSecretSource extends SecretSource {
 
         // Check mandatory variables are set
         if (!vaultUrl.isPresent() || !vaultPaths.isPresent()) return;
+
+        if (getVariable(CASC_VAULT_AGENT_ADDR).isPresent()) usingVaultAgent = true;
 
         String vaultEngineVersion = vaultEngineVersionOpt.orElse(DEFAULT_ENGINE_VERSION);
         this.vaultPaths = vaultPaths.get();
@@ -105,7 +111,7 @@ public class VaultSecretSource extends SecretSource {
         allPresent(vaultUser, vaultPw, this::userPass);
         allPresent(vaultAppRole, vaultAppRoleSecret, this::approle);
 
-        if (vaultAuthenticator == null) {
+        if (vaultAuthenticator == null && !usingVaultAgent) {
             LOGGER.log(Level.WARNING, "Could not determine vault authentication method. Not able to read secrets from vault.");
         }
     }
@@ -208,6 +214,8 @@ public class VaultSecretSource extends SecretSource {
             } catch (VaultException e) {
                 LOGGER.log(Level.WARNING, "Could not authenticate with vault client", e);
             }
+        }
+        if (vaultAuthenticator != null || usingVaultAgent) {
             readSecretsFromVault();
         }
     }
