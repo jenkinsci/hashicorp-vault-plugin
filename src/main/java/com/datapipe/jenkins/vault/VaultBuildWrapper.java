@@ -90,7 +90,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
         if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
-            provideEnvironmentVariablesFromVault(context, build);
+            provideEnvironmentVariablesFromVault(context, build, initialEnvironment);
         }
     }
 
@@ -124,7 +124,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         return leaseIds;
     }
 
-    private void provideEnvironmentVariablesFromVault(Context context, Run build) {
+    private void provideEnvironmentVariablesFromVault(Context context, Run build,
+        EnvVars envVars) {
         String url = getConfiguration().getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
@@ -136,18 +137,19 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
         for (VaultSecret vaultSecret : vaultSecrets) {
-            String path = vaultSecret.getPath();
+            String path = envVars.expand(vaultSecret.getPath());
+            Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
+                .orElse(configuration.getEngineVersion());
             try {
-                Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
-                    .orElse(configuration.getEngineVersion());
                 LogicalResponse response = vaultAccessor.read(path, engineVersion);
                 parseVaultErrorCodes(path, response);
                 Map<String, String> values = response.getData();
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-                    String secret = values.get(value.getVaultKey());
+                    String vaultKey = value.getVaultKey();
+                    String secret = values.get(vaultKey);
                     if (StringUtils.isBlank(secret)) {
                         throw new IllegalArgumentException(
-                            "Vault Secret " + value.getVaultKey() + " at " + path
+                            "Vault Secret " + vaultKey + " at " + path
                                 + " is either null or empty. Please check the Secret in Vault.");
                     }
                     valuesToMask.add(secret);
