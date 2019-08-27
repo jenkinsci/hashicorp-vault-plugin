@@ -6,10 +6,12 @@ import hudson.Extension;
 import hudson.model.Item;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
 @Extension
+@Symbol("hashicorpVault")
 public class GlobalVaultConfiguration extends GlobalConfiguration {
 
     private VaultConfiguration configuration;
