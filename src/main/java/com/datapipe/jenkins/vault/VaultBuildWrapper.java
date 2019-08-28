@@ -55,6 +55,7 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapperDescriptor;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -183,14 +184,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             }
         } else if (status >= 400) {
             String errors = Optional
-                .of(Json.parse(new String(restResponse.getBody()))).map(JsonValue::asObject)
+                .of(Json.parse(new String(restResponse.getBody(), StandardCharsets.UTF_8))).map(JsonValue::asObject)
                 .map(j -> j.get("errors")).map(JsonValue::asArray).map(JsonArray::values)
                 .map(j -> j.stream().map(JsonValue::asString).collect(Collectors.joining("\n")))
                 .orElse("");
             logger.printf("Vault responded with %d error code.%n", status);
             if (StringUtils.isNotBlank(errors)) {
-                logger.printf("Vault responded with errors: %s%n",
-                    new String(restResponse.getBody()));
+                logger.printf("Vault responded with errors: %s%n", errors);
             }
         }
     }
