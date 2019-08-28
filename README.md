@@ -91,39 +91,28 @@ The secrets are available as environment variables then.
 Let the code speak for itself:
 ```groovy
 node {
-  // define the secrets and the env variables
-  // Up to version 2.2.0 of plugin it works, but just for KV version 1
-  def secrets = [
-      [$class: 'VaultSecret', path: 'secret/testing', secretValues: [
-          [$class: 'VaultSecretValue', envVar: 'testing', vaultKey: 'value_one'],
-          [$class: 'VaultSecretValue', envVar: 'testing_again', vaultKey: 'value_two']]],
-      [$class: 'VaultSecret', path: 'secret/another_test', secretValues: [
-          [$class: 'VaultSecretValue', envVar: 'another_test', vaultKey: 'value']]]
-  ]
-  // For version above 2.2.0 you need set "engineVersion" variable
-  // regarding your Vault version - 1 or 2. Without it, this doesn't work.
-  // Please note, not need to add middle "/data/" path for KV 2 secrets,
-  // plugin will do it under a hood 
-  def secrets = [
-      [$class: 'VaultSecret', path: 'secret/testing', engineVersion: 2, secretValues: [
-          [$class: 'VaultSecretValue', envVar: 'testing', vaultKey: 'value_one'],
-          [$class: 'VaultSecretValue', envVar: 'testing_again', vaultKey: 'value_two']]],
-      [$class: 'VaultSecret', path: 'secret/another_test', engineVersion: 2, secretValues: [
-          [$class: 'VaultSecretValue', envVar: 'another_test', vaultKey: 'value']]]
-  ]
+    // define the secrets and the env variables
+    // engine version can be defined on secret, job, folder or global.
+    // the default is engine version 2 unless otherwise specified globally.
+    def secrets = [
+        [path: 'secret/testing', engineVersion: 1, secretValues: [
+            [envVar: 'testing', vaultKey: 'value_one'],
+            [envVar: 'testing_again', vaultKey: 'value_two']]],
+        [path: 'secret/another_test', engineVersion: 2, secretValues: [
+            [vaultKey: 'another_test']]]
+    ]
 
-  // optional configuration, if you do not provide this the next higher configuration
-  // (e.g. folder or global) will be used
-  def configuration = [$class: 'VaultConfiguration',
-                       vaultUrl: 'http://my-very-other-vault-url.com',
-                       vaultCredentialId: 'my-vault-cred-id']
-
-  // inside this block your credentials will be available as env variables
-  wrap([$class: 'VaultBuildWrapper', configuration: configuration, vaultSecrets: secrets]) {
-      sh 'echo $testing'
-      sh 'echo $testing_again'
-      sh 'echo $another_test'
-  }
+    // optional configuration, if you do not provide this the next higher configuration
+    // (e.g. folder or global) will be used
+    def configuration = [vaultUrl: 'http://my-very-other-vault-url.com',
+                         vaultCredentialId: 'my-vault-cred-id'
+                         engineVersion: 1]
+    // inside this block your credentials will be available as env variables
+    withVault([configuration: configuration, vaultSecrets: secrets]) {
+        sh 'echo $testing'
+        sh 'echo $testing_again'
+        sh 'echo $another_test'
+    }
 }
 ```
 In the future we might migrate to a [BuildStep](http://javadoc.jenkins-ci.org/hudson/tasks/BuildStep.html) instead of a BuildWrapper.
