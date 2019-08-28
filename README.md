@@ -175,7 +175,7 @@ unclassified:
   hashicorpVault:
     configuration:
       vaultCredentialId: "vaultToken"
-      vaultUrl: "${CASC_VAULT_AGENT_ADDR:-http://localhost:8100}" # Vault Agent Addr
+      vaultUrl: "https://vault.company.io"
 
 credentials:
   system:
