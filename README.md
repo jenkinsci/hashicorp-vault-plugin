@@ -138,12 +138,13 @@ node {
 ![freeStyle Credential Binding](docs/images/freestyle_injectCreds.png)
 
 ## Configuration as Code
-There is an easier way to setup the global Vault configuration on your Jenkins server. No need for messing around in the UI.  
+There is an easier way to setup the global Vault configuration on your Jenkins server.  
+No need for messing around in the UI.  
+
 Jenkins Configuration as Code often shorten to [JCasC] or simplify [Configuration as Code plugin]
 allows you to configure Jenkins via a yaml file. If you are a first time user, you can learn more about [JCasC] :point_left:
 
-Hashicorp Plugin also adds an extension to [JCasC] by providing a Secret Source for [Configuration as Code plugin] to read secrets from.
-[For more information read here](#hashicorp-vault-plugin-as-a-secret-source-for-jcasc)
+Hashicorp Plugin also adds an extension to [JCasC] by providing a Secret Source for [Configuration as Code plugin] to read secrets from, which you can [read about here](#hashicorp-vault-plugin-as-a-secret-source-for-jcasc)
 
 ### Prerequisite: 
 
@@ -187,7 +188,7 @@ credentials:
               token: "${MY_SECRET_TOKEN}"
 ```
 
-See handling secrets [section](https://github.com/jenkinsci/configuration-as-code-plugin#handling-secrets) in JCasC documentation for better security.
+See [handling secrets section](https://github.com/jenkinsci/configuration-as-code-plugin#handling-secrets) in JCasC documentation for better security.
 
 You can also configure `VaultGithubTokenCredential`, or `VautGCPCredential` or `VaultAppRoleCredential`
 
