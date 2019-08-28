@@ -317,35 +317,6 @@ listener "tcp" {
 }
 ```
 
-## Migration Guide
-
-### Upgrade from 1.x to 2.0
-The `BuildWrapper` did not change, so no changes to your Jenkinsfile should be necessary. However, you need to reconfigure Vault in your Jenkins instance based on the instructions above. There is no way to smoothly upgrade this, because this is a major rewrite and handling of configuration completly changed.
-
-# CHANGELOG
-* **2018/08/22** - Feature Release - 2.2.0
-  * Add support for GCP authentication
-* **2018/05/01** - Bugfix Release - 2.1.1
-  * MaskingConsoleLogFilter should filter out null secrets [JENKINS-46792](https://issues.jenkins-ci.org/browse/JENKINS-38647)
-  * [Avoid NPE Crash](https://github.com/jenkinsci/hashicorp-vault-plugin/pull/13)
-  * Switch to SimpleBuildWrapper for pipeline compatibility [JENKINS-48049](https://issues.jenkins-ci.org/browse/JENKINS-48049)
-  * Dynamic secrets should be revoked after build wrapper completes [JENKINS-46794](https://issues.jenkins-ci.org/browse/JENKINS-46794)
-* **2017/05/22** - Feature Release - 2.1.0
-  * Vault Key Not Saved In Vault Error Messaging [JENKINS-38647](https://issues.jenkins-ci.org/browse/JENKINS-38647)
-  * Add support github token auth [JENKINS-38939](https://issues.jenkins-ci.org/browse/JENKINS-38939)
-* **2017/05/19** - Bugfix Release - 2.0.1
-  * Build fails if plugin is enabled for a job without secrets specified [JENKINS-44163](https://issues.jenkins-ci.org/browse/JENKINS-441630)
-* **2017/04/27** - Breaking change release (AppRole auth backend, Folder ability, improved configuration, ...)
-* **2017/04/10** - Feature Release - 1.4
-  * Support reading Vault Token from file on disk [JENKINS-37713](issues.jenkins-ci.org/browse/JENKINS-37713)
-  * Using credentials plugin for authentication token [JENKINS-38646](issues.jenkins-ci.org/browse/JENKINS-38646)
-* **2017/03/03** - Feature Release - 1.3
-  * Vault Plugin should mask credentials in build log [JENKINS-39383](issues.jenkins-ci.org/browse/JENKINS-39383)
-* **2016/08/15** - Re-release due to failed maven release - 1.2
-* **2016/08/11** - Bugfix release - 1.1
-  * Refactor to allow getting multiple vault keys in a single API call [JENKINS-37151](https://issues.jenkins-ci.org/browse/JENKINS-37151)
-* **2016/08/02** - Initial release - 1.0
-
 [global_configuration]: docs/images/global_configuration.png
 [job_configuration]: docs/images/job_configuration.png
 [JCasC]: https://github.com/casz/configuration-as-code-plugin
