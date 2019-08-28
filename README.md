@@ -4,7 +4,7 @@
 This plugin adds a build wrapper to set environment variables from a HashiCorp [Vault](https://www.vaultproject.io/) secret. Secrets are generally masked in the build log, so you can't accidentally print them.  
 It also has the ability to inject Vault credentials into a build pipeline or freestyle job for fine-grained vault interactions.
 
-# Vault Authentication Backends
+## Vault Authentication Backends
 This plugin allows authenticating against Vault using the AppRole authentication backend. Hashicorp recommends using AppRole for Servers / automated workflows (like Jenkins) and using Tokens (default mechanism, Github Token, ...) for every developer's machine.
   Furthermore, this plugin allows using a Github personal access token, or a Vault Token - either configured directly in Jenkins or read from an arbitrary file on the Jenkins Machine.
 
@@ -28,7 +28,7 @@ The `Descriptor` needs to be annotated with `@Extension`. Your credential needs 
 See [VaultAppRoleCredential.java](https://github.com/jenkinsci/hashicorp-vault-plugin/blob/master/src/main/java/com/datapipe/jenkins/vault/credentials/VaultAppRoleCredential.java) for an example.
 
 
-# Plugin Usage
+## Plugin Usage
 ### Configuration
 You can configure the plugin on three different levels:
 * Global: in your global config
@@ -105,7 +105,7 @@ node {
     // optional configuration, if you do not provide this the next higher configuration
     // (e.g. folder or global) will be used
     def configuration = [vaultUrl: 'http://my-very-other-vault-url.com',
-                         vaultCredentialId: 'my-vault-cred-id'
+                         vaultCredentialId: 'my-vault-cred-id',
                          engineVersion: 1]
     // inside this block your credentials will be available as env variables
     withVault([configuration: configuration, vaultSecrets: secrets]) {
@@ -117,7 +117,7 @@ node {
 ```
 In the future we might migrate to a [BuildStep](http://javadoc.jenkins-ci.org/hudson/tasks/BuildStep.html) instead of a BuildWrapper.
 
-# Inject Vault Credentials into your Job
+## Inject Vault Credentials into your Job
 ### Pipeline Usage
 ![withCredentials Block](docs/images/pipeline_withCredentials.png)
 
@@ -137,35 +137,187 @@ node {
 ### FreeStyle Job
 ![freeStyle Credential Binding](docs/images/freestyle_injectCreds.png)
 
+## Configuration as Code
+There is an easier way to setup the global Vault configuration on your Jenkins server.  
+No need for messing around in the UI.  
 
-# Migration Guide
+Jenkins Configuration as Code often shorten to [JCasC] or simplify [Configuration as Code plugin]
+allows you to configure Jenkins via a yaml file. If you are a first time user, you can learn more about [JCasC] :point_left:
 
-### Upgrade from 1.x to 2.0
-The `BuildWrapper` did not change, so no changes to your Jenkinsfile should be necessary. However, you need to reconfigure Vault in your Jenkins instance based on the instructions above. There is no way to smoothly upgrade this, because this is a major rewrite and handling of configuration completly changed.
+Hashicorp Plugin also adds an extension to [JCasC] by providing a Secret Source for [Configuration as Code plugin] to read secrets from, which you can [read about here](#hashicorp-vault-plugin-as-a-secret-source-for-jcasc)
 
-# CHANGELOG
-* **2018/08/22** - Feature Release - 2.2.0
-  * Add support for GCP authentication
-* **2018/05/01** - Bugfix Release - 2.1.1
-  * MaskingConsoleLogFilter should filter out null secrets [JENKINS-46792](https://issues.jenkins-ci.org/browse/JENKINS-38647)
-  * [Avoid NPE Crash](https://github.com/jenkinsci/hashicorp-vault-plugin/pull/13)
-  * Switch to SimpleBuildWrapper for pipeline compatibility [JENKINS-48049](https://issues.jenkins-ci.org/browse/JENKINS-48049)
-  * Dynamic secrets should be revoked after build wrapper completes [JENKINS-46794](https://issues.jenkins-ci.org/browse/JENKINS-46794)
-* **2017/05/22** - Feature Release - 2.1.0
-  * Vault Key Not Saved In Vault Error Messaging [JENKINS-38647](https://issues.jenkins-ci.org/browse/JENKINS-38647)
-  * Add support github token auth [JENKINS-38939](https://issues.jenkins-ci.org/browse/JENKINS-38939)
-* **2017/05/19** - Bugfix Release - 2.0.1
-  * Build fails if plugin is enabled for a job without secrets specified [JENKINS-44163](https://issues.jenkins-ci.org/browse/JENKINS-441630)
-* **2017/04/27** - Breaking change release (AppRole auth backend, Folder ability, improved configuration, ...)
-* **2017/04/10** - Feature Release - 1.4
-  * Support reading Vault Token from file on disk [JENKINS-37713](issues.jenkins-ci.org/browse/JENKINS-37713)
-  * Using credentials plugin for authentication token [JENKINS-38646](issues.jenkins-ci.org/browse/JENKINS-38646)
-* **2017/03/03** - Feature Release - 1.3
-  * Vault Plugin should mask credentials in build log [JENKINS-39383](issues.jenkins-ci.org/browse/JENKINS-39383)
-* **2016/08/15** - Re-release due to failed maven release - 1.2
-* **2016/08/11** - Bugfix release - 1.1
-  * Refactor to allow getting multiple vault keys in a single API call [JENKINS-37151](https://issues.jenkins-ci.org/browse/JENKINS-37151)
-* **2016/08/02** - Initial release - 1.0
+### Prerequisite: 
+
+Install `Configuration as Code` Plugin on your Jenkins instance.
+
+Refer to [Installing a new plugin in Jenkins](https://jenkins.io/doc/book/managing/plugins/#installing-a-plugin).
+
+#### Add configuration YAML:
+
+There are multiple ways to load JCasC yaml file to configure Jenkins:
+
+* JCasC by default searches for a file with the name `jenkins.yaml` in `$JENKINS_ROOT`.
+
+* The JCasC looks for an environment variable `CASC_JENKINS_CONFIG` which contains the path for the configuration `yaml` file.
+
+    * A path to a folder containing a set of config files e.g. `/var/jenkins_home/casc_configs`.
+
+    * A full path to a single file e.g. `/var/jenkins_home/casc_configs/jenkins.yaml`.
+
+    * A URL pointing to a file served on the web e.g. `https://<your-domain>/jenkins.yaml`.
+
+* You can also set the configuration yaml path in the UI. Go to `<your-jenkins-domain>/configuration-as-code`. Enter path or URL to `jenkins.yaml` and select `Apply New Configuration`.
+
+To configure your Vault in Jenkins add the following to `jenkins.yaml`:
+
+```yaml
+unclassified:
+  hashicorpVault:
+    configuration:
+      vaultCredentialId: "vaultToken"
+      vaultUrl: "${CASC_VAULT_AGENT_ADDR:-http://localhost:8100}" # Vault Agent Addr
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - vaultTokenCredential:
+              description: "Uber Token"
+              id: "vaultToken"
+              scope: GLOBAL
+              token: "${MY_SECRET_TOKEN}"
+```
+
+See [handling secrets section](https://github.com/jenkinsci/configuration-as-code-plugin#handling-secrets) in JCasC documentation for better security.
+
+You can also configure `VaultGithubTokenCredential`, or `VautGCPCredential` or `VaultAppRoleCredential`
+
+If you are unsure about how to do it from `yaml`. You can still use the UI to configure credentials.  
+After you configured Credentials and the Global Vault configuration.  
+you can use the export feature build into JCasC by visiting `<your-jenkins-domain>/configuration-as-code/viewExport` 
+
+### HashiCorp Vault Plugin as a Secret Source for JCasC
+
+We can provide these initial secrets for JCasC
+The secret source for JCasC is configured via environment variables as way to get access to vault at startup and when configuring Jenkins instance.
+
+[For Security and compatibility considerations please read more here](https://github.com/jenkinsci/configuration-as-code-plugin#security-and-compatibility-considerations)
+
+- The environment variable `CASC_VAULT_PW` must be present, if token is not used and appRole/Secret is not used. (Vault password.)
+- The environment variable `CASC_VAULT_USER` must be present, if token is not used and appRole/Secret is not used. (Vault username.)
+- The environment variable `CASC_VAULT_APPROLE` must be present, if token is not used and U/P not used. (Vault AppRole ID.)
+- The environment variable `CASC_VAULT_APPROLE_SECRET` must be present, it token is not used and U/P not used. (Vault AppRole Secret ID.)
+- The environment variable `CASC_VAULT_TOKEN` must be present, if U/P is not used. (Vault token.)
+- The environment variable `CASC_VAULT_PATHS` must be present. (Comma separated vault key paths. For example, `secret/jenkins,secret/admin`.)
+- The environment variable `CASC_VAULT_URL` must be present. (Vault url, including port number.)
+- The environment variable `CASC_VAULT_AGENT_ADDR` is optional. It takes precedence over `CASC_VAULT_URL` and is used for connecting to a Vault Agent. [See this section](#vault-agent)
+- The environment variable `CASC_VAULT_MOUNT` is optional. (Vault auth mount. For example, `ldap` or another username & password authentication type, defaults to `userpass`.)
+- The environment variable `CASC_VAULT_NAMESPACE` is optional. If used, sets the Vault namespace for Enterprise Vaults.
+- The environment variable `CASC_VAULT_FILE` is optional, provides a way for the other variables to be read from a file instead of environment variables.
+- The environment variable `CASC_VAULT_ENGINE_VERSION` is optional. If unset, your vault path is assumed to be using kv version 2. If your vault path uses engine version 1, set this variable to `1`.
+- The issued token should have read access to vault path `auth/token/lookup-self` in order to determine its expiration time. JCasC will re-issue a token if its expiration is reached (except for `CASC_VAULT_TOKEN`).
+
+If the environment variables `CASC_VAULT_URL` and `CASC_VAULT_PATHS` are present, JCasC will try to gather initial secrets from Vault. However for it to work properly there is a need for authentication by either the combination of `CASC_VAULT_USER` and `CASC_VAULT_PW`, a `CASC_VAULT_TOKEN`, or the combination of `CASC_VAULT_APPROLE` and `CASC_VAULT_APPROLE_SECRET`. The authenticated user must have at least read access.
+
+You can also provide a `CASC_VAULT_FILE` environment variable where you load the secrets from a file.
+
+File should be in a Java Properties format
+
+```properties
+CASC_VAULT_PW=PASSWORD
+CASC_VAULT_USER=USER
+CASC_VAULT_TOKEN=TOKEN
+CASC_VAULT_PATHS=secret/jenkins/master,secret/admin
+CASC_VAULT_URL=https://vault.dot.com
+CASC_VAULT_MOUNT=ldap
+```
+
+A good use for `CASC_VAULT_FILE` would be together with docker secrets.
+
+```yaml
+version: "3.6"
+
+services:
+  jenkins:
+    environment:
+      CASC_VAULT_FILE: /run/secrets/jcasc_vault
+    restart: always
+    build: .
+    image: jenkins.master:v1.0
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - jenkins-home:/var/jenkins_home
+    secrets:
+      - jcasc_vault
+
+volumes:
+  jenkins-home:
+
+secrets:
+  jcasc_vault:
+    file: ./secrets/jcasc_vault
+```
+
+### Vault Agent
+
+[For the use-case of Vault Agent read here](https://www.vaultproject.io/docs/agent/)
+
+When `CASC_VAULT_AGENT_ADDR` is specified, you only need to specify `CASC_VAULT_PATHS` and optionally `CASC_VAULT_ENGINE_VERSION`  
+Since Vault Agent must be configured to handle auto authentication.
+
+Here is an example of how to configure your Vault Agent with an app role.
+[Vault Agent supports multiple auto-auth methods](https://www.vaultproject.io/docs/agent/autoauth/methods/index.html)
+
+```hcl
+pid_file = "/tmp/agent_pidfile"
+auto_auth {
+    method {
+        type = "approle"
+        config = {
+            role_id_file_path = "/home/vault/role_id"
+            secret_id_file_path = "/home/vault/secret_id"
+        }
+    }
+    sink {
+        type = "file"
+        config = {
+            path = "/tmp/file-foo"
+        }
+    }
+}
+cache {
+    use_auto_auth_token = true
+}
+listener "tcp" {
+    address = "0.0.0.0:8200"
+    tls_disable = true
+}
+```
+
+Ideally your Vault Agent should be running on the same Machine or running as a Container networked together.  
+You ought to block any connection to Vault Agent for anything that is not considered localhost.
+
+For setup with Jenkins and Vault Agent running on the same host you can achieve this by using
+```hcl
+listener "tcp" {
+    address = "127.0.0.1:8200"
+    tls_disable = true
+}
+```
+
+For Containers you would need to use listener address of `0.0.0.0:8200`.  
+You should ___never expose___ the Vault Agent port. You ___OUGHT___ to network Vault Agent container and Jenkins container together.
+
+```hcl
+listener "tcp" {
+    address = "0.0.0.0:8200"
+    tls_disable = true
+}
+```
 
 [global_configuration]: docs/images/global_configuration.png
 [job_configuration]: docs/images/job_configuration.png
+[JCasC]: https://github.com/casz/configuration-as-code-plugin
+[Configuration as Code plugin]: https://github.com/casz/configuration-as-code-plugin
