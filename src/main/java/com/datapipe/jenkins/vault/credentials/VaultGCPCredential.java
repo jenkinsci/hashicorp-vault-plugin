@@ -33,6 +33,7 @@ public class VaultGCPCredential extends AbstractVaultTokenCredential {
         this.audience = audience;
     }
 
+    @NonNull
     public String getRole() {
         return role;
     }

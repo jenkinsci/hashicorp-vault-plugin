@@ -201,7 +201,7 @@ public class VaultConfigurationIT {
         VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        Credentials credential = new VaultTokenCredential(CredentialsScope.GLOBAL, "token-1",
+        VaultCredential credential = new VaultTokenCredential(CredentialsScope.GLOBAL, "token-1",
             "description", Secret.fromString("test-token"));
         SystemCredentialsProvider.getInstance().setDomainCredentialsMap(
             Collections.singletonMap(Domain.global(), Collections.singletonList(credential)));
@@ -219,7 +219,7 @@ public class VaultConfigurationIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         verify(mockAccessor, times(1))
-            .init("http://job-vault-url.com", (VaultCredential) credential, false);
+            .init("http://job-vault-url.com", credential, false);
         verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);

@@ -25,6 +25,7 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
         this.accessToken = accessToken;
     }
 
+    @NonNull
     public Secret getAccessToken() {
         return accessToken;
     }
