@@ -34,10 +34,12 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
         }
     }
 
+    @NonNull
     public String getRoleId() {
         return roleId;
     }
 
+    @NonNull
     public Secret getSecretId() {
         return secretId;
     }
