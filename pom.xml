@@ -20,8 +20,8 @@
     <configuration-as-code.version>1.29</configuration-as-code.version>
   </properties>
   <name>HashiCorp Vault Plugin</name>
-  <description>Build Wrapper for reading secrets in a HashiCorp Vault</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/HashiCorp+Vault+Plugin</url>
+  <description>Reading secrets from HashiCorp Vault for a Pipeline or as a Secret Source for JCasC</description>
+  <url>https://github.com/jenkinsci/hashicorp-vault-plugin</url>
   <organization>
     <name>Datapipe, Inc.</name>
     <url>https://www.datapipe.com</url>
