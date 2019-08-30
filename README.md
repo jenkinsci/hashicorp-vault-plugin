@@ -117,14 +117,14 @@ node {
 ```
 In the future we might migrate to a [BuildStep](http://javadoc.jenkins-ci.org/hudson/tasks/BuildStep.html) instead of a BuildWrapper.
 
-### Implemented hashicorp-vault-pipeline-plugin
+After integration of the [hashicorp-vault-pipeline-plugin] this is now also possible
 ##### Using global vault configuration
 
 ```
 pipeline {
     agent any
     environment {
-        SECRET = vault path: 'secrets', key: 'username', engineVersion: 2
+        SECRET = vault path: 'secrets', key: 'username'
     }
     stages {
         stage("read vault key") {
@@ -163,9 +163,9 @@ By default, the plugin does not hide any accidental printing of secret to consol
 pipeline {
     agent any
     environment {
-        SECRET1    = vault path: 'secrets', key: 'password1', vaultUrl: 'https://my-vault.com:8200', credentialsId: 'my-creds', engineVersion: 2
-        SECRET2    = vault path: 'secrets', key: 'password2', vaultUrl: 'https://my-vault.com:8200', credentialsId: 'my-creds', engineVersion: 2
-        NOT_SECRET = vault path: 'secrets', key: 'username', vaultUrl: 'https://my-vault.com:8200', credentialsId: 'my-creds', engineVersion: 2
+        SECRET1    = vault path: 'secrets', key: 'password1', vaultUrl: 'https://my-vault.com:8200', credentialsId: 'my-creds'
+        SECRET2    = vault path: 'secrets', key: 'password2', vaultUrl: 'https://my-vault.com:8200', credentialsId: 'my-creds'
+        NOT_SECRET = vault path: 'secrets', key: 'username', vaultUrl: 'https://my-vault.com:8200', credentialsId: 'my-creds'
     }
     stages {
         stage("read vault key") {

@@ -26,7 +26,7 @@ public class VaultStepExecution extends StepExecution {
     private final transient Run run;
     private final transient TaskListener listener;
 
-    public VaultStepExecution(@Nonnull final StepContext context, final VaultReadStep readStep) throws IOException, InterruptedException {
+    VaultStepExecution(@Nonnull final StepContext context, final VaultReadStep readStep) throws IOException, InterruptedException {
         super(context);
         this.readStep = readStep;
         this.run = getRunFromContext();
