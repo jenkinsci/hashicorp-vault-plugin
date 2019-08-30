@@ -1,32 +1,33 @@
 package com.datapipe.jenkins.vault.buildstep;
 
-import java.io.IOException;
-
-import javax.annotation.Nonnull;
-
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
-
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.datapipe.jenkins.vault.VaultAccessor;
 import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-
 import hudson.EnvVars;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import java.io.IOException;
+import javax.annotation.Nonnull;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 public class VaultStepExecution extends StepExecution {
+
+    private static final long serialVersionUID = 3240138110787913228L;
+
     private final transient VaultReadStep readStep;
 
     private final EnvVars envVars;
     private final transient Run run;
-    private final transient TaskListener listener;
+    private final TaskListener listener;
 
-    VaultStepExecution(@Nonnull final StepContext context, final VaultReadStep readStep) throws IOException, InterruptedException {
+    VaultStepExecution(@Nonnull final StepContext context, final VaultReadStep readStep)
+        throws IOException, InterruptedException {
         super(context);
         this.readStep = readStep;
         this.run = getRunFromContext();
@@ -39,7 +40,7 @@ public class VaultStepExecution extends StepExecution {
         try {
 
             final String path = Util.replaceMacro(readStep.getPath(), envVars);
-            final int engineVersion = readStep.getEngineVersion();
+            final Integer engineVersion = readStep.getEngineVersion();
             final VaultAccessor vaultAccessor = initVaultAccessor();
 
             final String value = vaultAccessor.read(path, engineVersion)
@@ -58,19 +59,16 @@ public class VaultStepExecution extends StepExecution {
     }
 
     private VaultAccessor initVaultAccessor() {
-        GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.all().get(GlobalVaultConfiguration.class);
-        if (globalVaultConfiguration == null) {
-            throw new VaultPluginException("Unable to retrieve GlobalVaultConfiguration");
-        }
+        GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.get();
 
         final VaultConfiguration vaultConfiguration = globalVaultConfiguration.getConfiguration();
-        final String credentialsId = readStep.getCredentialsId() == null || readStep.getCredentialsId().isEmpty() ? vaultConfiguration.getVaultCredentialId() : Util.replaceMacro(readStep.getCredentialsId(), envVars);
-        final String vaultUrl = readStep.getVaultUrl() == null || readStep.getVaultUrl().isEmpty() ? vaultConfiguration.getVaultUrl() : Util.replaceMacro(readStep.getVaultUrl(), envVars);
+        final String credentialsId = StringUtils.isBlank(readStep.getCredentialsId()) ? vaultConfiguration.getVaultCredentialId() : Util.replaceMacro(readStep.getCredentialsId(), envVars);
+        final String vaultUrl = StringUtils.isBlank(readStep.getVaultUrl()) ? vaultConfiguration.getVaultUrl() : Util.replaceMacro(readStep.getVaultUrl(), envVars);
         final boolean skipSslVerification = vaultConfiguration.isSkipSslVerification();
 
         VaultAccessor vaultAccessor = new VaultAccessor();
 
-        if (credentialsId == null || credentialsId.isEmpty()) {
+        if (StringUtils.isBlank(credentialsId)) {
             listener.getLogger().append(String.format("using vault url '%s' without credentials", vaultUrl));
             vaultAccessor.init(vaultUrl, skipSslVerification);
             return vaultAccessor;

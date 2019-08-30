@@ -1,10 +1,10 @@
 package com.datapipe.jenkins.vault.buildstep;
 
-import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
-
+import hudson.Extension;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -12,9 +12,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import hudson.Extension;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
 
 public class VaultReadStep extends Step {
 
@@ -25,11 +23,21 @@ public class VaultReadStep extends Step {
     private Integer engineVersion;
 
     @DataBoundConstructor
-    public VaultReadStep() {}
+    public VaultReadStep() {
+        // default constructor required to initialize the build step
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
+    }
 
     @DataBoundSetter
     public void setCredentialsId(final String credentialsId) {
         this.credentialsId = credentialsId;
+    }
+
+    public String getKey() {
+        return key;
     }
 
     @DataBoundSetter
@@ -37,9 +45,17 @@ public class VaultReadStep extends Step {
         this.key = key;
     }
 
+    public String getPath() {
+        return path;
+    }
+
     @DataBoundSetter
     public void setPath(final String path) {
         this.path = path;
+    }
+
+    public String getVaultUrl() {
+        return vaultUrl;
     }
 
     @DataBoundSetter
@@ -47,29 +63,13 @@ public class VaultReadStep extends Step {
         this.vaultUrl = vaultUrl;
     }
 
+    public Integer getEngineVersion() {
+        return this.engineVersion != null ? this.engineVersion : DEFAULT_ENGINE_VERSION;
+    }
+
     @DataBoundSetter
     public void setEngineVersion(final int engineVersion) {
         this.engineVersion = engineVersion;
-    }
-
-    public String getCredentialsId() {
-        return credentialsId;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public String getVaultUrl() {
-        return vaultUrl;
-    }
-
-    public Integer getEngineVersion() {
-        return engineVersion != null ? engineVersion : DEFAULT_ENGINE_VERSION;
     }
 
     @Override
