@@ -117,7 +117,7 @@ node {
 ```
 In the future we might migrate to a [BuildStep](http://javadoc.jenkins-ci.org/hudson/tasks/BuildStep.html) instead of a BuildWrapper.
 
-After integration of the [hashicorp-vault-pipeline-plugin] this is now also possible
+After integration of the [hashicorp-vault-pipeline-plugin](https://github.com/jenkinsci/hashicorp-vault-pipeline-plugin) this is now also possible
 ##### Using global vault configuration
 
 ```
