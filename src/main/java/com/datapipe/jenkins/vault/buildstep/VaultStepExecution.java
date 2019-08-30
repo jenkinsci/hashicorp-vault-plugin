@@ -64,13 +64,13 @@ public class VaultStepExecution extends StepExecution {
         final VaultConfiguration vaultConfiguration = globalVaultConfiguration.getConfiguration();
         final String credentialsId = StringUtils.isBlank(readStep.getCredentialsId()) ? vaultConfiguration.getVaultCredentialId() : Util.replaceMacro(readStep.getCredentialsId(), envVars);
         final String vaultUrl = StringUtils.isBlank(readStep.getVaultUrl()) ? vaultConfiguration.getVaultUrl() : Util.replaceMacro(readStep.getVaultUrl(), envVars);
-        final boolean skipSslVerification = vaultConfiguration.isSkipSslVerification();
+        final boolean sslVerification = vaultConfiguration.isSkipSslVerification();
 
         VaultAccessor vaultAccessor = new VaultAccessor();
 
         if (StringUtils.isBlank(credentialsId)) {
             listener.getLogger().append(String.format("using vault url '%s' without credentials", vaultUrl));
-            vaultAccessor.init(vaultUrl, skipSslVerification);
+            vaultAccessor.init(vaultUrl, !sslVerification);
             return vaultAccessor;
         } else {
             listener.getLogger().append(String.format("using vault url '%s' and credentialsId '%s'", vaultUrl, credentialsId));
@@ -80,9 +80,9 @@ public class VaultStepExecution extends StepExecution {
 
         if (credential == null) {
             listener.getLogger().append(String.format("no credentials found for credentialId %s, accessing Vault without credentials", credentialsId));
-            vaultAccessor.init(vaultUrl, skipSslVerification);
+            vaultAccessor.init(vaultUrl, !sslVerification);
         } else {
-            vaultAccessor.init(vaultUrl, credential, skipSslVerification);
+            vaultAccessor.init(vaultUrl, credential, !sslVerification);
         }
         return vaultAccessor;
     }
