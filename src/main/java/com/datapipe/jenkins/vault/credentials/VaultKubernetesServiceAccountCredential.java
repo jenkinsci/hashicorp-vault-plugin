@@ -1,0 +1,63 @@
+package com.datapipe.jenkins.vault.credentials;
+
+import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.VaultException;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.datapipe.jenkins.vault.exception.VaultPluginException;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.Extension;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.stream.Collectors;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+public class VaultKubernetesServiceAccountCredential extends AbstractVaultTokenCredential {
+
+    private static final String SERVICE_ACCOUNT_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
+
+    @NonNull
+    private final String role;
+
+    @DataBoundConstructor
+    public VaultKubernetesServiceAccountCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
+        @CheckForNull String description, @NonNull String role) {
+        super(scope, id, description);
+        this.role = role;
+    }
+
+
+    @Override
+    @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
+    public String getToken(Vault vault) {
+        String jwt;
+        try {
+            jwt = Files.lines(Paths.get(SERVICE_ACCOUNT_TOKEN_PATH)).collect(Collectors.joining());
+        } catch (IOException e) {
+            throw new VaultPluginException("could not get JWT from Service Account Token", e);
+        }
+
+        try {
+            return vault
+                .withRetries(5, 500)
+                .auth()
+                .loginByKubernetes(role, jwt)
+                .getAuthClientToken();
+        } catch (VaultException e) {
+            throw new VaultPluginException("could not log in into vault", e);
+        }
+    }
+
+    @Extension
+    public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
+
+        @NonNull
+        @Override
+        public String getDisplayName() {
+            return "Vault Kubernetes Service Account Credential";
+        }
+
+    }
+}
