@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class VaultKubernetesServiceAccountCredential extends AbstractVaultTokenCredential {
+public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
 
     private static final String SERVICE_ACCOUNT_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
 
@@ -22,7 +22,7 @@ public class VaultKubernetesServiceAccountCredential extends AbstractVaultTokenC
     private final String role;
 
     @DataBoundConstructor
-    public VaultKubernetesServiceAccountCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
+    public VaultKubernetesCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
         @CheckForNull String description, @NonNull String role) {
         super(scope, id, description);
         this.role = role;
@@ -56,7 +56,7 @@ public class VaultKubernetesServiceAccountCredential extends AbstractVaultTokenC
         @NonNull
         @Override
         public String getDisplayName() {
-            return "Vault Kubernetes Service Account Credential";
+            return "Vault Kubernetes Credential";
         }
 
     }
