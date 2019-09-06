@@ -67,6 +67,14 @@ You enter your github personal access token to authenticate to vault.
 
 You enter your Vault GCP auth `role` name and `audience`. The JWT will be automatically retrieved from GCE metdata. This requires that Jenkins master is running on a GCE instance.
 
+#### Vault Kubernetes Credential
+
+![Kubernetes Credential](docs/images/kubernetes_credential.png)
+
+You enter your Vault Kubernetes auth `role`. The JWT will be automatically retrieved from the
+mounted secret volume (`/var/run/secrets/kubernetes.io/serviceaccount/token`). This assumes,
+that the jenkins is running in Kubernetes Pod with a Service Account attached.
+
 #### Vault Token Credential
 
 ![Token Credential](docs/images/token_credential.png)
