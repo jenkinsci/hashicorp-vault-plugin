@@ -13,6 +13,7 @@ import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import java.io.Serializable;
+import java.io.File;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
@@ -31,6 +32,8 @@ public class VaultConfiguration
     private String vaultUrl;
 
     private String vaultCredentialId;
+
+    private File sslTrustStore = DescriptorImpl.DEFAULT_TRUSTSTORE;
 
     private boolean failIfNotFound = DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
 
@@ -55,6 +58,7 @@ public class VaultConfiguration
         this.vaultCredentialId = toCopy.getVaultCredentialId();
         this.failIfNotFound = toCopy.failIfNotFound;
         this.skipSslVerification = toCopy.skipSslVerification;
+        this.sslTrustStore = toCopy.sslTrustStore;
         this.engineVersion = toCopy.engineVersion;
     }
 
@@ -71,6 +75,9 @@ public class VaultConfiguration
         }
         if (result.engineVersion == null) {
             result.engineVersion = parent.getEngineVersion();
+        }
+        if (result.sslTrustStore == null) {
+            result.sslTrustStore = parent.getSslTrustStore();
         }
         result.failIfNotFound = failIfNotFound;
         return result;
@@ -121,6 +128,15 @@ public class VaultConfiguration
         this.engineVersion = engineVersion;
     }
 
+    public File getSslTrustStore() {
+        return sslTrustStore;
+    }
+
+    @DataBoundSetter
+    public void setSslTrustStore(File sslTrustStore) {
+        this.sslTrustStore = sslTrustStore;
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
 
@@ -129,6 +145,9 @@ public class VaultConfiguration
         public static final boolean DEFAULT_SKIP_SSL_VERIFICATION = false;
 
         public static final int DEFAULT_ENGINE_VERSION = 2;
+
+        public static final File DEFAULT_TRUSTSTORE =
+            new File(System.getProperty("java.home"), "lib/security/cacerts");
 
         @Override
         @NonNull

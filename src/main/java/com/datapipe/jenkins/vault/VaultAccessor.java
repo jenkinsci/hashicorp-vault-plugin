@@ -9,6 +9,9 @@ import com.bettercloud.vault.response.VaultResponse;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import java.io.Serializable;
+import java.io.File;
+
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_TRUSTSTORE;
 
 public class VaultAccessor implements Serializable {
 
@@ -19,23 +22,30 @@ public class VaultAccessor implements Serializable {
     private transient VaultConfig config;
 
 
+
     public void init(String url) {
-        init(url, null, false);
+        init(url, null, DEFAULT_TRUSTSTORE, false);
     }
 
     public void init(String url, boolean skipSslVerification) {
-        init(url, null, skipSslVerification);
+        init(url, null, DEFAULT_TRUSTSTORE, skipSslVerification);
     }
 
     public void init(String url, VaultCredential credential) {
-        init(url, credential, false);
+        init(url, credential, DEFAULT_TRUSTSTORE, false);
     }
 
     public void init(String url, VaultCredential credential, boolean skipSslVerification) {
+        init(url, credential, DEFAULT_TRUSTSTORE, skipSslVerification);
+    }
+
+    public void init(String url, VaultCredential credential, File trustStore, boolean skipSslVerification) {
         try {
             config = new VaultConfig()
                 .address(url)
-                .sslConfig(new SslConfig().verify(skipSslVerification).build())
+                .sslConfig(new SslConfig()
+                    .trustStoreFile(trustStore)
+                    .verify(skipSslVerification).build())
                 .build();
             if (credential == null) {
                 vault = new Vault(config);

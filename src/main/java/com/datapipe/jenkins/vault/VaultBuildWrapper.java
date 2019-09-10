@@ -55,6 +55,7 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapperDescriptor;
 import java.io.PrintStream;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +70,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_TRUSTSTORE;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
@@ -128,6 +130,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     private void provideEnvironmentVariablesFromVault(Context context, Run build,
         EnvVars envVars) {
         String url = getConfiguration().getVaultUrl();
+        File trustStore = getConfiguration().getSslTrustStore();
 
         if (StringUtils.isBlank(url)) {
             throw new VaultPluginException(
@@ -136,7 +139,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
+        vaultAccessor.init(url, credential, trustStore, configuration.isSkipSslVerification());
         for (VaultSecret vaultSecret : vaultSecrets) {
             String path = envVars.expand(vaultSecret.getPath());
             Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
@@ -228,6 +231,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
         if (configuration.getEngineVersion() == null) {
             configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
+        }
+        if (configuration.getSslTrustStore() == null) {
+            configuration.setSslTrustStore(DEFAULT_TRUSTSTORE);
         }
     }
 
