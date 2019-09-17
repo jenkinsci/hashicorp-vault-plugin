@@ -137,6 +137,11 @@ public class VaultConfiguration
         this.sslTrustStore = sslTrustStore;
     }
 
+    @DataBoundSetter
+    public void setSslTrustStore(String sslTrustStorePath) {
+        this.sslTrustStore = new File(sslTrustStorePath);
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
 
