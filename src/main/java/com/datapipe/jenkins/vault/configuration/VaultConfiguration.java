@@ -33,7 +33,7 @@ public class VaultConfiguration
 
     private String vaultCredentialId;
 
-    private File sslTrustStore = DescriptorImpl.DEFAULT_TRUSTSTORE;
+    private File sslTrustStore = DescriptorImpl.DEFAULT_SSL_TRUSTSTORE;
 
     private boolean failIfNotFound = DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
 
@@ -147,12 +147,12 @@ public class VaultConfiguration
 
         public static final boolean DEFAULT_FAIL_NOT_FOUND = true;
 
+        public static final File DEFAULT_SSL_TRUSTSTORE =
+            new File(System.getProperty("java.home"), "lib/security/cacerts");
+
         public static final boolean DEFAULT_SKIP_SSL_VERIFICATION = false;
 
         public static final int DEFAULT_ENGINE_VERSION = 2;
-
-        public static final File DEFAULT_TRUSTSTORE =
-            new File(System.getProperty("java.home"), "lib/security/cacerts");
 
         @Override
         @NonNull

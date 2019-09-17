@@ -6,12 +6,11 @@ import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.response.VaultResponse;
+import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import java.io.Serializable;
 import java.io.File;
-
-import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_TRUSTSTORE;
 
 public class VaultAccessor implements Serializable {
 
@@ -20,32 +19,22 @@ public class VaultAccessor implements Serializable {
     private transient Vault vault;
 
     private transient VaultConfig config;
+    private transient SslConfig sslConfig;
+    private transient VaultCredential credential;
 
-
-
-    public void init(String url) {
-        init(url, null, DEFAULT_TRUSTSTORE, false);
+    public VaultAccessor() {
+        config = new VaultConfig();
+        sslConfig = new SslConfig();
     }
 
-    public void init(String url, boolean skipSslVerification) {
-        init(url, null, DEFAULT_TRUSTSTORE, skipSslVerification);
-    }
-
-    public void init(String url, VaultCredential credential) {
-        init(url, credential, DEFAULT_TRUSTSTORE, false);
-    }
-
-    public void init(String url, VaultCredential credential, boolean skipSslVerification) {
-        init(url, credential, DEFAULT_TRUSTSTORE, skipSslVerification);
-    }
-
-    public void init(String url, VaultCredential credential, File trustStore, boolean skipSslVerification) {
+    public void init(VaultConfiguration vaultConfig, VaultCredential credential) {
         try {
             config = new VaultConfig()
-                .address(url)
+                .address(vaultConfig.getVaultUrl())
+                .engineVersion(vaultConfig.getEngineVersion())
                 .sslConfig(new SslConfig()
-                    .trustStoreFile(trustStore)
-                    .verify(skipSslVerification).build())
+                    .trustStoreFile(vaultConfig.getSslTrustStore())
+                    .verify(vaultConfig.isSkipSslVerification()).build())
                 .build();
             if (credential == null) {
                 vault = new Vault(config);

@@ -2,6 +2,7 @@ package com.datapipe.jenkins.vault;
 
 import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.rest.RestResponse;
+import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
@@ -29,7 +30,8 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
         super(vaultSecrets);
         setVaultAccessor(new VaultAccessor() {
             @Override
-            public void init(String url, VaultCredential credential) {
+            public void init(VaultConfiguration config, VaultCredential credential) {
+                String url = config.getVaultUrl();
                 if (!url.equals("http://jenkinsfile-vault-url.com")) {
                     throw new AssertionError("URL " + url + " does not match expected value of "
                         + "http://jenkinsfile-vault-url.com");

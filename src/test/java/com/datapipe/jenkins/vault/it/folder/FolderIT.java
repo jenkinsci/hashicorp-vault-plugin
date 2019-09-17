@@ -40,12 +40,12 @@ import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.JENKINSFILE_URL
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.echoSecret;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
-import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_TRUSTSTORE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -140,8 +140,9 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(
-            new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
+        VaultConfiguration config = new VaultConfiguration("http://folder1.com",
+            FOLDER_1_CREDENTIALS_ID, false);
+        this.folder1.addProperty(new FolderVaultConfiguration(config));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(echoSecret());
@@ -155,7 +156,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, DEFAULT_TRUSTSTORE, false);
+            .init(vaultBuildWrapper.getConfiguration(), (VaultCredential) FOLDER_1_CREDENTIAL);
         verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 
@@ -167,16 +168,16 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(
-            new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
+        VaultConfiguration config = new VaultConfiguration("http://folder1.com",
+            FOLDER_1_CREDENTIALS_ID, false);
+        this.folder1.addProperty(new FolderVaultConfiguration(config));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(echoSecret());
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
         verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL,
-                DEFAULT_TRUSTSTORE, false);
+            .init(vaultBuildWrapper.getConfiguration(), (VaultCredential) FOLDER_1_CREDENTIAL);
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(),
             is(FOLDER_1_CREDENTIALS_ID));
         assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
@@ -184,8 +185,7 @@ public class FolderIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL,
-                DEFAULT_TRUSTSTORE, false);
+            .init(vaultBuildWrapper.getConfiguration(), (VaultCredential) FOLDER_1_CREDENTIAL);
         verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 
@@ -212,7 +212,7 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);
-        verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
+        verify(mockAccessor, times(0)).init(any(VaultConfiguration.class), any(VaultCredential.class));
         verify(mockAccessor, times(0)).read(anyString(), anyInt());
     }
 

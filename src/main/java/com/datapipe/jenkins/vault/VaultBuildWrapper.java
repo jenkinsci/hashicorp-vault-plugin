@@ -70,7 +70,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
-import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_TRUSTSTORE;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
@@ -139,7 +138,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url, credential, trustStore, configuration.isSkipSslVerification());
+        vaultAccessor.init(getConfiguration(), credential);
         for (VaultSecret vaultSecret : vaultSecrets) {
             String path = envVars.expand(vaultSecret.getPath());
             Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
@@ -231,9 +230,6 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
         if (configuration.getEngineVersion() == null) {
             configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
-        }
-        if (configuration.getSslTrustStore() == null) {
-            configuration.setSslTrustStore(DEFAULT_TRUSTSTORE);
         }
     }
 

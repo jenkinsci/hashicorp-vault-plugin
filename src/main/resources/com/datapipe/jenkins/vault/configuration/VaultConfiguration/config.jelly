@@ -15,7 +15,7 @@
       <f:checkbox default="${descriptor.DEFAULT_FAIL_NOT_FOUND}"/>
     </f:entry>
     <f:entry field="sslTrustStore" title="SSL Trust Store">
-      <f:textbox default="${descriptor.DEFAULT_TRUSTSTORE}"/>
+      <f:textbox default="${descriptor.DEFAULT_SSL_TRUSTSTORE}"/>
     </f:entry>
     <f:entry title="Skip SSL verification" field="skipSslVerification">
       <f:checkbox default="${descriptor.DEFAULT_SKIP_SSL_VERIFICATION}"/>
