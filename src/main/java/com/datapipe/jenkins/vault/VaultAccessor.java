@@ -22,10 +22,7 @@ public class VaultAccessor implements Serializable {
     private transient SslConfig sslConfig;
     private transient VaultCredential credential;
 
-    public VaultAccessor() {
-        config = new VaultConfig();
-        sslConfig = new SslConfig();
-    }
+    public VaultAccessor() {}
 
     public void init(VaultConfiguration vaultConfig, VaultCredential credential) {
         try {
