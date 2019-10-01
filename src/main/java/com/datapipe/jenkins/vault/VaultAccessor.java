@@ -18,7 +18,6 @@ public class VaultAccessor implements Serializable {
 
     private transient VaultConfig config;
 
-
     public void init(String url) {
         init(url, null, false);
     }
@@ -35,7 +34,7 @@ public class VaultAccessor implements Serializable {
         try {
             config = new VaultConfig()
                 .address(url)
-                .sslConfig(new SslConfig().verify(skipSslVerification).build())
+                .sslConfig(new SslConfig().verify(!skipSslVerification).build())
                 .build();
             if (credential == null) {
                 vault = new Vault(config);

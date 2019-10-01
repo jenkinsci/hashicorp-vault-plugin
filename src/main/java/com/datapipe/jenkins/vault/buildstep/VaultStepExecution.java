@@ -38,7 +38,6 @@ public class VaultStepExecution extends StepExecution {
     @Override
     public boolean start() {
         try {
-
             final String path = Util.replaceMacro(readStep.getPath(), envVars);
             final Integer engineVersion = readStep.getEngineVersion();
             final VaultAccessor vaultAccessor = initVaultAccessor();
@@ -64,13 +63,13 @@ public class VaultStepExecution extends StepExecution {
         final VaultConfiguration vaultConfiguration = globalVaultConfiguration.getConfiguration();
         final String credentialsId = StringUtils.isBlank(readStep.getCredentialsId()) ? vaultConfiguration.getVaultCredentialId() : Util.replaceMacro(readStep.getCredentialsId(), envVars);
         final String vaultUrl = StringUtils.isBlank(readStep.getVaultUrl()) ? vaultConfiguration.getVaultUrl() : Util.replaceMacro(readStep.getVaultUrl(), envVars);
-        final boolean sslVerification = vaultConfiguration.isSkipSslVerification();
+        final boolean skipSslVerification = vaultConfiguration.isSkipSslVerification();
 
         VaultAccessor vaultAccessor = new VaultAccessor();
 
         if (StringUtils.isBlank(credentialsId)) {
             listener.getLogger().append(String.format("using vault url '%s' without credentials", vaultUrl));
-            vaultAccessor.init(vaultUrl, !sslVerification);
+            vaultAccessor.init(vaultUrl, skipSslVerification);
             return vaultAccessor;
         } else {
             listener.getLogger().append(String.format("using vault url '%s' and credentialsId '%s'", vaultUrl, credentialsId));
@@ -80,9 +79,9 @@ public class VaultStepExecution extends StepExecution {
 
         if (credential == null) {
             listener.getLogger().append(String.format("no credentials found for credentialId %s, accessing Vault without credentials", credentialsId));
-            vaultAccessor.init(vaultUrl, !sslVerification);
+            vaultAccessor.init(vaultUrl, skipSslVerification);
         } else {
-            vaultAccessor.init(vaultUrl, credential, !sslVerification);
+            vaultAccessor.init(vaultUrl, credential, skipSslVerification);
         }
         return vaultAccessor;
     }
