@@ -10,12 +10,6 @@ import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import hudson.EnvVars;
 import hudson.model.Build;
 import hudson.model.Run;
-import jenkins.tasks.SimpleBuildWrapper;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -23,6 +17,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import jenkins.tasks.SimpleBuildWrapper;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;

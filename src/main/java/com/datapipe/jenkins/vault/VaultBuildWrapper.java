@@ -54,12 +54,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapperDescriptor;
-import jenkins.tasks.SimpleBuildWrapper;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.Symbol;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -68,16 +62,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import jenkins.tasks.SimpleBuildWrapper;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
+    protected PrintStream logger;
     private VaultConfiguration configuration;
     private List<VaultSecret> vaultSecrets;
     private List<String> valuesToMask = new ArrayList<>();
     private VaultAccessor vaultAccessor = new VaultAccessor();
-    protected PrintStream logger;
 
     @DataBoundConstructor
     public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
@@ -86,7 +85,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace,
-        Launcher launcher, TaskListener listener, EnvVars initialEnvironment) {
+                      Launcher launcher, TaskListener listener, EnvVars initialEnvironment) {
         logger = listener.getLogger();
         pullAndMergeConfiguration(build);
 
@@ -96,34 +95,21 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
-
-    public List<VaultSecret> getVaultSecrets() {
-        return this.vaultSecrets;
-    }
-
-    @DataBoundSetter
-    public void setConfiguration(VaultConfiguration configuration) {
-        this.configuration = configuration;
-    }
-
-    public VaultConfiguration getConfiguration() {
-        return this.configuration;
-    }
-
-    @VisibleForTesting
-    public void setVaultAccessor(VaultAccessor vaultAccessor) {
-        this.vaultAccessor = vaultAccessor;
-    }
-
-    private List<String> retrieveLeaseIds(List<LogicalResponse> logicalResponses) {
-        List<String> leaseIds = new ArrayList<>();
-        for (LogicalResponse response : logicalResponses) {
-            String leaseId = response.getLeaseId();
-            if (leaseId != null && !leaseId.isEmpty()) {
-                leaseIds.add(leaseId);
+    private void pullAndMergeConfiguration(Run<?, ?> build) {
+        for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
+            if (configuration != null) {
+                configuration = configuration.mergeWithParent(resolver.forJob(build.getParent()));
+            } else {
+                configuration = resolver.forJob(build.getParent());
             }
         }
-        return leaseIds;
+        if (configuration == null) {
+            throw new VaultPluginException(
+                "No configuration found - please configure the VaultPlugin.");
+        }
+        if (configuration.getEngineVersion() == null) {
+            configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
+        }
     }
 
     protected void provideEnvironmentVariablesFromVault(Context context, Run build,
@@ -171,6 +157,34 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
+    public VaultConfiguration getConfiguration() {
+        return this.configuration;
+    }
+
+    @DataBoundSetter
+    public void setConfiguration(VaultConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
+    protected VaultCredential retrieveVaultCredentials(Run build) {
+        String id = getConfiguration().getVaultCredentialId();
+        if (StringUtils.isBlank(id)) {
+            throw new VaultPluginException(
+                "The credential id was not configured - please specify the credentials to use.");
+        }
+        List<VaultCredential> credentials = CredentialsProvider
+            .lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM,
+                Collections.emptyList());
+        VaultCredential credential = CredentialsMatchers
+            .firstOrNull(credentials, new IdMatcher(id));
+
+        if (credential == null) {
+            throw new CredentialsUnavailableException(id);
+        }
+
+        return credential;
+    }
+
     private boolean responseHasErrors(String path, LogicalResponse response) {
         RestResponse restResponse = response.getRestResponse();
         if (restResponse == null) return false;
@@ -201,40 +215,24 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         return false;
     }
 
-    protected VaultCredential retrieveVaultCredentials(Run build) {
-        String id = getConfiguration().getVaultCredentialId();
-        if (StringUtils.isBlank(id)) {
-            throw new VaultPluginException(
-                "The credential id was not configured - please specify the credentials to use.");
-        }
-        List<VaultCredential> credentials = CredentialsProvider
-            .lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM,
-                Collections.emptyList());
-        VaultCredential credential = CredentialsMatchers
-            .firstOrNull(credentials, new IdMatcher(id));
-
-        if (credential == null) {
-            throw new CredentialsUnavailableException(id);
-        }
-
-        return credential;
+    public List<VaultSecret> getVaultSecrets() {
+        return this.vaultSecrets;
     }
 
-    private void pullAndMergeConfiguration(Run<?, ?> build) {
-        for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
-            if (configuration != null) {
-                configuration = configuration.mergeWithParent(resolver.forJob(build.getParent()));
-            } else {
-                configuration = resolver.forJob(build.getParent());
+    @VisibleForTesting
+    public void setVaultAccessor(VaultAccessor vaultAccessor) {
+        this.vaultAccessor = vaultAccessor;
+    }
+
+    private List<String> retrieveLeaseIds(List<LogicalResponse> logicalResponses) {
+        List<String> leaseIds = new ArrayList<>();
+        for (LogicalResponse response : logicalResponses) {
+            String leaseId = response.getLeaseId();
+            if (leaseId != null && !leaseId.isEmpty()) {
+                leaseIds.add(leaseId);
             }
         }
-        if (configuration == null) {
-            throw new VaultPluginException(
-                "No configuration found - please configure the VaultPlugin.");
-        }
-        if (configuration.getEngineVersion() == null) {
-            configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
-        }
+        return leaseIds;
     }
 
     @Override
