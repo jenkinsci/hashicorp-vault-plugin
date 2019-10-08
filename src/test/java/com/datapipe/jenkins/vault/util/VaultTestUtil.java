@@ -1,4 +1,4 @@
-package com.datapipe.jenkins.vault.jcasc.secrets;
+package com.datapipe.jenkins.vault.util;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
@@ -21,21 +21,11 @@ import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.testcontainers.utility.MountableFile.forHostPath;
 
 @SuppressWarnings("WeakerAccess")
-class VaultTestUtil {
+public class VaultTestUtil implements TestConstants {
 
     private final static Logger LOGGER = Logger.getLogger(VaultTestUtil.class.getName());
 
-    private static final String VAULT_DOCKER_IMAGE = "vault:1.0.3";
-    public static final String VAULT_ROOT_TOKEN = "root-token";
-    public static final String VAULT_USER = "admin";
-    public static final String VAULT_PW = "admin";
-    public static final String VAULT_PATH_KV1_1 = "kv-v1/admin";
-    public static final String VAULT_PATH_KV1_2 = "kv-v1/dev";
-    public static final String VAULT_PATH_KV2_1 = "kv-v2/admin";
-    public static final String VAULT_PATH_KV2_2 = "kv-v2/dev";
-    public static final String VAULT_PATH_KV2_3 = "kv-v2/qa";
-    public static final String VAULT_PATH_KV2_AUTH_TEST = "kv-v2/auth-test";
-    public static final String VAULT_APPROLE_FILE = "JCasC_temp_approle_secret.prop";
+
     private static boolean configured = false;
     private static Network network = Network.newNetwork();
 
@@ -62,7 +52,7 @@ class VaultTestUtil {
             .withNetwork(network)
             .withNetworkAliases("vault")
             .withCopyFileToContainer(forHostPath(
-                VaultTestUtil.class.getResource("vaultTest_adminPolicy.hcl").getPath()),
+                TestConstants.class.getResource("vaultTest_adminPolicy.hcl").getPath()),
                 "/admin.hcl")
             .withVaultPort(8200)
             .waitingFor(Wait.forHttp("/v1/sys/seal-status").forStatusCode(200));
@@ -75,7 +65,7 @@ class VaultTestUtil {
             .withNetwork(network)
             .withCreateContainerCmdModifier(cmd -> cmd.withCapAdd(IPC_LOCK))
             .withCopyFileToContainer(forHostPath(
-                VaultTestUtil.class.getResource("vaultTest_agent.hcl").getPath()),
+                TestConstants.class.getResource("vaultTest_agent.hcl").getPath()),
                 "/agent.hcl")
             .withCopyFileToContainer(forHostPath(roleIDPath),
                 "/home/vault/role_id")

@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.jcasc.secrets;
 
 
+import com.datapipe.jenkins.vault.util.TestConstants;
 import hudson.model.Result;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorException;
@@ -31,26 +32,16 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.testcontainers.vault.VaultContainer;
 
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_APPROLE_FILE;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV1_1;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV1_2;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_1;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_2;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_3;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_AUTH_TEST;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PW;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_ROOT_TOKEN;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_USER;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.configureVaultContainer;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.createVaultContainer;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.hasDockerDaemon;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.runCommand;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.configureVaultContainer;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.createVaultContainer;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.runCommand;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 // Inspired by https://github.com/BetterCloud/vault-java-driver/blob/master/src/test-integration/java/com/bettercloud/vault/util/VaultContainer.java
-public class VaultSecretSourceTest {
+public class VaultSecretSourceTest implements TestConstants {
 
     private final static Logger LOGGER = Logger.getLogger(VaultSecretSourceTest.class.getName());
 
@@ -261,7 +252,7 @@ public class VaultSecretSourceTest {
     })
     public void vaultReturns404() throws Exception {
         WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
-        String pipelineText =  IOUtils.toString(getClass().getResourceAsStream("pipeline.groovy"));
+        String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"));
         pipeline.setDefinition(new CpsFlowDefinition(pipelineText, true));
 
         WorkflowRun build = pipeline.scheduleBuild2(0).get();
