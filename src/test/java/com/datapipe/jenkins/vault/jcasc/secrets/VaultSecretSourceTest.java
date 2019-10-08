@@ -53,7 +53,7 @@ public class VaultSecretSourceTest implements TestConstants {
     @Rule
     public RuleChain chain = RuleChain
         .outerRule(new EnvVarsRule()
-            .set("CASC_VAULT_FILE", getClass().getResource("vaultTest_cascFile").getPath()))
+            .set("CASC_VAULT_FILE", TestConstants.class.getResource("vaultTest_cascFile").getPath()))
         .around(j);
 
     private ConfigurationContext context;
