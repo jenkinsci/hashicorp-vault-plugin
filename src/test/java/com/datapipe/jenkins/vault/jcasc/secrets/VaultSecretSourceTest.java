@@ -259,6 +259,6 @@ public class VaultSecretSourceTest implements TestConstants {
         WorkflowRun build = pipeline.scheduleBuild2(0).get();
 
         j.assertBuildStatus(Result.FAILURE, build);
-        j.assertLogContains("Vault credentials not found for 'secret/testing'", build);
+        j.assertLogContains("Vault credentials not found for '" + VAULT_PATH_KV1_1 + "'", build);
     }
 }
