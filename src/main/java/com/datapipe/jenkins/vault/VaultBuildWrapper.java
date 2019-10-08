@@ -23,6 +23,8 @@
  */
 package com.datapipe.jenkins.vault;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.bettercloud.vault.json.Json;
 import com.bettercloud.vault.json.JsonArray;
@@ -133,9 +135,27 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 "The vault url was not configured - please specify the vault url to use.");
         }
 
+        VaultConfig vaultConfig;
+        try {
+            vaultConfig = new VaultConfig()
+                .address(configuration.getVaultUrl())
+                .sslConfig(new SslConfig().verify(!configuration.isSkipSslVerification()).build());
+
+            if (StringUtils.isNotEmpty(configuration.getVaultNamespace())) {
+                vaultConfig.nameSpace(configuration.getVaultNamespace());
+            }
+        } catch (VaultException e) {
+            throw new VaultPluginException("Could not set up VaultConfig.", e);
+        }
+
         VaultCredential credential = retrieveVaultCredentials(build);
 
-        vaultAccessor.init(url, credential, configuration.isSkipSslVerification());
+        vaultAccessor.setConfig(vaultConfig);
+        vaultAccessor.setCredential(credential);
+        vaultAccessor.setMaxRetries(configuration.getMaxRetries());
+        vaultAccessor.setRetryIntervalMilliseconds(configuration.getRetryIntervalMilliseconds());
+        vaultAccessor.init();
+
         for (VaultSecret vaultSecret : vaultSecrets) {
             String path = envVars.expand(vaultSecret.getPath());
             Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())

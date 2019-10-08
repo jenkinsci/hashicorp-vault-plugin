@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault;
 
+import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.rest.RestResponse;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
@@ -28,12 +29,18 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
     public VaultBuildWrapperWithMockAccessor(@CheckForNull List<VaultSecret> vaultSecrets) {
         super(vaultSecrets);
         setVaultAccessor(new VaultAccessor() {
+
             @Override
-            public void init(String url, VaultCredential credential) {
-                if (!url.equals("http://jenkinsfile-vault-url.com")) {
-                    throw new AssertionError("URL " + url + " does not match expected value of "
-                        + "http://jenkinsfile-vault-url.com");
+            public void setConfig(VaultConfig config) {
+                if (!config.getAddress().equals("http://jenkinsfile-vault-url.com")) {
+                    throw new AssertionError(
+                        "URL " + config.getAddress() + " does not match expected value of "
+                            + "http://jenkinsfile-vault-url.com");
                 }
+            }
+
+            @Override
+            public void setCredential(VaultCredential credential) {
                 VaultAppRoleCredential appRoleCredential = (VaultAppRoleCredential) credential;
                 if (!appRoleCredential.getRoleId().equals("role-id-global-2") || !appRoleCredential
                     .getSecretId().getPlainText().equals("secret-id-global-2")) {
@@ -42,6 +49,11 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
                             + appRoleCredential.getSecretId()
                             + " do not match expected: -global-2");
                 }
+            }
+
+            @Override
+            public VaultAccessor init() {
+                return this;
             }
 
             @Override

@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
@@ -14,37 +13,75 @@ public class VaultAccessor implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private VaultConfig config;
+    private VaultCredential credential;
+    private int maxRetries = 0;
+    private int retryIntervalMilliseconds = 1000;
+
     private transient Vault vault;
 
-    private transient VaultConfig config;
-
-
-    public void init(String url) {
-        init(url, null, false);
+    public VaultAccessor() {
+        this.config = new VaultConfig();
     }
 
-    public void init(String url, boolean skipSslVerification) {
-        init(url, null, skipSslVerification);
+    public VaultAccessor(VaultConfig config, VaultCredential credential) {
+        this.config = config;
+        this.credential = credential;
     }
 
-    public void init(String url, VaultCredential credential) {
-        init(url, credential, false);
-    }
-
-    public void init(String url, VaultCredential credential, boolean skipSslVerification) {
+    public VaultAccessor init() {
         try {
-            config = new VaultConfig()
-                .address(url)
-                .sslConfig(new SslConfig().verify(skipSslVerification).build())
-                .build();
+            config.build();
+
             if (credential == null) {
                 vault = new Vault(config);
             } else {
                 vault = credential.authorizeWithVault(config);
             }
+
+            vault.withRetries(maxRetries, retryIntervalMilliseconds);
         } catch (VaultException e) {
             throw new VaultPluginException("failed to connect to vault", e);
         }
+        return this;
+    }
+
+    public VaultConfig getConfig() {
+        return config;
+    }
+
+    public void setConfig(VaultConfig config) {
+        this.config = config;
+    }
+
+    public VaultCredential getCredential() {
+        return credential;
+    }
+
+    public void setCredential(VaultCredential credential) {
+        this.credential = credential;
+    }
+
+    public int getMaxRetries() {
+        return maxRetries;
+    }
+
+    public void setMaxRetries(int maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
+    public int getRetryIntervalMilliseconds() {
+        return retryIntervalMilliseconds;
+    }
+
+    public void setRetryIntervalMilliseconds(int retryIntervalMilliseconds) {
+        this.retryIntervalMilliseconds = retryIntervalMilliseconds;
+    }
+
+    @Deprecated
+    public void init(String url, VaultCredential credential) {
+        config.address(url);
+        this.credential = credential;
     }
 
     public LogicalResponse read(String path, Integer engineVersion) {

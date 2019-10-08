@@ -28,6 +28,9 @@ public class VaultConfiguration
     extends AbstractDescribableImpl<VaultConfiguration>
     implements Serializable {
 
+    private static final int RETRY_INTERVAL_MILLISECONDS = 1000;
+    private static final int DEFAULT_TIMEOUT = 30;
+
     private String vaultUrl;
 
     private String vaultCredentialId;
@@ -37,6 +40,10 @@ public class VaultConfiguration
     private boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
 
     private Integer engineVersion;
+
+    private String vaultNamespace;
+
+    private Integer timeout = DEFAULT_TIMEOUT;
 
     @DataBoundConstructor
     public VaultConfiguration() {
@@ -56,6 +63,8 @@ public class VaultConfiguration
         this.failIfNotFound = toCopy.failIfNotFound;
         this.skipSslVerification = toCopy.skipSslVerification;
         this.engineVersion = toCopy.engineVersion;
+        this.vaultNamespace = toCopy.vaultNamespace;
+        this.timeout = toCopy.timeout;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -71,6 +80,12 @@ public class VaultConfiguration
         }
         if (result.engineVersion == null) {
             result.engineVersion = parent.getEngineVersion();
+        }
+        if (StringUtils.isBlank(result.getVaultNamespace())) {
+            result.setVaultNamespace(parent.getVaultNamespace());
+        }
+        if (result.timeout == null) {
+            result.setTimeout(parent.getTimeout());
         }
         result.failIfNotFound = failIfNotFound;
         return result;
@@ -119,6 +134,43 @@ public class VaultConfiguration
     @DataBoundSetter
     public void setEngineVersion(Integer engineVersion) {
         this.engineVersion = engineVersion;
+    }
+
+    public String getVaultNamespace() {
+        return vaultNamespace;
+    }
+
+    @DataBoundSetter
+    public void setVaultNamespace(String vaultNamespace) {
+        this.vaultNamespace = fixEmptyAndTrim(vaultNamespace);
+    }
+
+    public Integer getTimeout() {
+        return timeout;
+    }
+
+    @DataBoundSetter
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
+
+    /**
+     * Number of retries when reading a secret from vault
+     *
+     * @return number of retries
+     */
+    public int getMaxRetries() {
+        final int to = (null != getTimeout()) ? getTimeout() : DEFAULT_TIMEOUT;
+        return (int) (to * 1000.0 / RETRY_INTERVAL_MILLISECONDS);
+    }
+
+    /**
+     * The time in milliseconds in between retries when reading a secret from vault
+     *
+     * @return 1000 milliseconds
+     */
+    public int getRetryIntervalMilliseconds() {
+        return RETRY_INTERVAL_MILLISECONDS;
     }
 
     @Extension
