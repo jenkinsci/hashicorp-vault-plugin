@@ -4,24 +4,30 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
-
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-
-import java.io.Serializable;
-import java.util.List;
-
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
+import java.io.Serializable;
+import java.util.List;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
-public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration> implements Serializable {
+import static hudson.Util.fixEmptyAndTrim;
+
+public class VaultConfiguration
+    extends AbstractDescribableImpl<VaultConfiguration>
+    implements Serializable {
+
     private static final int RETRY_INTERVAL_MILLISECONDS = 1000;
     private static final int DEFAULT_TIMEOUT = 30;
 
@@ -29,28 +35,34 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String vaultCredentialId;
 
-    private boolean failIfNotFound = true;
+    private boolean failIfNotFound = DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
 
-    private boolean skipSslVerification = false;
+    private boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
+
+    private Integer engineVersion;
 
     private String vaultNamespace;
 
     private Integer timeout = DEFAULT_TIMEOUT;
 
+    @DataBoundConstructor
     public VaultConfiguration() {
         // no args constructor
     }
 
-    @DataBoundConstructor
-    public VaultConfiguration(String vaultUrl, String vaultCredentialId) {
-        this.vaultUrl = normalizeUrl(vaultUrl);
-        this.vaultCredentialId = vaultCredentialId;
+    @Deprecated
+    public VaultConfiguration(String vaultUrl, String vaultCredentialId, boolean failIfNotFound) {
+        setVaultUrl(vaultUrl);
+        setVaultCredentialId(vaultCredentialId);
+        setFailIfNotFound(failIfNotFound);
     }
 
     public VaultConfiguration(VaultConfiguration toCopy) {
         this.vaultUrl = toCopy.getVaultUrl();
         this.vaultCredentialId = toCopy.getVaultCredentialId();
         this.failIfNotFound = toCopy.failIfNotFound;
+        this.skipSslVerification = toCopy.skipSslVerification;
+        this.engineVersion = toCopy.engineVersion;
         this.vaultNamespace = toCopy.vaultNamespace;
         this.timeout = toCopy.timeout;
     }
@@ -66,25 +78,21 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         if (StringUtils.isBlank(result.getVaultUrl())) {
             result.setVaultUrl(parent.getVaultUrl());
         }
+        if (result.engineVersion == null) {
+            result.engineVersion = parent.getEngineVersion();
+        }
         if (StringUtils.isBlank(result.getVaultNamespace())) {
             result.setVaultNamespace(parent.getVaultNamespace());
         }
-        if (null == result.timeout) {
+        if (result.timeout == null) {
             result.setTimeout(parent.getTimeout());
         }
         result.failIfNotFound = failIfNotFound;
         return result;
     }
 
-
-
     public String getVaultUrl() {
         return vaultUrl;
-    }
-
-    @DataBoundSetter
-    public void setVaultUrl(String vaultUrl) {
-        this.vaultUrl = normalizeUrl(vaultUrl);
     }
 
     public String getVaultCredentialId() {
@@ -92,8 +100,13 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     }
 
     @DataBoundSetter
+    public void setVaultUrl(String vaultUrl) {
+        this.vaultUrl = normalizeUrl(fixEmptyAndTrim(vaultUrl));
+    }
+
+    @DataBoundSetter
     public void setVaultCredentialId(String vaultCredentialId) {
-        this.vaultCredentialId = vaultCredentialId;
+        this.vaultCredentialId = fixEmptyAndTrim(vaultCredentialId);
     }
 
     public boolean isFailIfNotFound() {
@@ -105,28 +118,6 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.failIfNotFound = failIfNotFound;
     }
 
-    public String getVaultNamespace() {
-        return vaultNamespace;
-    }
-
-    @DataBoundSetter
-    public void setVaultNamespace(String vaultNamespace) {
-        this.vaultNamespace = vaultNamespace;
-    }
-
-    /**
-     * Timeout in seconds for reading a secret from vault
-     * @return
-     */
-    public Integer getTimeout() {
-        return this.timeout;
-    }
-
-    @DataBoundSetter
-    public void setTimeout(Integer timeout) {
-        this.timeout = timeout;
-    }
-
     public boolean isSkipSslVerification() {
         return skipSslVerification;
     }
@@ -136,44 +127,98 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.skipSslVerification = skipSslVerification;
     }
 
+    public Integer getEngineVersion() {
+        return engineVersion;
+    }
+
+    @DataBoundSetter
+    public void setEngineVersion(Integer engineVersion) {
+        this.engineVersion = engineVersion;
+    }
+
+    public String getVaultNamespace() {
+        return vaultNamespace;
+    }
+
+    @DataBoundSetter
+    public void setVaultNamespace(String vaultNamespace) {
+        this.vaultNamespace = fixEmptyAndTrim(vaultNamespace);
+    }
+
+    public Integer getTimeout() {
+        return timeout;
+    }
+
+    @DataBoundSetter
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
 
     /**
      * Number of retries when reading a secret from vault
-     * @return
+     *
+     * @return number of retries
      */
     public int getMaxRetries() {
-        final Integer to = (null != getTimeout()) ? getTimeout() : DEFAULT_TIMEOUT;
+        final int to = (null != getTimeout()) ? getTimeout() : DEFAULT_TIMEOUT;
         return (int) (to * 1000.0 / RETRY_INTERVAL_MILLISECONDS);
     }
 
     /**
      * The time in milliseconds in between retries when reading a secret from vault
-     * @return
+     *
+     * @return 1000 milliseconds
      */
     public int getRetryIntervalMilliseconds() {
         return RETRY_INTERVAL_MILLISECONDS;
     }
 
-
-
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
+
+        public static final boolean DEFAULT_FAIL_NOT_FOUND = true;
+
+        public static final boolean DEFAULT_SKIP_SSL_VERIFICATION = false;
+
+        public static final int DEFAULT_ENGINE_VERSION = 2;
+
         @Override
+        @NonNull
         public String getDisplayName() {
             return "Vault Configuration";
         }
 
-        public ListBoxModel doFillVaultCredentialIdItems(@AncestorInPath Item item, @QueryParameter String uri) {
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillVaultCredentialIdItems(@AncestorInPath Item item,
+            @QueryParameter String uri) {
             // This is needed for folders: credentials bound to a folder are
             // realized through domain requirements
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(uri).build();
             return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item,
-                    VaultCredential.class, domainRequirements);
+                VaultCredential.class, domainRequirements);
+        }
+
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+            return engineVersions(context);
         }
     }
 
+    @Restricted(NoExternalUse.class)
+    public static ListBoxModel engineVersions(Item context) {
+        ListBoxModel options = new ListBoxModel(
+            new Option("2", "2"),
+            new Option("1", "1")
+        );
+        if (context != null) {
+            Option option = new Option("Default", "");
+            options.add(0, option);
+        }
+        return options;
+    }
+
     private String normalizeUrl(String url) {
-        if(url == null) {
+        if (url == null) {
             return null;
         }
 

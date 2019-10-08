@@ -14,13 +14,17 @@ import com.datapipe.jenkins.vault.VaultBuildWrapper;
 import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
@@ -28,26 +32,23 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 @SuppressWarnings("ALL")
-public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials implements VaultUsernamePasswordCredential {
+public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials implements
+    VaultUsernamePasswordCredential {
 
     public static final String DEFAULT_USERNAME_KEY = "username";
     public static final String DEFAULT_PASSWORD_KEY = "password";
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(VaultUsernamePasswordCredentialImpl.class.getName());
+    private static final Logger LOGGER = Logger
+        .getLogger(VaultUsernamePasswordCredentialImpl.class.getName());
     private String path;
     private String usernameKey;
     private String passwordKey;
     private Integer engineVersion;
 
     @DataBoundConstructor
-    public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id, String description) {
+    public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id,
+        String description) {
         super(scope, id, description);
     }
 
@@ -114,18 +115,22 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         return getVaultSecret(this.getPath(), valueKey, this.getEngineVersion());
     }
 
-    private static String getVaultSecret(String secretPath, String secretKey, Integer engineVersion) {
+    private static String getVaultSecret(String secretPath, String secretKey,
+        Integer engineVersion) {
         if (Jenkins.getInstanceOrNull() == null) {
             LOGGER.warning("Cannot retrieve secret becuase Jenkins.instance is not available");
             return null;
         }
 
-        LOGGER.info("Retrieving vault secret path=" + secretPath + " key=" + secretKey + " engineVersion=" + engineVersion);
+        LOGGER.info(
+            "Retrieving vault secret path=" + secretPath + " key=" + secretKey + " engineVersion="
+                + engineVersion);
 
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all().get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
+            .get(GlobalVaultConfiguration.class);
 
-
-        ExtensionList<VaultBuildWrapper.DescriptorImpl> extensionList = Jenkins.getInstance().getExtensionList(VaultBuildWrapper.DescriptorImpl.class);
+        ExtensionList<VaultBuildWrapper.DescriptorImpl> extensionList = Jenkins.getInstance()
+            .getExtensionList(VaultBuildWrapper.DescriptorImpl.class);
         VaultBuildWrapper.DescriptorImpl descriptor = extensionList.get(0);
 
         if (descriptor == null) {
@@ -134,25 +139,30 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
         try {
             VaultConfig vaultConfig = new VaultConfig()
-                    .address(globalConfig.getConfiguration().getVaultUrl())
-                    .sslConfig(new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification()).build())
-                    .engineVersion(engineVersion);
+                .address(globalConfig.getConfiguration().getVaultUrl())
+                .sslConfig(
+                    new SslConfig().verify(globalConfig.getConfiguration().isSkipSslVerification())
+                        .build())
+                .engineVersion(engineVersion);
 
             if (StringUtils.isNotEmpty(globalConfig.getConfiguration().getVaultNamespace())) {
                 vaultConfig.nameSpace(globalConfig.getConfiguration().getVaultNamespace());
             }
 
-            VaultCredential vaultCredential = retrieveVaultCredentials(globalConfig.getConfiguration().getVaultCredentialId());
+            VaultCredential vaultCredential = retrieveVaultCredentials(
+                globalConfig.getConfiguration().getVaultCredentialId());
 
             VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
             vaultAccessor.setMaxRetries(globalConfig.getConfiguration().getMaxRetries());
-            vaultAccessor.setRetryIntervalMilliseconds(globalConfig.getConfiguration().getRetryIntervalMilliseconds());
+            vaultAccessor.setRetryIntervalMilliseconds(
+                globalConfig.getConfiguration().getRetryIntervalMilliseconds());
             vaultAccessor.init();
 
             Map<String, String> values = vaultAccessor.read(secretPath, engineVersion).getData();
 
             if (!values.containsKey(secretKey)) {
-                throw new VaultPluginException("Key " + secretKey + " could not be found in path " + secretPath);
+                throw new VaultPluginException(
+                    "Key " + secretKey + " could not be found in path " + secretPath);
             }
 
             return values.get(secretKey);
@@ -163,15 +173,18 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
     private static VaultCredential retrieveVaultCredentials(String id) {
         if (StringUtils.isBlank(id)) {
-            throw new VaultPluginException("The credential id was not configured - please specify the credentials to use.");
+            throw new VaultPluginException(
+                "The credential id was not configured - please specify the credentials to use.");
         } else {
-            LOGGER.log(Level.INFO, "Retrieving vault credential ID : " + id );
+            LOGGER.log(Level.INFO, "Retrieving vault credential ID : " + id);
         }
-        List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class,
+        List<VaultCredential> credentials = CredentialsProvider
+            .lookupCredentials(VaultCredential.class,
                 Jenkins.getInstance(),
                 ACL.SYSTEM,
                 Collections.<DomainRequirement>emptyList());
-        VaultCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
+        VaultCredential credential = CredentialsMatchers
+            .firstOrNull(credentials, new IdMatcher(id));
 
         if (credential == null) {
             throw new CredentialsUnavailableException(id);
@@ -190,10 +203,10 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         }
 
         public FormValidation doTestConnection(
-                @QueryParameter("path") String path,
-                @QueryParameter("usernameKey") String usernameKey,
-                @QueryParameter("passwordKey") String passwordKey,
-                @QueryParameter("engineVersion") Integer engineVersion) {
+            @QueryParameter("path") String path,
+            @QueryParameter("usernameKey") String usernameKey,
+            @QueryParameter("passwordKey") String passwordKey,
+            @QueryParameter("engineVersion") Integer engineVersion) {
 
             String username = null;
             try {
@@ -208,7 +221,8 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
                 return FormValidation.error("FAILED to retrieve password key: \n" + e);
             }
 
-            return FormValidation.ok("Successfully retrieved username " + username + " and the password");
+            return FormValidation
+                .ok("Successfully retrieved username " + username + " and the password");
         }
 
     }

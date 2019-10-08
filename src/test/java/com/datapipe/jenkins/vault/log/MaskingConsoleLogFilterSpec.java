@@ -1,10 +1,6 @@
 package com.datapipe.jenkins.vault.log;
 
 import hudson.model.Run;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,6 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -20,9 +19,11 @@ import static org.mockito.Mockito.mock;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MaskingConsoleLogFilterSpec {
+
     @Test
     public void shouldCorrectlyMask() throws IOException, InterruptedException {
-        MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(), Arrays.asList("secret"));
+        MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
+            Collections.singletonList("secret"));
         ByteArrayOutputStream resultingLog = new ByteArrayOutputStream();
 
         OutputStream maskingLogger = filter.decorateLogger(mock(Run.class), resultingLog);
@@ -38,7 +39,8 @@ public class MaskingConsoleLogFilterSpec {
 
     @Test
     public void shouldCorrectlyMaskOverlappingSecrets() throws IOException, InterruptedException {
-        MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(), Arrays.asList("secret", "veryverysecret"));
+        MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
+            Arrays.asList("secret", "veryverysecret"));
         ByteArrayOutputStream resultingLog = new ByteArrayOutputStream();
 
         OutputStream maskingLogger = filter.decorateLogger(mock(Run.class), resultingLog);
@@ -56,7 +58,8 @@ public class MaskingConsoleLogFilterSpec {
 
     @Test
     public void shouldCorrectlyHandleEmptyList() throws Exception {
-        MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(), Collections.<String>emptyList());
+        MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
+            Collections.emptyList());
         ByteArrayOutputStream resultingLog = new ByteArrayOutputStream();
 
         OutputStream maskingLogger = filter.decorateLogger(mock(Run.class), resultingLog);

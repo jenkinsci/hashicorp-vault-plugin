@@ -4,7 +4,6 @@ import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
@@ -12,19 +11,17 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
-import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
+import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultTokenCredential> {
 
@@ -40,18 +37,21 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     private String namespaceVariable = DEFAULT_VAULT_NAMESPACE_VARIABLE_NAME;
 
     /**
-     *
      * @param addrVariable if {@code null}, {@value DEFAULT_VAULT_ADDR_VARIABLE_NAME} will be used.
-     * @param tokenVariable if {@code null}, {@value DEFAULT_VAULT_TOKEN_VARIABLE_NAME} will be used.*
+     * @param tokenVariable if {@code null}, {@value DEFAULT_VAULT_TOKEN_VARIABLE_NAME} will be
+     * used.
      * @param credentialsId credential identifier
      * @param vaultAddr vault address
      */
     @DataBoundConstructor
-    public VaultTokenCredentialBinding(@Nullable String addrVariable, @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
+    public VaultTokenCredentialBinding(@Nullable String addrVariable,
+        @Nullable String tokenVariable, String credentialsId, String vaultAddr) {
         super(credentialsId);
         this.vaultAddr = vaultAddr;
-        this.addrVariable = StringUtils.defaultIfBlank(addrVariable, DEFAULT_VAULT_ADDR_VARIABLE_NAME);
-        this.tokenVariable = StringUtils.defaultIfBlank(tokenVariable, DEFAULT_VAULT_TOKEN_VARIABLE_NAME);
+        this.addrVariable = StringUtils
+            .defaultIfBlank(addrVariable, DEFAULT_VAULT_ADDR_VARIABLE_NAME);
+        this.tokenVariable = StringUtils
+            .defaultIfBlank(tokenVariable, DEFAULT_VAULT_TOKEN_VARIABLE_NAME);
     }
 
     @NonNull
@@ -95,9 +95,10 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
     }
 
     @Override
-    public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
+    public MultiEnvironment bind(@NonNull Run<?, ?> build, FilePath workspace, Launcher launcher,
+        @NonNull TaskListener listener) throws IOException, InterruptedException {
         AbstractVaultTokenCredential credentials = getCredentials(build);
-        Map<String,String> m = new HashMap<String,String>();
+        Map<String, String> m = new HashMap<>();
         m.put(addrVariable, vaultAddr);
         m.put(namespaceVariable, vaultNamespace);
         m.put(tokenVariable, getToken(credentials));
@@ -120,17 +121,20 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
 
     @Override
     public Set<String> variables() {
-        return new HashSet<String>(Arrays.asList(addrVariable, namespaceVariable, tokenVariable));
+        return new HashSet<>(Arrays.asList(addrVariable, namespaceVariable, tokenVariable));
     }
 
     @Extension
     public static class DescriptorImpl extends BindingDescriptor<AbstractVaultTokenCredential> {
 
-        @Override protected Class<AbstractVaultTokenCredential> type() {
+        @Override
+        protected Class<AbstractVaultTokenCredential> type() {
             return AbstractVaultTokenCredential.class;
         }
 
-        @Override public String getDisplayName() {
+        @NonNull
+        @Override
+        public String getDisplayName() {
             return "HashiCorp Vault: Address, Namespace and Token";
         }
     }

@@ -1,4 +1,4 @@
-/**
+/*
  * The MIT License (MIT)
  * <p>
  * Copyright (c) 2016 Datapipe, Inc.
@@ -25,14 +25,15 @@ package com.datapipe.jenkins.vault;
 
 import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.VaultConfig;
-import com.google.common.annotations.VisibleForTesting;
-
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.json.Json;
+import com.bettercloud.vault.json.JsonArray;
+import com.bettercloud.vault.json.JsonValue;
 import com.bettercloud.vault.response.LogicalResponse;
+import com.bettercloud.vault.rest.RestResponse;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
@@ -41,20 +42,9 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
-
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
+import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -66,14 +56,29 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildWrapperDescriptor;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import jenkins.tasks.SimpleBuildWrapper;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
+
     private VaultConfiguration configuration;
     private List<VaultSecret> vaultSecrets;
     private List<String> valuesToMask = new ArrayList<>();
     private VaultAccessor vaultAccessor = new VaultAccessor();
-    private PrintStream logger;
+    protected PrintStream logger;
 
     @DataBoundConstructor
     public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
@@ -82,13 +87,13 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace,
-                      Launcher launcher, TaskListener listener, EnvVars initialEnvironment) {
+        Launcher launcher, TaskListener listener, EnvVars initialEnvironment) {
         logger = listener.getLogger();
         pullAndMergeConfiguration(build);
 
         // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
         if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
-            provideEnvironmentVariablesFromVault(context, build);
+            provideEnvironmentVariablesFromVault(context, build, initialEnvironment);
         }
     }
 
@@ -122,25 +127,27 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         return leaseIds;
     }
 
-    private List<LogicalResponse> provideEnvironmentVariablesFromVault(Context context, Run build) {
+    protected void provideEnvironmentVariablesFromVault(Context context, Run build, EnvVars envVars) {
         String url = getConfiguration().getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
-            throw new VaultPluginException("The vault url was not configured - please specify the vault url to use.");
+            throw new VaultPluginException(
+                "The vault url was not configured - please specify the vault url to use.");
         }
 
-        VaultConfig vaultConfig = null;
+        VaultConfig vaultConfig;
         try {
             vaultConfig = new VaultConfig()
-                    .address(configuration.getVaultUrl())
-                    .sslConfig(new SslConfig().verify(configuration.isSkipSslVerification()).build());
+                .address(configuration.getVaultUrl())
+                .sslConfig(new SslConfig().verify(!configuration.isSkipSslVerification()).build());
 
-            if (configuration.getVaultNamespace() != null && !configuration.getVaultNamespace().isEmpty()) {
-                    vaultConfig.nameSpace(configuration.getVaultNamespace());
+            if (StringUtils.isNotEmpty(configuration.getVaultNamespace())) {
+                vaultConfig.nameSpace(configuration.getVaultNamespace());
             }
         } catch (VaultException e) {
             throw new VaultPluginException("Could not set up VaultConfig.", e);
         }
+
         VaultCredential credential = retrieveVaultCredentials(build);
 
         vaultAccessor.setConfig(vaultConfig);
@@ -149,37 +156,81 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         vaultAccessor.setRetryIntervalMilliseconds(configuration.getRetryIntervalMilliseconds());
         vaultAccessor.init();
 
-        ArrayList<LogicalResponse> responses = new ArrayList<>();
         for (VaultSecret vaultSecret : vaultSecrets) {
+            String path = envVars.expand(vaultSecret.getPath());
+            Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
+                .orElse(configuration.getEngineVersion());
             try {
-                LogicalResponse response = vaultAccessor.read(vaultSecret.getPath(), vaultSecret.getEngineVersion());
-                responses.add(response);
+                LogicalResponse response = vaultAccessor.read(path, engineVersion);
+                if (responseHasErrors(path, response)) {
+                    continue;
+                }
                 Map<String, String> values = response.getData();
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-                    if (values.get(value.getVaultKey()) == null || values.get(value.getVaultKey()).trim().isEmpty())
-                        throw new IllegalArgumentException("Vault Secret " + value.getVaultKey() + " at " + vaultSecret.getPath() + " is either null or empty. Please check the Secret in Vault.");
-                    valuesToMask.add(values.get(value.getVaultKey()));
-                    context.env(value.getEnvVar(), values.get(value.getVaultKey()));
+                    String vaultKey = value.getVaultKey();
+                    String secret = values.get(vaultKey);
+                    if (StringUtils.isBlank(secret)) {
+                        throw new IllegalArgumentException(
+                            "Vault Secret " + vaultKey + " at " + path
+                                + " is either null or empty. Please check the Secret in Vault.");
+                    }
+                    valuesToMask.add(secret);
+                    context.env(value.getEnvVar(), secret);
                 }
             } catch (VaultPluginException ex) {
                 VaultException e = (VaultException) ex.getCause();
-                if (e.getHttpStatusCode() == 404 && !configuration.isFailIfNotFound()) {
-                    logger.println("Vault credentials not found " + vaultSecret.getPath());
-                } else {
-                    throw ex;
+                if (e != null) {
+                    throw new VaultPluginException(String
+                        .format("Vault response returned %d for secret path %s",
+                            e.getHttpStatusCode(), path),
+                        e);
                 }
+                throw ex;
             }
         }
-        return responses;
     }
 
-    private VaultCredential retrieveVaultCredentials(Run build) {
+    private boolean responseHasErrors(String path, LogicalResponse response) {
+        RestResponse restResponse = response.getRestResponse();
+        if (restResponse == null) return false;
+        int status = restResponse.getStatus();
+        if (status == 403) {
+            logger.printf("Access denied to Vault Secrets at '%s'%n", path);
+            return true;
+        } else if (status == 404) {
+            if (configuration.isFailIfNotFound()) {
+                throw new VaultPluginException(
+                    String.format("Vault credentials not found for '%s'", path));
+            } else {
+                logger.printf("Vault credentials not found for '%s'%n", path);
+                return true;
+            }
+        } else if (status >= 400) {
+            String errors = Optional
+                .of(Json.parse(new String(restResponse.getBody(), StandardCharsets.UTF_8))).map(JsonValue::asObject)
+                .map(j -> j.get("errors")).map(JsonValue::asArray).map(JsonArray::values)
+                .map(j -> j.stream().map(JsonValue::asString).collect(Collectors.joining("\n")))
+                .orElse("");
+            logger.printf("Vault responded with %d error code.%n", status);
+            if (StringUtils.isNotBlank(errors)) {
+                logger.printf("Vault responded with errors: %s%n", errors);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    protected VaultCredential retrieveVaultCredentials(Run build) {
         String id = getConfiguration().getVaultCredentialId();
         if (StringUtils.isBlank(id)) {
-            throw new VaultPluginException("The credential id was not configured - please specify the credentials to use.");
+            throw new VaultPluginException(
+                "The credential id was not configured - please specify the credentials to use.");
         }
-        List<VaultCredential> credentials = CredentialsProvider.lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
-        VaultCredential credential = CredentialsMatchers.firstOrNull(credentials, new IdMatcher(id));
+        List<VaultCredential> credentials = CredentialsProvider
+            .lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM,
+                Collections.emptyList());
+        VaultCredential credential = CredentialsMatchers
+            .firstOrNull(credentials, new IdMatcher(id));
 
         if (credential == null) {
             throw new CredentialsUnavailableException(id);
@@ -197,13 +248,17 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             }
         }
         if (configuration == null) {
-            throw new VaultPluginException("No configuration found - please configure the VaultPlugin.");
+            throw new VaultPluginException(
+                "No configuration found - please configure the VaultPlugin.");
+        }
+        if (configuration.getEngineVersion() == null) {
+            configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
         }
     }
 
     @Override
     public ConsoleLogFilter createLoggerDecorator(
-            @Nonnull final Run<?, ?> build) {
+        @NonNull final Run<?, ?> build) {
         return new MaskingConsoleLogFilter(build.getCharset().name(), valuesToMask);
     }
 
@@ -213,7 +268,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
      * that it can be accessed from views.
      */
     @Extension
+    @Symbol("withVault")
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
+
         public DescriptorImpl() {
             super(VaultBuildWrapper.class);
             load();

@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler" xmlns:c="/lib/credentials">
-    <f:entry title="Vault URL">
-        <f:textbox field="vaultUrl" name="vaultUrl"/>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+  <f:entry title="Vault URL">
+    <f:textbox field="vaultUrl" name="vaultUrl"/>
+  </f:entry>
+  <f:entry title="Vault Credential" field="vaultCredentialId">
+    <c:select/>
+  </f:entry>
+  <f:advanced>
+    <f:entry title="Vault Namespace" field="vaultNamespace">
+      <f:textbox/>
     </f:entry>
-    <f:entry title="Vault Namespace">
-            <f:textbox field="vaultNamespace" name="vaultNamespace" description="Vault namespace. Leave empty if none is used." />
+    <f:entry field="engineVersion" title="K/V Engine Version">
+      <f:select/>
     </f:entry>
-    <f:entry title="Vault Credential" field="vaultCredentialId" name="vaultCredentialId">
-        <c:select/>
+    <f:entry title="Fail if path is not found" field="failIfNotFound">
+      <f:checkbox default="${descriptor.DEFAULT_FAIL_NOT_FOUND}"/>
     </f:entry>
-    <f:entry title="Fail if path is not found" field="failIfNotFound" name="failIfNotFound">
-        <f:checkbox/>
+    <f:entry title="Skip SSL verification" field="skipSslVerification">
+      <f:checkbox default="${descriptor.DEFAULT_SKIP_SSL_VERIFICATION}"/>
     </f:entry>
-    <f:entry title="Timeout" field="timeout" description="Timeout in seconds for reading a secret, after which the plugin will stop retrying">
-        <f:number default="60"/>
+    <f:entry title="Timeout" field="timeout">
+      <f:number default="60" clazz="positive-number"/>
     </f:entry>
+  </f:advanced>
 </j:jelly>

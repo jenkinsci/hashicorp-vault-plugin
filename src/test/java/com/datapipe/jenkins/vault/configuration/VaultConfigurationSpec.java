@@ -7,11 +7,16 @@ import static org.junit.Assert.assertThat;
 
 public class VaultConfigurationSpec {
 
-    public static VaultConfiguration completeTestConfig(String identifier) {
+    public static VaultConfiguration completeTestConfig(String identifier, Integer engineVersion) {
         VaultConfiguration result = new VaultConfiguration();
         result.setVaultUrl("http://example.com/" + identifier);
         result.setVaultCredentialId("credential" + identifier);
+        result.setEngineVersion(engineVersion);
         return result;
+    }
+
+    public static VaultConfiguration completeTestConfig(String identifier) {
+        return completeTestConfig(identifier, 2);
     }
 
     public static VaultConfiguration urlOnlyConfig(String identifier) {
@@ -37,7 +42,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void childShouldPartlyOverwriteParent(){
+    public void childShouldPartlyOverwriteParent() {
         VaultConfiguration parent = completeTestConfig("parent");
         VaultConfiguration child = urlOnlyConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -54,7 +59,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void emptyChildShouldBeOverriden(){
+    public void emptyChildShouldBeOverriden() {
         VaultConfiguration parent = completeTestConfig("parent");
         VaultConfiguration child = new VaultConfiguration();
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -64,7 +69,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void emptyParentShouldBeIgnored(){
+    public void emptyParentShouldBeIgnored() {
         VaultConfiguration parent = new VaultConfiguration();
         VaultConfiguration child = completeTestConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -84,7 +89,8 @@ public class VaultConfigurationSpec {
 
     @Test
     public void shouldNotStoreTrailingSlashesInUrl() {
-        VaultConfiguration parent = new VaultConfiguration("http://vault-url.com/", null);
+        VaultConfiguration parent = new VaultConfiguration();
+        parent.setVaultUrl("http://vault-url.com/");
         parent.setFailIfNotFound(false);
         parent.setVaultNamespace("mynamespace");
         parent.setTimeout(20);
@@ -93,14 +99,11 @@ public class VaultConfigurationSpec {
 
     @Test
     public void shouldStoreFailureHandling() {
-        VaultConfiguration parent = new VaultConfiguration("http://vault-url.com/", null);
+        VaultConfiguration parent = new VaultConfiguration();
+        parent.setVaultUrl("http://vault-url.com/");
         parent.setFailIfNotFound(false);
         parent.setVaultNamespace("mynamespace");
         parent.setTimeout(20);
         assertThat(parent.isFailIfNotFound(), is(false));
-    }
-
-    public void shouldCorrectlyShowIfEmpty() {
-
     }
 }

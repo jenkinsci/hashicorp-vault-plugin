@@ -6,19 +6,19 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
-import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
-import org.kohsuke.stapler.DataBoundConstructor;
-
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
+import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-public class VaultUsernamePasswordCredentialBinding extends MultiBinding<VaultUsernamePasswordCredential> {
+public class VaultUsernamePasswordCredentialBinding extends
+    MultiBinding<VaultUsernamePasswordCredential> {
 
     public static final String DEFAULT_USERNAME_VARIABLE = "USERNAME";
     public static final String DEFAULT_PASSWORD_VARIABLE = "PASSWORD";
@@ -26,11 +26,14 @@ public class VaultUsernamePasswordCredentialBinding extends MultiBinding<VaultUs
     private String passwordVariable;
 
     @DataBoundConstructor
-    public VaultUsernamePasswordCredentialBinding(@Nullable String usernameVariable, @Nullable String passwordVariable,
-                                            String credentialsId) {
+    public VaultUsernamePasswordCredentialBinding(@Nullable String usernameVariable,
+        @Nullable String passwordVariable,
+        String credentialsId) {
         super(credentialsId);
-        this.usernameVariable = StringUtils.defaultIfBlank(usernameVariable, DEFAULT_USERNAME_VARIABLE);
-        this.passwordVariable = StringUtils.defaultIfBlank(passwordVariable, DEFAULT_PASSWORD_VARIABLE);
+        this.usernameVariable = StringUtils
+            .defaultIfBlank(usernameVariable, DEFAULT_USERNAME_VARIABLE);
+        this.passwordVariable = StringUtils
+            .defaultIfBlank(passwordVariable, DEFAULT_PASSWORD_VARIABLE);
     }
 
     @Override
@@ -39,8 +42,9 @@ public class VaultUsernamePasswordCredentialBinding extends MultiBinding<VaultUs
     }
 
     @Override
-    public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener)
-            throws IOException, InterruptedException {
+    public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher,
+        TaskListener listener)
+        throws IOException, InterruptedException {
         VaultUsernamePasswordCredential credentials = this.getCredentials(build);
         Map<String, String> map = new HashMap<String, String>();
         map.put(this.usernameVariable, credentials.getUsername());
