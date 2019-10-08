@@ -76,7 +76,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     private List<VaultSecret> vaultSecrets;
     private List<String> valuesToMask = new ArrayList<>();
     private VaultAccessor vaultAccessor = new VaultAccessor();
-    private PrintStream logger;
+    protected PrintStream logger;
 
     @DataBoundConstructor
     public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
@@ -125,8 +125,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         return leaseIds;
     }
 
-    private void provideEnvironmentVariablesFromVault(Context context, Run build,
-        EnvVars envVars) {
+    protected void provideEnvironmentVariablesFromVault(Context context, Run build, EnvVars envVars) {
         String url = getConfiguration().getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
@@ -143,7 +142,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                 .orElse(configuration.getEngineVersion());
             try {
                 LogicalResponse response = vaultAccessor.read(path, engineVersion);
-                parseVaultErrorCodes(path, response);
+                if (responseHasErrors(path, response)) {
+                    continue;
+                }
                 Map<String, String> values = response.getData();
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
                     String vaultKey = value.getVaultKey();
@@ -169,18 +170,20 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
-    private void parseVaultErrorCodes(String path, LogicalResponse response) {
+    private boolean responseHasErrors(String path, LogicalResponse response) {
         RestResponse restResponse = response.getRestResponse();
-        if (restResponse == null) return;
+        if (restResponse == null) return false;
         int status = restResponse.getStatus();
         if (status == 403) {
-            logger.printf("Access denied to Vault Secrets at %s%n", path);
+            logger.printf("Access denied to Vault Secrets at '%s'%n", path);
+            return true;
         } else if (status == 404) {
             if (configuration.isFailIfNotFound()) {
                 throw new VaultPluginException(
-                    String.format("Vault credentials not found for %s", path));
+                    String.format("Vault credentials not found for '%s'", path));
             } else {
-                logger.printf("Vault credentials not found for %s%n", path);
+                logger.printf("Vault credentials not found for '%s'%n", path);
+                return true;
             }
         } else if (status >= 400) {
             String errors = Optional
@@ -192,10 +195,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             if (StringUtils.isNotBlank(errors)) {
                 logger.printf("Vault responded with errors: %s%n", errors);
             }
+            return true;
         }
+        return false;
     }
 
-    private VaultCredential retrieveVaultCredentials(Run build) {
+    protected VaultCredential retrieveVaultCredentials(Run build) {
         String id = getConfiguration().getVaultCredentialId();
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException(
