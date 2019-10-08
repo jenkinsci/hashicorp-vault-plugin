@@ -54,7 +54,7 @@ public class VaultTestUtil implements TestConstants {
             .withCopyFileToContainer(forHostPath(
                 TestConstants.class.getResource("vaultTest_adminPolicy.hcl").getPath()),
                 "/admin.hcl")
-            .withVaultPort(8200)
+            .withExposedPorts(8200)
             .waitingFor(Wait.forHttp("/v1/sys/seal-status").forStatusCode(200));
     }
 
@@ -72,8 +72,12 @@ public class VaultTestUtil implements TestConstants {
             .withCopyFileToContainer(forHostPath(secretIDPath),
                 "/home/vault/secret_id")
             .withCommand("vault agent -config=/agent.hcl -address=http://vault:8200")
-            .withVaultPort(8100)
+            .withExposedPorts(8200)
             .waitingFor(Wait.forLogMessage(".*renewed auth token.*", 1));
+    }
+
+    public static String getAddress(VaultContainer container) {
+        return String.format("http://%s:%d", container.getContainerIpAddress(), container.getMappedPort(8200));
     }
 
     public static void configureVaultContainer(VaultContainer container) {
@@ -102,7 +106,7 @@ public class VaultTestUtil implements TestConstants {
                 "secret_id_num_uses=1000", "policies=admin");
 
             // Retrieve AppRole credentials
-            VaultConfig config = new VaultConfig().address("http://localhost:8200")
+            VaultConfig config = new VaultConfig().address(getAddress(container))
                 .token(VAULT_ROOT_TOKEN).engineVersion(1).build();
             Vault vaultClient = new Vault(config);
             final String roleID = vaultClient.logical().read("auth/approle/role/admin/role-id")
@@ -137,6 +141,12 @@ public class VaultTestUtil implements TestConstants {
                 secretIDPath);
             assert vaultAgentContainer != null;
             vaultAgentContainer.start();
+            filePath = Paths.get(System.getProperty("java.io.tmpdir"), VAULT_AGENT_FILE);
+            file = filePath.toFile();
+            fos = new FileOutputStream(file);
+            properties.clear();
+            properties.put("CASC_VAULT_AGENT_ADDR", getAddress(vaultAgentContainer));
+            properties.store(fos, null);
             LOGGER.log(Level.INFO, "Vault is configured");
             configured = true;
         } catch (Exception e) {

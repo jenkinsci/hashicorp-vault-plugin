@@ -34,6 +34,7 @@ import org.testcontainers.vault.VaultContainer;
 
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.configureVaultContainer;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.createVaultContainer;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.getAddress;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.runCommand;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -50,10 +51,11 @@ public class VaultSecretSourceTest implements TestConstants {
 
     public final static JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
 
+    public static EnvVarsRule envVarsRule = new EnvVarsRule();
+
     @Rule
     public RuleChain chain = RuleChain
-        .outerRule(new EnvVarsRule()
-            .set("CASC_VAULT_FILE", TestConstants.class.getResource("vaultTest_cascFile").getPath()))
+        .outerRule(envVarsRule)
         .around(j);
 
     private ConfigurationContext context;
@@ -65,6 +67,7 @@ public class VaultSecretSourceTest implements TestConstants {
 
         // Create vault policies/users/roles ..
         configureVaultContainer(vaultContainer);
+        envVarsRule.set("CASC_VAULT_URL", getAddress(vaultContainer));
     }
 
     @AfterClass
@@ -236,8 +239,8 @@ public class VaultSecretSourceTest implements TestConstants {
 
     @Test
     @ConfiguredWithCode("vault.yml")
+    @EnvsFromFile(VAULT_AGENT_FILE)
     @Envs({
-        @Env(name = "CASC_VAULT_AGENT_ADDR", value = "http://localhost:8100"),
         @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_KV1_1 + "," + VAULT_PATH_KV1_2),
         @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "1")
     })
@@ -247,9 +250,7 @@ public class VaultSecretSourceTest implements TestConstants {
 
     @Test
     @ConfiguredWithCode("vault.yml")
-    @Envs({
-        @Env(name = "CASC_VAULT_AGENT_ADDR", value = "http://localhost:8100")
-    })
+    @EnvsFromFile(VAULT_AGENT_FILE)
     public void vaultReturns404() throws Exception {
         WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
         String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"));
