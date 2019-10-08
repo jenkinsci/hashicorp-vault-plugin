@@ -49,13 +49,11 @@ public class VaultSecretSourceTest implements TestConstants {
     @ClassRule
     public static VaultContainer vaultContainer = createVaultContainer();
 
-    public final static JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
-
-    public static EnvVarsRule envVarsRule = new EnvVarsRule();
+    public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
 
     @Rule
     public RuleChain chain = RuleChain
-        .outerRule(envVarsRule)
+        .outerRule(new EnvVarsRule().set("CASC_VAULT_URL", getAddress(vaultContainer)))
         .around(j);
 
     private ConfigurationContext context;
@@ -67,12 +65,14 @@ public class VaultSecretSourceTest implements TestConstants {
 
         // Create vault policies/users/roles ..
         configureVaultContainer(vaultContainer);
-        envVarsRule.set("CASC_VAULT_URL", getAddress(vaultContainer));
     }
 
     @AfterClass
     public static void removeAppRoleFile() {
         File file = Paths.get(System.getProperty("java.io.tmpdir"), VAULT_APPROLE_FILE).toFile();
+        assert file.delete() || !file.exists();
+        file = Paths.get(System.getProperty("java.io.tmpdir"), VAULT_AGENT_FILE).toFile();
+        System.out.println(file.getAbsolutePath());
         assert file.delete() || !file.exists();
     }
 
@@ -239,7 +239,7 @@ public class VaultSecretSourceTest implements TestConstants {
 
     @Test
     @ConfiguredWithCode("vault.yml")
-    @EnvsFromFile(VAULT_AGENT_FILE)
+    @EnvsFromFile(value = {VAULT_AGENT_FILE, VAULT_APPROLE_FILE})
     @Envs({
         @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_KV1_1 + "," + VAULT_PATH_KV1_2),
         @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "1")
@@ -250,7 +250,7 @@ public class VaultSecretSourceTest implements TestConstants {
 
     @Test
     @ConfiguredWithCode("vault.yml")
-    @EnvsFromFile(VAULT_AGENT_FILE)
+    @EnvsFromFile(value = {VAULT_AGENT_FILE, VAULT_APPROLE_FILE})
     public void vaultReturns404() throws Exception {
         WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
         String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"));
