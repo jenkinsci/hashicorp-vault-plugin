@@ -23,9 +23,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,7 +60,7 @@ public class VaultBuildWrapperTest {
 
         wrapper.verifyCalls();
         assertThat(new String(baos.toByteArray(), StandardCharsets.UTF_8),
-            is("Vault credentials not found for 'not/existing'\n"));
+            containsString("Vault credentials not found for 'not/existing'"));
     }
 
     private List<VaultSecret> standardSecrets(String path) {
@@ -95,7 +96,7 @@ public class VaultBuildWrapperTest {
             vaultConfig.setVaultCredentialId("credId");
             vaultConfig.setFailIfNotFound(false);
             mockAccessor = mock(VaultAccessor.class);
-            doNothing().when(mockAccessor).init();
+            doReturn(mockAccessor).when(mockAccessor).init();
             LogicalResponse response = getNotFoundResponse();
             when(mockAccessor.read("not/existing", 2)).thenReturn(response);
             setVaultAccessor(mockAccessor);
