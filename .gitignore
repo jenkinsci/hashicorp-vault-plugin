@@ -8,4 +8,3 @@ work/
 .settings/
 *.sublime*
 tmp/
-ssl/

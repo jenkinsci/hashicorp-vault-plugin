@@ -2,7 +2,6 @@ package com.datapipe.jenkins.vault.util;
 
 import java.io.File;
 import org.testcontainers.containers.Network;
-import org.testcontainers.utility.TestEnvironment;
 
 public interface TestConstants {
 
@@ -12,11 +11,9 @@ public interface TestConstants {
     int MAX_RETRIES = 5;
     int RETRY_MILLIS = 1000;
 
-    String CURRENT_WORKING_DIRECTORY = System.getProperty("user.dir");
+    String CURRENT_WORKING_DIRECTORY = System.getProperty("user.dir") + "/src/test/resources/com/datapipe/jenkins/vault/util";
     String SSL_DIRECTORY = CURRENT_WORKING_DIRECTORY + File.separator + "ssl";
     String CERT_PEMFILE = SSL_DIRECTORY + File.separator + "root-cert.pem";
-
-    String CLIENT_CERT_PEMFILE = SSL_DIRECTORY + File.separator + "client-cert.pem";
 
     String CONTAINER_STARTUP_SCRIPT = "/vault/config/startup.sh";
     String CONTAINER_CONFIG_FILE = "/vault/config/config.hcl";
@@ -29,7 +26,6 @@ public interface TestConstants {
     String APPROLE_POLICY_FILE = "/home/vault/approlePolicy.hcl";
 
     Network CONTAINER_NETWORK = Network.newNetwork();
-    boolean DOCKER_AVAILABLE = TestEnvironment.dockerApiAtLeast("1.10");
 
     String VAULT_DOCKER_IMAGE = "vault:1.0.3";
     String VAULT_ROOT_TOKEN = "root-token";
