@@ -24,8 +24,9 @@ echo 000a > serialfile
 touch certindex
 openssl ca -batch -config libressl.conf -notext -in vault-csr.pem -out vault-cert.pem
 # Configure SSL at the OS level to trust the new certs
-cp root-cert.pem vault-cert.pem /usr/local/share/ca-certificates
+cp root-cert.pem vault-cert.pem /usr/local/share/ca-certificates/
 # Clean up temp files
 rm 0A.pem certindex certindex.attr certindex.old libressl.conf serialfile serialfile.old vault-csr.pem
+update-ca-certificates
 
 vault server -config /vault/config/config.hcl
