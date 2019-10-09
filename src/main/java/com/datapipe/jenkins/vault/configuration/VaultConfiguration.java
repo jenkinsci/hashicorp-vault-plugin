@@ -208,11 +208,12 @@ public class VaultConfiguration
         }
     }
 
+    @NonNull
     public VaultConfig getVaultConfig() {
-        VaultConfig vaultConfig;
+        VaultConfig vaultConfig = new VaultConfig();
+        vaultConfig.address(this.getVaultUrl());
+        vaultConfig.engineVersion(this.getEngineVersion());
         try {
-            vaultConfig = new VaultConfig().address(this.getVaultUrl());
-
             if (this.isSkipSslVerification()) {
                 vaultConfig.sslConfig(new SslConfig().verify(false).build());
             }
@@ -220,7 +221,6 @@ public class VaultConfiguration
             if (StringUtils.isNotEmpty(this.getVaultNamespace())) {
                 vaultConfig.nameSpace(this.getVaultNamespace());
             }
-            vaultConfig.engineVersion(this.getEngineVersion());
         } catch (VaultException e) {
             throw new VaultPluginException("Could not set up VaultConfig.", e);
         }
