@@ -7,20 +7,32 @@ import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.util.TestConstants;
+import com.datapipe.jenkins.vault.util.VaultContainer;
 import hudson.model.Result;
 import hudson.util.Secret;
+import java.io.IOException;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class SSLSkipVerifyTest extends AbstractSSLTest implements TestConstants {
+public class SSLSkipVerifyTest implements TestConstants {
+    @ClassRule
+    public static VaultContainer container = new VaultContainer();
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
+
+    @BeforeClass
+    public static void setupClass() throws IOException, InterruptedException {
+        container.initAndUnsealVault();
+        container.setBasicSecrets();
+    }
 
     @Test
     public void SSLSkipVerify() throws Exception {

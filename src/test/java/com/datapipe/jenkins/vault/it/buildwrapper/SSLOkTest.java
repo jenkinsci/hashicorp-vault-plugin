@@ -7,11 +7,13 @@ import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.util.TestConstants;
+import com.datapipe.jenkins.vault.util.VaultContainer;
 import hudson.model.Result;
 import hudson.util.Secret;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -19,13 +21,17 @@ import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class SSLOkTest extends AbstractSSLTest implements TestConstants {
+public class SSLOkTest implements TestConstants {
+    @ClassRule
+    public static VaultContainer container = new VaultContainer();
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
@@ -35,6 +41,12 @@ public class SSLOkTest extends AbstractSSLTest implements TestConstants {
 
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();
+
+    @BeforeClass
+    public static void setupClass() throws IOException, InterruptedException {
+        container.initAndUnsealVault();
+        container.setBasicSecrets();
+    }
 
     @Test
     public void SSLOk() throws Exception {
