@@ -1,9 +1,13 @@
 package com.datapipe.jenkins.vault.configuration;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
+import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -202,6 +206,25 @@ public class VaultConfiguration
         public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
             return engineVersions(context);
         }
+    }
+
+    public VaultConfig getVaultConfig() {
+        VaultConfig vaultConfig;
+        try {
+            vaultConfig = new VaultConfig().address(this.getVaultUrl());
+
+            if (this.isSkipSslVerification()) {
+                vaultConfig.sslConfig(new SslConfig().verify(false).build());
+            }
+
+            if (StringUtils.isNotEmpty(this.getVaultNamespace())) {
+                vaultConfig.nameSpace(this.getVaultNamespace());
+            }
+            vaultConfig.engineVersion(this.getEngineVersion());
+        } catch (VaultException e) {
+            throw new VaultPluginException("Could not set up VaultConfig.", e);
+        }
+        return vaultConfig;
     }
 
     @Restricted(NoExternalUse.class)

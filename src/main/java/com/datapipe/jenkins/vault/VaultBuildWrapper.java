@@ -128,35 +128,22 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     }
 
     protected void provideEnvironmentVariablesFromVault(Context context, Run build, EnvVars envVars) {
-        String url = getConfiguration().getVaultUrl();
+        VaultConfiguration config = getConfiguration();
+        String url = config.getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
             throw new VaultPluginException(
                 "The vault url was not configured - please specify the vault url to use.");
         }
 
-        VaultConfig vaultConfig;
-        try {
-            vaultConfig = new VaultConfig().address(configuration.getVaultUrl());
-
-            if (configuration.isSkipSslVerification()) {
-                vaultConfig.sslConfig(new SslConfig().verify(false).build());
-            }
-
-            if (StringUtils.isNotEmpty(configuration.getVaultNamespace())) {
-                vaultConfig.nameSpace(configuration.getVaultNamespace());
-            }
-            vaultConfig.engineVersion(configuration.getEngineVersion());
-        } catch (VaultException e) {
-            throw new VaultPluginException("Could not set up VaultConfig.", e);
-        }
+        VaultConfig vaultConfig = config.getVaultConfig();
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
         vaultAccessor.setConfig(vaultConfig);
         vaultAccessor.setCredential(credential);
-        vaultAccessor.setMaxRetries(configuration.getMaxRetries());
-        vaultAccessor.setRetryIntervalMilliseconds(configuration.getRetryIntervalMilliseconds());
+        vaultAccessor.setMaxRetries(config.getMaxRetries());
+        vaultAccessor.setRetryIntervalMilliseconds(config.getRetryIntervalMilliseconds());
         vaultAccessor.init();
 
         for (VaultSecret vaultSecret : vaultSecrets) {

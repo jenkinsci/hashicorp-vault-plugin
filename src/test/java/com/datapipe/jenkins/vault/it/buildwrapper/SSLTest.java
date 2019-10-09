@@ -1,5 +1,7 @@
 package com.datapipe.jenkins.vault.it.buildwrapper;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.Domain;
@@ -28,8 +30,11 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.mockito.Mockito;
 
-public class SSLOkTest implements TestConstants {
+import static org.mockito.Mockito.when;
+
+public class SSLTest implements TestConstants {
     @ClassRule
     public static VaultContainer container = new VaultContainer();
 
@@ -49,6 +54,31 @@ public class SSLOkTest implements TestConstants {
     }
 
     @Test
+    public void SSLError() throws Exception {
+        String credentialsId = "vaultToken";
+        VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
+            credentialsId, "fake description", Secret.fromString(container.getRootToken()));
+        CredentialsProvider.lookupStores(j.jenkins).iterator().next()
+            .addCredentials(Domain.global(), c);
+
+        GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.get();
+        VaultConfiguration vaultConfiguration = new VaultConfiguration();
+        vaultConfiguration.setVaultUrl(container.getAddress());
+        vaultConfiguration.setVaultCredentialId(credentialsId);
+        vaultConfiguration.setTimeout(1);
+        globalVaultConfiguration.setConfiguration(vaultConfiguration);
+
+        WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
+        String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"));
+        pipeline.setDefinition(new CpsFlowDefinition(pipelineText, true));
+
+        WorkflowRun build = pipeline.scheduleBuild2(0).get();
+
+        j.assertBuildStatus(Result.FAILURE, build);
+        j.assertLogContains("javax.net.ssl.SSLHandshakeException", build);
+    }
+
+    @Test
     public void SSLOk() throws Exception {
         File store = testFolder.newFile("cacerts.keystore");
         File certificate = new File(CERT_PEMFILE);
@@ -63,11 +93,48 @@ public class SSLOkTest implements TestConstants {
             .addCredentials(Domain.global(), c);
 
         GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.get();
+        VaultConfiguration vaultConfiguration = Mockito.mock(VaultConfiguration.class);
+        when(vaultConfiguration.getVaultUrl()).thenReturn(container.getAddress());
+        when(vaultConfiguration.getVaultCredentialId()).thenReturn(credentialsId);
+        when(vaultConfiguration.getEngineVersion()).thenReturn(1);
+        when(vaultConfiguration.getTimeout()).thenReturn(5);
+        globalVaultConfiguration.setConfiguration(vaultConfiguration);
+
+        VaultConfig config = new VaultConfig()
+            .address(vaultConfiguration.getVaultUrl())
+            .engineVersion(vaultConfiguration.getEngineVersion())
+            .sslConfig(new SslConfig()
+                .trustStoreFile(store)
+                .verify(true)
+                .build()
+            );
+        when(vaultConfiguration.getVaultConfig()).thenReturn(config);
+
+        WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
+        String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"));
+        pipeline.setDefinition(new CpsFlowDefinition(pipelineText, true));
+
+        WorkflowRun build = pipeline.scheduleBuild2(0).get();
+
+        j.assertBuildStatus(Result.SUCCESS, build);
+        j.assertLogContains("****", build);
+    }
+
+    @Test
+    public void SSLSkipVerify() throws Exception {
+        String credentialsId = "vaultToken";
+        VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
+            credentialsId, "fake description", Secret.fromString(container.getRootToken()));
+        CredentialsProvider.lookupStores(j.jenkins).iterator().next()
+            .addCredentials(Domain.global(), c);
+
+        GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.get();
         VaultConfiguration vaultConfiguration = new VaultConfiguration();
         vaultConfiguration.setVaultUrl(container.getAddress());
         vaultConfiguration.setVaultCredentialId(credentialsId);
         vaultConfiguration.setEngineVersion(1);
         vaultConfiguration.setTimeout(5);
+        vaultConfiguration.setSkipSslVerification(true);
         globalVaultConfiguration.setConfiguration(vaultConfiguration);
 
         WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
