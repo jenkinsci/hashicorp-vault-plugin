@@ -2,7 +2,6 @@ package com.datapipe.jenkins.vault.util;
 
 import java.io.File;
 import org.testcontainers.containers.Network;
-import org.testcontainers.utility.TestEnvironment;
 
 public interface TestConstants {
 
