@@ -15,6 +15,8 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -49,7 +51,7 @@ public class VaultUsernamePasswordCredentialIT {
                     + " withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '"
                     + credentialsId
                     + "', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) { "
-                    + "      sh 'echo \"$USERNAME:$PASSWORD\" > script'\n"
+                    + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSWORD") + " > script'\n"
                     + "  }\n"
                     + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -90,7 +92,7 @@ public class VaultUsernamePasswordCredentialIT {
                     + "withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '"
                     + credentialsId
                     + "', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {"
-                    + "      sh 'echo \"$USERNAME:$PASSWORD\" > script'\n"
+                    + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSWORD") + " > script'\n"
                     + "  }\n"
                     + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -125,7 +127,7 @@ public class VaultUsernamePasswordCredentialIT {
                     + " withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '"
                     + credentialsId
                     + "', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) { "
-                    + "      sh 'echo \"$USERNAME:$PASSWORD\" > script'\n"
+                    + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSWORD") + " > script'\n"
                     + "  }\n"
                     + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
