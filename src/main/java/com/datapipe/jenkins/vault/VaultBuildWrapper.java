@@ -137,13 +137,16 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultConfig vaultConfig;
         try {
-            vaultConfig = new VaultConfig()
-                .address(configuration.getVaultUrl())
-                .sslConfig(new SslConfig().verify(!configuration.isSkipSslVerification()).build());
+            vaultConfig = new VaultConfig().address(configuration.getVaultUrl());
+
+            if (configuration.isSkipSslVerification()) {
+                vaultConfig.sslConfig(new SslConfig().verify(false).build());
+            }
 
             if (StringUtils.isNotEmpty(configuration.getVaultNamespace())) {
                 vaultConfig.nameSpace(configuration.getVaultNamespace());
             }
+            vaultConfig.engineVersion(configuration.getEngineVersion());
         } catch (VaultException e) {
             throw new VaultPluginException("Could not set up VaultConfig.", e);
         }

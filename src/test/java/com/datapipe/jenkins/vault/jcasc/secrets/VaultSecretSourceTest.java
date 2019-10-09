@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.jcasc.secrets;
 
 
+import com.datapipe.jenkins.vault.util.TestConstants;
 import hudson.model.Result;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorException;
@@ -31,38 +32,28 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.testcontainers.vault.VaultContainer;
 
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_APPROLE_FILE;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV1_1;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV1_2;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_1;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_2;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_3;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PATH_KV2_AUTH_TEST;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_PW;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_ROOT_TOKEN;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.VAULT_USER;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.configureVaultContainer;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.createVaultContainer;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.hasDockerDaemon;
-import static com.datapipe.jenkins.vault.jcasc.secrets.VaultTestUtil.runCommand;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.configureVaultContainer;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.createVaultContainer;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.getAddress;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.runCommand;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 // Inspired by https://github.com/BetterCloud/vault-java-driver/blob/master/src/test-integration/java/com/bettercloud/vault/util/VaultContainer.java
-public class VaultSecretSourceTest {
+public class VaultSecretSourceTest implements TestConstants {
 
     private final static Logger LOGGER = Logger.getLogger(VaultSecretSourceTest.class.getName());
 
     @ClassRule
     public static VaultContainer vaultContainer = createVaultContainer();
 
-    public final static JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
+    public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
 
     @Rule
     public RuleChain chain = RuleChain
-        .outerRule(new EnvVarsRule()
-            .set("CASC_VAULT_FILE", getClass().getResource("vaultTest_cascFile").getPath()))
+        .outerRule(new EnvVarsRule().set("CASC_VAULT_URL", getAddress(vaultContainer)))
         .around(j);
 
     private ConfigurationContext context;
@@ -79,6 +70,9 @@ public class VaultSecretSourceTest {
     @AfterClass
     public static void removeAppRoleFile() {
         File file = Paths.get(System.getProperty("java.io.tmpdir"), VAULT_APPROLE_FILE).toFile();
+        assert file.delete() || !file.exists();
+        file = Paths.get(System.getProperty("java.io.tmpdir"), VAULT_AGENT_FILE).toFile();
+        System.out.println(file.getAbsolutePath());
         assert file.delete() || !file.exists();
     }
 
@@ -245,8 +239,8 @@ public class VaultSecretSourceTest {
 
     @Test
     @ConfiguredWithCode("vault.yml")
+    @EnvsFromFile(value = {VAULT_AGENT_FILE, VAULT_APPROLE_FILE})
     @Envs({
-        @Env(name = "CASC_VAULT_AGENT_ADDR", value = "http://localhost:8100"),
         @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_KV1_1 + "," + VAULT_PATH_KV1_2),
         @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "1")
     })
@@ -256,17 +250,15 @@ public class VaultSecretSourceTest {
 
     @Test
     @ConfiguredWithCode("vault.yml")
-    @Envs({
-        @Env(name = "CASC_VAULT_AGENT_ADDR", value = "http://localhost:8100")
-    })
+    @EnvsFromFile(value = {VAULT_AGENT_FILE, VAULT_APPROLE_FILE})
     public void vaultReturns404() throws Exception {
         WorkflowJob pipeline = j.createProject(WorkflowJob.class, "Pipeline");
-        String pipelineText =  IOUtils.toString(getClass().getResourceAsStream("pipeline.groovy"));
+        String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"));
         pipeline.setDefinition(new CpsFlowDefinition(pipelineText, true));
 
         WorkflowRun build = pipeline.scheduleBuild2(0).get();
 
         j.assertBuildStatus(Result.FAILURE, build);
-        j.assertLogContains("Vault credentials not found for 'secret/testing'", build);
+        j.assertLogContains("Vault credentials not found for '" + VAULT_PATH_KV1_1 + "'", build);
     }
 }
