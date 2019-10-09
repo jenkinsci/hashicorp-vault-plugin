@@ -23,7 +23,6 @@
  */
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.bettercloud.vault.json.Json;
