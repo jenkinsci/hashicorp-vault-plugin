@@ -16,7 +16,11 @@ import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.lifecycle.TestDescription;
+import org.testcontainers.lifecycle.TestLifecycleAware;
 
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
+import static org.junit.Assume.assumeTrue;
 import static org.testcontainers.utility.MountableFile.forHostPath;
 
 /**
@@ -31,12 +35,16 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
     private String rootToken;
     private String unsealKey;
 
-    /**
-     * Establishes a running Docker container, hosting a Vault server instance.
-     */
-    public VaultContainer(String image) {
-        super(image);
-        this.withNetwork(CONTAINER_NETWORK)
+    public VaultContainer() {
+        super(DEFAULT_IMAGE_AND_TAG);
+    }
+
+    public static VaultContainer createVaultContainer() {
+        if (!hasDockerDaemon()) {
+            return null;
+        }
+        return new VaultContainer()
+            .withNetwork(CONTAINER_NETWORK)
             .withNetworkAliases("vault")
             .withCopyFileToContainer(forHostPath(
                 TestConstants.class.getResource("vaultTest_server.hcl").getPath()),
@@ -53,10 +61,6 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
             .withCommand("/bin/sh " + CONTAINER_STARTUP_SCRIPT)
             .withLogConsumer(new Slf4jLogConsumer(LOGGER))
             .waitingFor(Wait.forLogMessage(".+Vault server started!.+", 1));
-    }
-
-    public VaultContainer() {
-        this(DEFAULT_IMAGE_AND_TAG);
     }
 
     /**

@@ -27,7 +27,6 @@ public interface TestConstants {
     String APPROLE_POLICY_FILE = "/home/vault/approlePolicy.hcl";
 
     Network CONTAINER_NETWORK = Network.newNetwork();
-    boolean DOCKER_AVAILABLE = TestEnvironment.dockerApiAtLeast("1.10");
 
     String VAULT_DOCKER_IMAGE = "vault:1.0.3";
     String VAULT_ROOT_TOKEN = "root-token";

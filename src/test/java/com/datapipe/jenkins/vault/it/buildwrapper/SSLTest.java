@@ -32,12 +32,14 @@ import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.Mockito;
 
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.when;
 
 public class SSLTest implements TestConstants {
 
-    public static VaultContainer container = new VaultContainer();
+    @ClassRule
+    public static VaultContainer container = VaultContainer.createVaultContainer();
 
     @ClassRule
     public static JenkinsRule j = new JenkinsRule();
@@ -53,8 +55,7 @@ public class SSLTest implements TestConstants {
 
     @BeforeClass
     public static void setupClass() throws IOException, InterruptedException {
-        assumeTrue(DOCKER_AVAILABLE);
-        container.start();
+        assumeTrue(hasDockerDaemon());
         container.initAndUnsealVault();
         container.setBasicSecrets();
 
