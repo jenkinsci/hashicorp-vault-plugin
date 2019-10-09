@@ -196,7 +196,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>vault</artifactId>
-      <version>1.12.0</version>
+      <version>1.12.2</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
