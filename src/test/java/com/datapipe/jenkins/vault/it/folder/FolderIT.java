@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.it.folder;
 
+import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
@@ -57,6 +58,7 @@ public class FolderIT {
 
     private static final String FOLDER_1_CREDENTIALS_ID = "folder1";
     private static final String FOLDER_2_CREDENTIALS_ID = "folder2";
+    private static final Integer TIMEOUT = 1;
 
     private Credentials GLOBAL_CREDENTIAL_1;
     private Credentials GLOBAL_CREDENTIAL_2;
@@ -76,8 +78,15 @@ public class FolderIT {
     public void setupJenkins() throws IOException {
         GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
             .get(GlobalVaultConfiguration.class);
-        globalConfig.setConfiguration(
-            new VaultConfiguration("http://global-vault-url.com", GLOBAL_CREDENTIALS_ID_1, false));
+
+        VaultConfiguration vaultConfig = new VaultConfiguration();
+        vaultConfig.setVaultUrl("http://global-vault-url.com");
+        vaultConfig.setVaultCredentialId(GLOBAL_CREDENTIALS_ID_1);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        globalConfig.setConfiguration(vaultConfig);
         globalConfig.save();
 
         FOLDER_1_CREDENTIAL = createTokenCredential(FOLDER_1_CREDENTIALS_ID);
@@ -139,8 +148,14 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(
-            new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
+        VaultConfiguration vaultConfig = new VaultConfiguration();
+        vaultConfig.setVaultUrl("http://folder1.com");
+        vaultConfig.setVaultCredentialId(FOLDER_1_CREDENTIALS_ID);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        this.folder1.addProperty(new FolderVaultConfiguration(vaultConfig));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(echoSecret());
@@ -153,8 +168,11 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
-        verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
+        VaultConfig config = new VaultConfig().address("http://folder1.com")
+            .nameSpace("mynamespace");
+        mockAccessor.setConfig(config);
+        mockAccessor.setCredential((VaultCredential) FOLDER_1_CREDENTIAL);
+        verify(mockAccessor, times(1)).init();
         verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 
@@ -166,23 +184,32 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(
-            new VaultConfiguration("http://folder1.com", FOLDER_1_CREDENTIALS_ID, false)));
+        VaultConfiguration vaultConfig = new VaultConfiguration();
+        vaultConfig.setVaultUrl("http://folder1.com");
+        vaultConfig.setVaultCredentialId(FOLDER_1_CREDENTIALS_ID);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        this.folder1.addProperty(new FolderVaultConfiguration(vaultConfig));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(echoSecret());
 
         FreeStyleBuild build = this.projectInFolder1.scheduleBuild2(0).get();
-        verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
+        VaultConfig config = new VaultConfig()
+            .address("http://folder1.com")
+            .nameSpace("mynamespace");
+        mockAccessor.setConfig(config);
+        mockAccessor.setCredential((VaultCredential) FOLDER_1_CREDENTIAL);
+        verify(mockAccessor, times(1)).init();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(),
             is(FOLDER_1_CREDENTIALS_ID));
         assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
-        verify(mockAccessor, times(1))
-            .init("http://folder1.com", (VaultCredential) FOLDER_1_CREDENTIAL, false);
+        verify(mockAccessor, times(1)).init();
         verify(mockAccessor, times(1)).read("secret/path1", 2);
     }
 
@@ -195,8 +222,14 @@ public class FolderIT {
         VaultAccessor mockAccessor = mockVaultAccessor();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
-        this.folder1.addProperty(new FolderVaultConfiguration(
-            new VaultConfiguration("http://folder1.com", FOLDER_2_CREDENTIALS_ID, false)));
+        VaultConfiguration vaultConfig = new VaultConfiguration();
+        vaultConfig.setVaultUrl("http://folder1.com");
+        vaultConfig.setVaultCredentialId(FOLDER_2_CREDENTIALS_ID);
+        vaultConfig.setFailIfNotFound(false);
+        vaultConfig.setVaultNamespace("mynamespace");
+        vaultConfig.setTimeout(TIMEOUT);
+
+        this.folder1.addProperty(new FolderVaultConfiguration(vaultConfig));
 
         this.projectInFolder1.getBuildWrappersList().add(vaultBuildWrapper);
         this.projectInFolder1.getBuildersList().add(echoSecret());
@@ -209,7 +242,10 @@ public class FolderIT {
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);
-        verify(mockAccessor, times(0)).init(anyString(), any(VaultCredential.class));
+        VaultConfig config = new VaultConfig().address(anyString());
+        mockAccessor.setConfig(config);
+        mockAccessor.setCredential(any(VaultCredential.class));
+        verify(mockAccessor, times(0)).init();
         verify(mockAccessor, times(0)).read(anyString(), anyInt());
     }
 

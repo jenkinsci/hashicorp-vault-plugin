@@ -155,6 +155,7 @@ public class VaultSecretSource extends SecretSource {
 
                     // check if we overwrite an existing key from another path
                     Map<String, String> nextSecrets = vault.logical().read(vaultPath).getData();
+                    // TODO(casz) handle error response
                     for (String key : nextSecrets.keySet()) {
                         if (secrets.containsKey(key)) {
                             LOGGER.log(Level.WARNING, "Key {0} exists in multiple vault paths.", key);

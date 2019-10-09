@@ -1,14 +1,15 @@
+package com.datapipe.jenkins.vault.util
 //noinspection GrPackage
 node {
     def secrets = [
         [
-            path: 'secret/testing',
+            path: 'kv-v1/admin',
             secretValues: [
-                [envVar: 'testing', vaultKey: 'value_one']
+                [envVar: 'testing', vaultKey: 'key1']
             ]
         ]
     ]
     withVault([vaultSecrets: secrets]) {
-        echo '${env.testing}'
+        echo "${env.testing}"
     }
 }

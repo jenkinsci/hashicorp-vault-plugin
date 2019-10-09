@@ -1,9 +1,13 @@
 package com.datapipe.jenkins.vault.configuration;
 
+import com.bettercloud.vault.SslConfig;
+import com.bettercloud.vault.VaultConfig;
+import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
+import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -28,6 +32,9 @@ public class VaultConfiguration
     extends AbstractDescribableImpl<VaultConfiguration>
     implements Serializable {
 
+    private static final int RETRY_INTERVAL_MILLISECONDS = 1000;
+    private static final int DEFAULT_TIMEOUT = 30;
+
     private String vaultUrl;
 
     private String vaultCredentialId;
@@ -37,6 +44,10 @@ public class VaultConfiguration
     private boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
 
     private Integer engineVersion;
+
+    private String vaultNamespace;
+
+    private Integer timeout = DEFAULT_TIMEOUT;
 
     @DataBoundConstructor
     public VaultConfiguration() {
@@ -56,6 +67,8 @@ public class VaultConfiguration
         this.failIfNotFound = toCopy.failIfNotFound;
         this.skipSslVerification = toCopy.skipSslVerification;
         this.engineVersion = toCopy.engineVersion;
+        this.vaultNamespace = toCopy.vaultNamespace;
+        this.timeout = toCopy.timeout;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -71,6 +84,12 @@ public class VaultConfiguration
         }
         if (result.engineVersion == null) {
             result.engineVersion = parent.getEngineVersion();
+        }
+        if (StringUtils.isBlank(result.getVaultNamespace())) {
+            result.setVaultNamespace(parent.getVaultNamespace());
+        }
+        if (result.timeout == null) {
+            result.setTimeout(parent.getTimeout());
         }
         result.failIfNotFound = failIfNotFound;
         return result;
@@ -121,6 +140,43 @@ public class VaultConfiguration
         this.engineVersion = engineVersion;
     }
 
+    public String getVaultNamespace() {
+        return vaultNamespace;
+    }
+
+    @DataBoundSetter
+    public void setVaultNamespace(String vaultNamespace) {
+        this.vaultNamespace = fixEmptyAndTrim(vaultNamespace);
+    }
+
+    public Integer getTimeout() {
+        return timeout;
+    }
+
+    @DataBoundSetter
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
+
+    /**
+     * Number of retries when reading a secret from vault
+     *
+     * @return number of retries
+     */
+    public int getMaxRetries() {
+        final int to = (null != getTimeout()) ? getTimeout() : DEFAULT_TIMEOUT;
+        return (int) (to * 1000.0 / RETRY_INTERVAL_MILLISECONDS);
+    }
+
+    /**
+     * The time in milliseconds in between retries when reading a secret from vault
+     *
+     * @return 1000 milliseconds
+     */
+    public int getRetryIntervalMilliseconds() {
+        return RETRY_INTERVAL_MILLISECONDS;
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<VaultConfiguration> {
 
@@ -150,6 +206,25 @@ public class VaultConfiguration
         public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
             return engineVersions(context);
         }
+    }
+
+    @NonNull
+    public VaultConfig getVaultConfig() {
+        VaultConfig vaultConfig = new VaultConfig();
+        vaultConfig.address(this.getVaultUrl());
+        vaultConfig.engineVersion(this.getEngineVersion());
+        try {
+            if (this.isSkipSslVerification()) {
+                vaultConfig.sslConfig(new SslConfig().verify(false).build());
+            }
+
+            if (StringUtils.isNotEmpty(this.getVaultNamespace())) {
+                vaultConfig.nameSpace(this.getVaultNamespace());
+            }
+        } catch (VaultException e) {
+            throw new VaultPluginException("Could not set up VaultConfig.", e);
+        }
+        return vaultConfig;
     }
 
     @Restricted(NoExternalUse.class)

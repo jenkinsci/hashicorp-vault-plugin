@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.buildstep;
 
+import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.datapipe.jenkins.vault.VaultAccessor;
 import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
@@ -63,26 +64,29 @@ public class VaultStepExecution extends StepExecution {
         final VaultConfiguration vaultConfiguration = globalVaultConfiguration.getConfiguration();
         final String credentialsId = StringUtils.isBlank(readStep.getCredentialsId()) ? vaultConfiguration.getVaultCredentialId() : Util.replaceMacro(readStep.getCredentialsId(), envVars);
         final String vaultUrl = StringUtils.isBlank(readStep.getVaultUrl()) ? vaultConfiguration.getVaultUrl() : Util.replaceMacro(readStep.getVaultUrl(), envVars);
-        final boolean skipSslVerification = vaultConfiguration.isSkipSslVerification();
+
+        VaultConfig vaultConfig = vaultConfiguration.getVaultConfig();
 
         VaultAccessor vaultAccessor = new VaultAccessor();
+        vaultAccessor.setConfig(vaultConfig);
 
+        VaultCredential credential = null;
         if (StringUtils.isBlank(credentialsId)) {
             listener.getLogger().append(String.format("using vault url '%s' without credentials", vaultUrl));
-            vaultAccessor.init(vaultUrl, skipSslVerification);
-            return vaultAccessor;
         } else {
+            credential = CredentialsProvider.findCredentialById(credentialsId, VaultCredential.class, run);
             listener.getLogger().append(String.format("using vault url '%s' and credentialsId '%s'", vaultUrl, credentialsId));
         }
 
-        VaultCredential credential = CredentialsProvider.findCredentialById(credentialsId, VaultCredential.class, run);
-
         if (credential == null) {
             listener.getLogger().append(String.format("no credentials found for credentialId %s, accessing Vault without credentials", credentialsId));
-            vaultAccessor.init(vaultUrl, skipSslVerification);
         } else {
-            vaultAccessor.init(vaultUrl, credential, skipSslVerification);
+            vaultAccessor.setCredential(credential);
         }
+
+        vaultAccessor.setMaxRetries(vaultConfiguration.getMaxRetries());
+        vaultAccessor.setRetryIntervalMilliseconds(vaultConfiguration.getRetryIntervalMilliseconds());
+        vaultAccessor.init();
         return vaultAccessor;
     }
 
