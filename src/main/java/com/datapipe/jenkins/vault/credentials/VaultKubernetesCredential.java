@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
 
@@ -21,16 +22,25 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
     @NonNull
     private final String role;
 
-    private final String mountPath;
+    @NonNull
+    private String mountPath = DescriptorImpl.defaultPath;
 
     @DataBoundConstructor
     public VaultKubernetesCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
-        @CheckForNull String description, @NonNull String role, String mountPath) {
+        @CheckForNull String description, @NonNull String role) {
         super(scope, id, description);
         this.role = role;
-        this.mountPath = mountPath == null ? "kubernetes" : mountPath;
     }
 
+    @NonNull
+    public String getMountPath() {
+        return this.mountPath;
+    }
+
+    @DataBoundSetter
+    public void setMountPath(@NonNull String mountPath) {
+        this.mountPath = mountPath;
+    }
 
     @Override
     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
@@ -61,6 +71,8 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
         public String getDisplayName() {
             return "Vault Kubernetes Credential";
         }
+
+        public static final String defaultPath = "kubernetes";
 
     }
 }
