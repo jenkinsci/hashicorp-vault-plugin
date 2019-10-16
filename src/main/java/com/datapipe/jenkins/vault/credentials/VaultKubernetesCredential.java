@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
 
@@ -21,6 +22,9 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
     @NonNull
     private final String role;
 
+    @NonNull
+    private String mountPath = DescriptorImpl.defaultPath;
+
     @DataBoundConstructor
     public VaultKubernetesCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
         @CheckForNull String description, @NonNull String role) {
@@ -28,6 +32,15 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
         this.role = role;
     }
 
+    @NonNull
+    public String getMountPath() {
+        return this.mountPath;
+    }
+
+    @DataBoundSetter
+    public void setMountPath(@NonNull String mountPath) {
+        this.mountPath = mountPath;
+    }
 
     @Override
     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
@@ -43,7 +56,7 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
             return vault
                 .withRetries(5, 500)
                 .auth()
-                .loginByKubernetes(role, jwt)
+                .loginByJwt(mountPath, role, jwt)
                 .getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
@@ -58,6 +71,8 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
         public String getDisplayName() {
             return "Vault Kubernetes Credential";
         }
+
+        public static final String defaultPath = "kubernetes";
 
     }
 }
