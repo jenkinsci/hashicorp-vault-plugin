@@ -21,11 +21,14 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
     @NonNull
     private final String role;
 
+    private final String mountPath;
+
     @DataBoundConstructor
     public VaultKubernetesCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
-        @CheckForNull String description, @NonNull String role) {
+        @CheckForNull String description, @NonNull String role, String mountPath) {
         super(scope, id, description);
         this.role = role;
+        this.mountPath = mountPath == null ? "kubernetes" : mountPath;
     }
 
 
@@ -43,7 +46,7 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
             return vault
                 .withRetries(5, 500)
                 .auth()
-                .loginByKubernetes(role, jwt)
+                .loginByJwt(mountPath, role, jwt)
                 .getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
