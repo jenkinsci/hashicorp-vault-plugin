@@ -8,20 +8,22 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class VaultAppRoleAuthenticator extends VaultAuthenticatorWithExpiration {
+
     private final static Logger LOGGER = Logger.getLogger(VaultAppRoleAuthenticator.class.getName());
 
-    private String approle;
-    private String approleSecret;
+    private VaultAppRole appRole;
 
-    public VaultAppRoleAuthenticator(String approle, String approleSecret) {
-        this.approle = approle;
-        this.approleSecret = approleSecret;
+    public VaultAppRoleAuthenticator(VaultAppRole appRole, String mountPath) {
+        this.appRole = appRole;
+        this.mountPath = mountPath;
     }
 
     public void authenticate(Vault vault, VaultConfig config) throws VaultException {
         if (isTokenTTLExpired()) {
             // authenticate
-            currentAuthToken = vault.auth().loginByAppRole(approle, approleSecret).getAuthClientToken();
+            currentAuthToken = vault.auth()
+                .loginByAppRole(mountPath, appRole.getAppRole(), appRole.getAppRoleSecret())
+                .getAuthClientToken();
             config.token(currentAuthToken).build();
             LOGGER.log(Level.FINE, "Login to Vault using AppRole/SecretID successful");
             getTTLExpiryOfCurrentToken(vault);
@@ -38,6 +40,6 @@ public class VaultAppRoleAuthenticator extends VaultAuthenticatorWithExpiration 
 
     @Override
     public int hashCode() {
-        return Objects.hash(approle, approleSecret);
+        return Objects.hash(appRole);
     }
 }

@@ -9,10 +9,10 @@ public interface VaultAuthenticator {
     static VaultAuthenticator of(String token) {
         return new VaultSingleTokenAuthenticator(token);
     }
-    static VaultAuthenticator of(String approle, String approleSecret) {
-        return new VaultAppRoleAuthenticator(approle, approleSecret);
+    static VaultAuthenticator of(VaultAppRole appRole, String mountPath) {
+        return new VaultAppRoleAuthenticator(appRole, mountPath);
     }
-    static VaultAuthenticator of(String user, String pass, String mouthPath) {
-        return new VaultUserPassAuthenticator(user, pass, mouthPath);
+    static VaultAuthenticator of(VaultUsernamePassword vaultUsernamePassword, String mountPath) {
+        return new VaultUserPassAuthenticator(vaultUsernamePassword, mountPath);
     }
 }
