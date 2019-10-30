@@ -15,9 +15,9 @@ public class VaultUserPassAuthenticator extends VaultAuthenticatorWithExpiration
     private VaultUsernamePassword userPass;
 
     public VaultUserPassAuthenticator(
-        VaultUsernamePassword vaultUsernamePassword,
+        VaultUsernamePassword userPass,
         String mountPath) {
-        this.userPass = vaultUsernamePassword;
+        this.userPass = userPass;
         this.mountPath = mountPath;
     }
 
