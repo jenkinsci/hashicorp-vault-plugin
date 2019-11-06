@@ -41,6 +41,7 @@ public class VaultSecretSource extends SecretSource {
     private static final String CASC_VAULT_PATH = "CASC_VAULT_PATH"; // TODO: deprecate!
     private static final String DEFAULT_ENGINE_VERSION = "2";
     private static final String DEFAULT_USER_BACKEND = "userpass";
+    private static final String DEFAULT_APPROLE_BACKEND = "approle";
 
     private Map<String, String> secrets = new HashMap<>();
     private Vault vault;
@@ -135,11 +136,14 @@ public class VaultSecretSource extends SecretSource {
 
     private void userPass(String user, String pass) {
         Optional<String> mount = getVariable(CASC_VAULT_MOUNT);
-        setAuthenticator(VaultAuthenticator.of(user, pass, mount.orElse(DEFAULT_USER_BACKEND)));
+        setAuthenticator(VaultAuthenticator
+            .of(new VaultUsernamePassword(user, pass), mount.orElse(DEFAULT_USER_BACKEND)));
     }
 
     private void approle(String approle, String approleSecret) {
-        setAuthenticator(VaultAuthenticator.of(approle, approleSecret));
+        Optional<String> mount = getVariable(CASC_VAULT_MOUNT);
+        setAuthenticator(VaultAuthenticator
+            .of(new VaultAppRole(approle, approleSecret), mount.orElse(DEFAULT_APPROLE_BACKEND)));
     }
 
     private void readSecretsFromVault() {

@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 abstract class VaultAuthenticatorWithExpiration implements VaultAuthenticator {
 
     private final static Logger LOGGER = Logger.getLogger(VaultAuthenticatorWithExpiration.class.getName());
+    protected String mountPath;
 
     private Calendar tokenExpiration;
     protected String currentAuthToken;
