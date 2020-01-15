@@ -18,7 +18,7 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * Requires either CASC_VAULT_USER and CASC_VAULT_PW, or CASC_VAULT_TOKEN,
- * or CASC_VAULT_APPROLE and CASC_VAULT_APPROLE_SECRET
+ * or CASC_VAULT_APPROLE and CASC_VAULT_APPROLE_SECRET, or CASC_VAULT_KUBERNETES_ROLE
  * environment variables set alongside with CASC_VAULT_PATHS and CASC_VAULT_URL
  */
 @Extension(optional = true)
@@ -35,6 +35,7 @@ public class VaultSecretSource extends SecretSource {
     private static final String CASC_VAULT_TOKEN = "CASC_VAULT_TOKEN";
     private static final String CASC_VAULT_APPROLE = "CASC_VAULT_APPROLE";
     private static final String CASC_VAULT_APPROLE_SECRET = "CASC_VAULT_APPROLE_SECRET";
+    private static final String CASC_VAULT_KUBERNETES_ROLE = "CASC_VAULT_KUBERNETES_ROLE";
     private static final String CASC_VAULT_NAMESPACE = "CASC_VAULT_NAMESPACE";
     private static final String CASC_VAULT_ENGINE_VERSION = "CASC_VAULT_ENGINE_VERSION";
     private static final String CASC_VAULT_PATHS = "CASC_VAULT_PATHS";
@@ -42,6 +43,7 @@ public class VaultSecretSource extends SecretSource {
     private static final String DEFAULT_ENGINE_VERSION = "2";
     private static final String DEFAULT_USER_BACKEND = "userpass";
     private static final String DEFAULT_APPROLE_BACKEND = "approle";
+    private static final String DEFAULT_KUBERNETES_BACKEND = "kubernetes";
 
     private Map<String, String> secrets = new HashMap<>();
     private Vault vault;
@@ -107,10 +109,12 @@ public class VaultSecretSource extends SecretSource {
         Optional<String> vaultToken = getVariable(CASC_VAULT_TOKEN);
         Optional<String> vaultAppRole = getVariable(CASC_VAULT_APPROLE);
         Optional<String> vaultAppRoleSecret = getVariable(CASC_VAULT_APPROLE_SECRET);
+        Optional<String> vaultKubernetesRole = getVariable(CASC_VAULT_KUBERNETES_ROLE);
 
         vaultToken.ifPresent(this::token);
         allPresent(vaultUser, vaultPw, this::userPass);
         allPresent(vaultAppRole, vaultAppRoleSecret, this::approle);
+        vaultKubernetesRole.ifPresent(this::kubernetes);
 
         if (vaultAuthenticator == null && !usingVaultAgent) {
             LOGGER.log(Level.WARNING, "Could not determine vault authentication method. Not able to read secrets from vault.");
@@ -144,6 +148,12 @@ public class VaultSecretSource extends SecretSource {
         Optional<String> mount = getVariable(CASC_VAULT_MOUNT);
         setAuthenticator(VaultAuthenticator
             .of(new VaultAppRole(approle, approleSecret), mount.orElse(DEFAULT_APPROLE_BACKEND)));
+    }
+
+    private void kubernetes(String role) {
+        Optional<String> mount = getVariable(CASC_VAULT_MOUNT);
+        setAuthenticator(VaultAuthenticator
+            .of(new VaultKubernetes(role), mount.orElse(DEFAULT_KUBERNETES_BACKEND)));
     }
 
     private void readSecretsFromVault() {
