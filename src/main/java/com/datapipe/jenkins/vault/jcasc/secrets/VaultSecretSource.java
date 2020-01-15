@@ -36,6 +36,7 @@ public class VaultSecretSource extends SecretSource {
     private static final String CASC_VAULT_APPROLE = "CASC_VAULT_APPROLE";
     private static final String CASC_VAULT_APPROLE_SECRET = "CASC_VAULT_APPROLE_SECRET";
     private static final String CASC_VAULT_NAMESPACE = "CASC_VAULT_NAMESPACE";
+    private static final String CASC_VAULT_PREFIX_PATH = "CASC_VAULT_PREFIX_PATH";
     private static final String CASC_VAULT_ENGINE_VERSION = "CASC_VAULT_ENGINE_VERSION";
     private static final String CASC_VAULT_PATHS = "CASC_VAULT_PATHS";
     private static final String CASC_VAULT_PATH = "CASC_VAULT_PATH"; // TODO: deprecate!
@@ -63,6 +64,7 @@ public class VaultSecretSource extends SecretSource {
             .map(Optional::of)
             .orElseGet(() -> getVariable(CASC_VAULT_URL));
         Optional<String> vaultNamespace = getVariable(CASC_VAULT_NAMESPACE);
+        Optional<String> vaultPrefixPath = getVariable(CASC_VAULT_PREFIX_PATH);
         Optional<String[]> vaultPaths = getCommaSeparatedVariables(CASC_VAULT_PATHS);
         getVariable(CASC_VAULT_PATH).ifPresent(s -> LOGGER
             .log(Level.SEVERE, "{0} is deprecated, please switch to {1}",
@@ -88,6 +90,11 @@ public class VaultSecretSource extends SecretSource {
 
             vaultConfig.engineVersion(Integer.parseInt(vaultEngineVersion));
             LOGGER.log(Level.FINE, "Using engine version: {0}", vaultEngineVersion);
+
+            if (vaultPrefixPath.isPresent()) {
+                vaultConfig.prefixPath(vaultPrefixPath.get());
+                LOGGER.log(Level.FINE, "Using prefixPath with Vault: {0}", vaultPrefixPath);
+            }
         } catch (VaultException e) {
             LOGGER.log(Level.WARNING, "Could not configure vault connection", e);
         }

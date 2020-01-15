@@ -106,4 +106,14 @@ public class VaultConfigurationSpec {
         parent.setTimeout(20);
         assertThat(parent.isFailIfNotFound(), is(false));
     }
+
+    @Test
+    public void shouldStorePrefixPath() {
+        VaultConfiguration parent = new VaultConfiguration();
+        parent.setVaultUrl("http://vault-url.com/");
+        parent.setFailIfNotFound(false);
+        parent.setPrefixPath("my/custom/prefixpath");
+        parent.setTimeout(20);
+        assertThat(parent.getPrefixPath(), is("my/custom/prefixpath"));
+    }
 }

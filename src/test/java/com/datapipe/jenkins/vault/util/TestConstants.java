@@ -37,6 +37,9 @@ public interface TestConstants {
     String VAULT_PATH_KV2_2 = "kv-v2/dev";
     String VAULT_PATH_KV2_3 = "kv-v2/qa";
     String VAULT_PATH_KV2_AUTH_TEST = "kv-v2/auth-test";
+    String VAULT_PATH_LONG_KV2_1 = "long/path/kv-v2/admin";
+    String VAULT_PATH_LONG_KV2_2 = "long/path/kv-v2/dev";
+    String VAULT_PATH_LONG_KV2_PREFIX_PATH = "long/path/kv-v2";
     String VAULT_APPROLE_FILE = "JCasC_temp_approle_secret.prop";
     String VAULT_AGENT_FILE = "JCasC_temp_vault_agent.prop";
 }
