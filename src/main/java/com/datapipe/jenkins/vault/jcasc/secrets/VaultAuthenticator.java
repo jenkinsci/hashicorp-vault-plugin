@@ -15,4 +15,7 @@ public interface VaultAuthenticator {
     static VaultAuthenticator of(VaultUsernamePassword vaultUsernamePassword, String mountPath) {
         return new VaultUserPassAuthenticator(vaultUsernamePassword, mountPath);
     }
+    static VaultAuthenticator of(VaultKubernetes vaultKubernetes, String mountPath) {
+        return new VaultKubernetesAuthenticator(vaultKubernetes, mountPath);
+    }
 }
