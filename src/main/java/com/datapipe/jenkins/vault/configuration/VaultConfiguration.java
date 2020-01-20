@@ -47,6 +47,8 @@ public class VaultConfiguration
 
     private String vaultNamespace;
 
+    private String prefixPath;
+
     private Integer timeout = DEFAULT_TIMEOUT;
 
     @DataBoundConstructor
@@ -68,6 +70,7 @@ public class VaultConfiguration
         this.skipSslVerification = toCopy.skipSslVerification;
         this.engineVersion = toCopy.engineVersion;
         this.vaultNamespace = toCopy.vaultNamespace;
+        this.prefixPath = toCopy.prefixPath;
         this.timeout = toCopy.timeout;
     }
 
@@ -87,6 +90,9 @@ public class VaultConfiguration
         }
         if (StringUtils.isBlank(result.getVaultNamespace())) {
             result.setVaultNamespace(parent.getVaultNamespace());
+        }
+        if (StringUtils.isBlank(result.getPrefixPath())) {
+            result.setPrefixPath(parent.getPrefixPath());
         }
         if (result.timeout == null) {
             result.setTimeout(parent.getTimeout());
@@ -147,6 +153,15 @@ public class VaultConfiguration
     @DataBoundSetter
     public void setVaultNamespace(String vaultNamespace) {
         this.vaultNamespace = fixEmptyAndTrim(vaultNamespace);
+    }
+
+    public String getPrefixPath() {
+        return prefixPath;
+    }
+
+    @DataBoundSetter
+    public void setPrefixPath(String prefixPath) {
+        this.prefixPath = fixEmptyAndTrim(prefixPath);
     }
 
     public Integer getTimeout() {
@@ -220,6 +235,10 @@ public class VaultConfiguration
 
             if (StringUtils.isNotEmpty(this.getVaultNamespace())) {
                 vaultConfig.nameSpace(this.getVaultNamespace());
+            }
+
+            if (StringUtils.isNotEmpty(this.getPrefixPath())) {
+                vaultConfig.prefixPath(this.getPrefixPath());
             }
         } catch (VaultException e) {
             throw new VaultPluginException("Could not set up VaultConfig.", e);

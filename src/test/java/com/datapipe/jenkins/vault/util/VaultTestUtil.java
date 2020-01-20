@@ -88,6 +88,8 @@ public class VaultTestUtil implements TestConstants {
             // Create Secret Backends
             runCommand(container, "vault", "secrets", "enable", "-path=kv-v2",
                 "-version=2", "kv");
+            runCommand(container, "vault", "secrets", "enable", "-path=long/path/kv-v2",
+                "-version=2", "kv");
             runCommand(container, "vault", "secrets", "enable", "-path=kv-v1",
                 "-version=1", "kv");
 
@@ -137,6 +139,9 @@ public class VaultTestUtil implements TestConstants {
             runCommand(container, "vault", "kv", "put", VAULT_PATH_KV2_3, "key2=321");
             runCommand(container, "vault", "kv", "put", VAULT_PATH_KV2_AUTH_TEST,
                 "key1=auth-test");
+            runCommand(container, "vault", "kv", "put", VAULT_PATH_LONG_KV2_1, "key1=123",
+                "key2=456");
+            runCommand(container, "vault", "kv", "put", VAULT_PATH_LONG_KV2_2, "key3=789");
             VaultContainer vaultAgentContainer = createVaultAgentContainer(roleIDPath,
                 secretIDPath);
             assert vaultAgentContainer != null;

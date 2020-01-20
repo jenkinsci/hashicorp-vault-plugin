@@ -221,6 +221,7 @@ The secret source for JCasC is configured via environment variables as way to ge
 - The environment variable `CASC_VAULT_AGENT_ADDR` is optional. It takes precedence over `CASC_VAULT_URL` and is used for connecting to a Vault Agent. [See this section](#vault-agent)
 - The environment variable `CASC_VAULT_MOUNT` is optional. (Vault auth mount. For example, `ldap` or another username & password authentication type, defaults to `userpass`.)
 - The environment variable `CASC_VAULT_NAMESPACE` is optional. If used, sets the Vault namespace for Enterprise Vaults.
+- The environment variable `CASC_VAULT_PREFIX_PATH` is optional. If used, allows to use complex prefix paths (for example with KV secrets available at `my/long/data/prefix/kv/secret1` set this to `my/long/data/prefix/kv`).
 - The environment variable `CASC_VAULT_FILE` is optional, provides a way for the other variables to be read from a file instead of environment variables.
 - The environment variable `CASC_VAULT_ENGINE_VERSION` is optional. If unset, your vault path is assumed to be using kv version 2. If your vault path uses engine version 1, set this variable to `1`.
 - The issued token should have read access to vault path `auth/token/lookup-self` in order to determine its expiration time. JCasC will re-issue a token if its expiration is reached (except for `CASC_VAULT_TOKEN`).

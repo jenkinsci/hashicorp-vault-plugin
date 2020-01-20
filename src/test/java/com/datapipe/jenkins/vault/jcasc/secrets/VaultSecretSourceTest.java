@@ -110,6 +110,19 @@ public class VaultSecretSourceTest implements TestConstants {
     @Test
     @ConfiguredWithCode("vault.yml")
     @Envs({
+        @Env(name = "CASC_VAULT_USER", value = VAULT_USER),
+        @Env(name = "CASC_VAULT_PW", value = VAULT_PW),
+        @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_LONG_KV2_1 + "," + VAULT_PATH_LONG_KV2_2),
+        @Env(name = "CASC_VAULT_PREFIX_PATH", value = VAULT_PATH_LONG_KV2_PREFIX_PATH),
+        @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "2")
+    })
+    public void kv2WithLongPathAndUser() {
+        assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+    }
+
+    @Test
+    @ConfiguredWithCode("vault.yml")
+    @Envs({
         @Env(name = "CASC_VAULT_USER", value = "1234"),
         @Env(name = "CASC_VAULT_PW", value = VAULT_PW),
         @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_KV2_1),
