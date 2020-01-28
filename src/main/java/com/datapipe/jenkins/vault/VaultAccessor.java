@@ -13,7 +13,7 @@ public class VaultAccessor implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private VaultConfig config;
+    private transient VaultConfig config;
     private VaultCredential credential;
     private int maxRetries = 0;
     private int retryIntervalMilliseconds = 1000;
