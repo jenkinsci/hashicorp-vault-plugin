@@ -6,15 +6,14 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-
-import javax.annotation.Nonnull;
-import java.util.Collections;
-import java.util.List;
-import java.util.logging.Logger;
 
 @SuppressWarnings("ALL")
 public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implements

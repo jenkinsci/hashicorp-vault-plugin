@@ -9,17 +9,16 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.Secret;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
-import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
-import org.jenkinsci.plugins.credentialsbinding.impl.UnbindableDir;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
+import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
+import org.jenkinsci.plugins.credentialsbinding.impl.UnbindableDir;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VaultSSHUserPrivateKeyBinding extends
     MultiBinding<VaultSSHUserPrivateKey> {

@@ -15,16 +15,15 @@ import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import hudson.ExtensionList;
 import hudson.security.ACL;
-import jenkins.model.GlobalConfiguration;
-import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
-
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nonnull;
+import jenkins.model.GlobalConfiguration;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 
 public class VaultHelper {
     private static final Logger LOGGER = Logger.getLogger(VaultHelper.class.getName());

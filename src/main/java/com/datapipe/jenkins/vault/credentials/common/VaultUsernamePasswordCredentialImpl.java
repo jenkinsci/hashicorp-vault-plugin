@@ -6,12 +6,11 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import java.util.logging.Logger;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-
-import java.util.logging.Logger;
 
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 

@@ -7,6 +7,7 @@ import com.datapipe.jenkins.vault.credentials.common.VaultSSHUserPrivateKeyImpl;
 import hudson.FilePath;
 import hudson.model.Result;
 import hudson.util.Secret;
+import java.util.Collections;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -15,12 +16,13 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
-import java.util.Collections;
-
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class VaultSSHUserPrivateKeyIT {
 
