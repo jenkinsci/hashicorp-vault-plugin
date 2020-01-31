@@ -4,8 +4,10 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +17,10 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
 import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 
 public class VaultUsernamePasswordCredentialBinding extends
     MultiBinding<VaultUsernamePasswordCredential> {
@@ -79,6 +84,11 @@ public class VaultUsernamePasswordCredentialBinding extends
         @Override
         public String getDisplayName() {
             return "Vault Username-Password Credentials";
+        }
+
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+            return engineVersions(context);
         }
     }
 }

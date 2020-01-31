@@ -6,8 +6,10 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import java.io.IOException;
 import java.util.HashSet;
@@ -18,7 +20,10 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
 import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
 import org.jenkinsci.plugins.credentialsbinding.impl.UnbindableDir;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 
 public class VaultSSHUserPrivateKeyBinding extends
     MultiBinding<VaultSSHUserPrivateKey> {
@@ -97,6 +102,11 @@ public class VaultSSHUserPrivateKeyBinding extends
         @Override
         public String getDisplayName() {
             return "Vault SSH Username with private key Credentials";
+        }
+
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+            return engineVersions(context);
         }
     }
 }

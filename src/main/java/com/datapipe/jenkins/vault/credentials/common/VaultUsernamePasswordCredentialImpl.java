@@ -4,14 +4,18 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import hudson.model.Item;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import java.util.logging.Logger;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 
 @SuppressWarnings("ALL")
@@ -129,5 +133,9 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
                 .ok("Successfully retrieved username " + username + " and the password");
         }
 
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+            return engineVersions(context);
+        }
     }
 }

@@ -4,16 +4,21 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import hudson.model.Item;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 
 @SuppressWarnings("ALL")
 public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implements
@@ -161,5 +166,9 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
                 .ok("Successfully retrieved username " + username + ", the private key and the passphrase");
         }
 
+        @SuppressWarnings("unused") // used by stapler
+        public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
+            return engineVersions(context);
+        }
     }
 }
