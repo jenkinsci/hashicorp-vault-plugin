@@ -12,6 +12,7 @@ import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.jenkinsci.plugins.credentialsbinding.impl.UnbindableDir;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import static com.datapipe.jenkins.vault.WindowsFilePermissionHelper.fixSshKeyOnWindows;
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 
 public class VaultSSHUserPrivateKeyBinding extends
@@ -72,7 +74,11 @@ public class VaultSSHUserPrivateKeyBinding extends
             contents.append('\n');
         }
         keyFile.write(contents.toString(), "UTF-8");
-        keyFile.chmod(0400);
+        if (launcher.isUnix()) {
+            keyFile.chmod(0400);
+        } else {
+            fixSshKeyOnWindows(Paths.get(keyFile.toURI()));
+        }
 
         Map<String, String> map = new LinkedHashMap<>();
         map.put(privateKeyVariable, keyFile.getRemote());
