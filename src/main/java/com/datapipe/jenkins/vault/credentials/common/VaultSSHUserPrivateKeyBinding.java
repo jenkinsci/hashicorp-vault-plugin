@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.google.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
@@ -17,7 +16,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
 import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
 import org.jenkinsci.plugins.credentialsbinding.impl.UnbindableDir;
@@ -26,6 +24,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import static com.datapipe.jenkins.vault.WindowsFilePermissionHelper.fixSshKeyOnWindows;
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
+import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
 public class VaultSSHUserPrivateKeyBinding extends
     MultiBinding<VaultSSHUserPrivateKey> {
@@ -40,12 +39,9 @@ public class VaultSSHUserPrivateKeyBinding extends
     @DataBoundConstructor
     public VaultSSHUserPrivateKeyBinding(@Nullable String usernameVariable, @Nullable String privateKeyVariable, @Nullable String passphraseVariable, String credentialsId) {
         super(credentialsId);
-        this.usernameVariable = StringUtils
-            .defaultIfBlank(usernameVariable, DEFAULT_USERNAME_VARIABLE);
-        this.privateKeyVariable = StringUtils
-            .defaultIfBlank(privateKeyVariable, DEFAULT_PRIVATE_KEY_VARIABLE);
-        this.passphraseVariable = StringUtils
-            .defaultIfBlank(passphraseVariable, DEFAULT_PASSPHRASE_VARIABLE);
+        this.usernameVariable = defaultIfBlank(usernameVariable, DEFAULT_USERNAME_VARIABLE);
+        this.privateKeyVariable = defaultIfBlank(privateKeyVariable, DEFAULT_PRIVATE_KEY_VARIABLE);
+        this.passphraseVariable = defaultIfBlank(passphraseVariable, DEFAULT_PASSPHRASE_VARIABLE);
     }
 
     @Override
@@ -64,9 +60,9 @@ public class VaultSSHUserPrivateKeyBinding extends
 
     @Override
     public MultiEnvironment bind(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
-        SSHUserPrivateKey sshKey = getCredentials(build);
+        VaultSSHUserPrivateKey sshKey = getCredentials(build);
         UnbindableDir keyDir = UnbindableDir.create(workspace);
-        FilePath keyFile = keyDir.getDirPath().child("ssh-key-" + privateKeyVariable);
+        FilePath keyFile = keyDir.getDirPath().child(String.format("ssh-key-%s", privateKeyVariable));
 
         StringBuilder contents = new StringBuilder();
         for (String key : sshKey.getPrivateKeys()) {
