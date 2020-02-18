@@ -8,7 +8,10 @@ import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -16,25 +19,26 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
-import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 
 @SuppressWarnings("ALL")
-public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials implements
-    VaultUsernamePasswordCredential {
+public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implements
+    VaultSSHUserPrivateKey {
 
     public static final String DEFAULT_USERNAME_KEY = "username";
-    public static final String DEFAULT_PASSWORD_KEY = "password";
+    public static final String DEFAULT_PRIVATE_KEY_KEY = "private_key";
+    public static final String DEFAULT_PASSPHRASE_KEY = "passphrase";
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger
-        .getLogger(VaultUsernamePasswordCredentialImpl.class.getName());
+        .getLogger(VaultSSHUserPrivateKeyImpl.class.getName());
     private String path;
     private String usernameKey;
-    private String passwordKey;
+    private String privateKeyKey;
+    private String passphraseKey;
     private Integer engineVersion;
 
     @DataBoundConstructor
-    public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id,
-        String description) {
+    public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
+                                      String description) {
         super(scope, id, description);
     }
 
@@ -60,13 +64,23 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     }
 
     @NonNull
-    public String getPasswordKey() {
-        return passwordKey;
+    public String getPrivateKeyKey() {
+        return privateKeyKey;
     }
 
     @DataBoundSetter
-    public void setPasswordKey(String passwordKey) {
-        this.passwordKey = StringUtils.isEmpty(passwordKey) ? DEFAULT_PASSWORD_KEY : passwordKey;
+    public void setPrivateKeyKey(String privateKeyKey) {
+        this.privateKeyKey = StringUtils.isEmpty(privateKeyKey) ? DEFAULT_PRIVATE_KEY_KEY : privateKeyKey;
+    }
+
+    @NonNull
+    public String getPassphraseKey() {
+        return passphraseKey;
+    }
+
+    @DataBoundSetter
+    public void setPassphraseKey(String passphraseKey) {
+        this.passphraseKey = StringUtils.isEmpty(passphraseKey) ? DEFAULT_PASSPHRASE_KEY : passphraseKey;
     }
 
     public Integer getEngineVersion() {
@@ -92,13 +106,25 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
     @NonNull
     @Override
-    public Secret getPassword() {
-        return Secret.fromString(getValue(this.passwordKey));
+    public String getPrivateKey() {
+        return getValue(this.privateKeyKey);
+    }
+
+    @NonNull
+    @Override
+    public List<String> getPrivateKeys() {
+        return Collections.singletonList(getPrivateKey());
+    }
+
+    @NonNull
+    @Override
+    public Secret getPassphrase() {
+        return Secret.fromString(getValue(this.passphraseKey));
     }
 
 
-    private String getValue(String valueKey) {
-        return getVaultSecret(this.getPath(), valueKey, this.getEngineVersion());
+    private String getValue(@Nonnull String valueKey) {
+        return VaultHelper.getVaultSecret(this.getPath(), valueKey, this.getEngineVersion());
     }
 
 
@@ -107,30 +133,37 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
         @Override
         public String getDisplayName() {
-            return "Vault Username-Password Credential";
+            return "Vault SSH Username with private key Credential";
         }
 
         public FormValidation doTestConnection(
             @QueryParameter("path") String path,
             @QueryParameter("usernameKey") String usernameKey,
-            @QueryParameter("passwordKey") String passwordKey,
+            @QueryParameter("privateKeyKey") String privateKeyKey,
+            @QueryParameter("passphraseKey") String passphraseKey,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
             String username = null;
             try {
-                username = getVaultSecret(path, usernameKey, engineVersion);
+                username = VaultHelper.getVaultSecret(path, usernameKey, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                getVaultSecret(path, passwordKey, engineVersion);
+                VaultHelper.getVaultSecret(path, privateKeyKey, engineVersion);
             } catch (Exception e) {
-                return FormValidation.error("FAILED to retrieve password key: \n" + e);
+                return FormValidation.error("FAILED to retrieve private key key: \n" + e);
+            }
+
+            try {
+                VaultHelper.getVaultSecret(path, passphraseKey, engineVersion);
+            } catch (Exception e) {
+                return FormValidation.error("FAILED to retrieve passphrase key: \n" + e);
             }
 
             return FormValidation
-                .ok("Successfully retrieved username " + username + " and the password");
+                .ok("Successfully retrieved username " + username + ", the private key and the passphrase");
         }
 
         @SuppressWarnings("unused") // used by stapler
