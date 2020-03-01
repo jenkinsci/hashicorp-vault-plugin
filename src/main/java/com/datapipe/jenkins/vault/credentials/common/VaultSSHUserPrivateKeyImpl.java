@@ -11,25 +11,28 @@ import hudson.util.Secret;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
+import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
+import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
 @SuppressWarnings("ALL")
 public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implements
     VaultSSHUserPrivateKey {
 
+    private static final Logger LOGGER = Logger
+        .getLogger(VaultSSHUserPrivateKeyImpl.class.getName());
+
     public static final String DEFAULT_USERNAME_KEY = "username";
     public static final String DEFAULT_PRIVATE_KEY_KEY = "private_key";
     public static final String DEFAULT_PASSPHRASE_KEY = "passphrase";
+
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger
-        .getLogger(VaultSSHUserPrivateKeyImpl.class.getName());
+
     private String path;
     private String usernameKey;
     private String privateKeyKey;
@@ -38,10 +41,9 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
 
     @DataBoundConstructor
     public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
-                                      String description) {
+        String description) {
         super(scope, id, description);
     }
-
 
     @NonNull
     public String getPath() {
@@ -60,7 +62,7 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
 
     @DataBoundSetter
     public void setUsernameKey(String usernameKey) {
-        this.usernameKey = StringUtils.isEmpty(usernameKey) ? DEFAULT_USERNAME_KEY : usernameKey;
+        this.usernameKey = defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY);
     }
 
     @NonNull
@@ -70,7 +72,7 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
 
     @DataBoundSetter
     public void setPrivateKeyKey(String privateKeyKey) {
-        this.privateKeyKey = StringUtils.isEmpty(privateKeyKey) ? DEFAULT_PRIVATE_KEY_KEY : privateKeyKey;
+        this.privateKeyKey = defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY);
     }
 
     @NonNull
@@ -80,7 +82,7 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
 
     @DataBoundSetter
     public void setPassphraseKey(String passphraseKey) {
-        this.passphraseKey = StringUtils.isEmpty(passphraseKey) ? DEFAULT_PASSPHRASE_KEY : passphraseKey;
+        this.passphraseKey = defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY);
     }
 
     public Integer getEngineVersion() {
@@ -97,17 +99,18 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
     public String getDisplayName() {
         return this.path;
     }
-
     @NonNull
     @Override
     public String getUsername() {
-        return getValue(this.usernameKey);
+        String secretKey = defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY);
+        return getVaultSecret(path, secretKey, engineVersion);
     }
 
     @NonNull
     @Override
     public String getPrivateKey() {
-        return getValue(this.privateKeyKey);
+        String secretKey = defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY);
+        return getVaultSecret(path, secretKey, engineVersion);
     }
 
     @NonNull
@@ -119,14 +122,10 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
     @NonNull
     @Override
     public Secret getPassphrase() {
-        return Secret.fromString(getValue(this.passphraseKey));
+        String secretKey = defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY);
+        String secret = getVaultSecret(path, secretKey, engineVersion);
+        return Secret.fromString(secret);
     }
-
-
-    private String getValue(@Nonnull String valueKey) {
-        return VaultHelper.getVaultSecret(this.getPath(), valueKey, this.getEngineVersion());
-    }
-
 
     @Extension(ordinal = 1)
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
@@ -143,27 +142,28 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
             @QueryParameter("passphraseKey") String passphraseKey,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
-            String username = null;
+            String username;
             try {
-                username = VaultHelper.getVaultSecret(path, usernameKey, engineVersion);
+                username = getVaultSecret(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                VaultHelper.getVaultSecret(path, privateKeyKey, engineVersion);
+                getVaultSecret(path, defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY), engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve private key key: \n" + e);
             }
 
             try {
-                VaultHelper.getVaultSecret(path, passphraseKey, engineVersion);
+                getVaultSecret(path, defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY), engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve passphrase key: \n" + e);
             }
 
-            return FormValidation
-                .ok("Successfully retrieved username " + username + ", the private key and the passphrase");
+            return FormValidation.ok(String.format(
+                "Successfully retrieved username %s, the private key and the passphrase",
+                username));
         }
 
         @SuppressWarnings("unused") // used by stapler

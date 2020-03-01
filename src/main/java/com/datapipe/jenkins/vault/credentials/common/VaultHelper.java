@@ -14,7 +14,9 @@ import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import hudson.ExtensionList;
+import hudson.remoting.Channel;
 import hudson.security.ACL;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,76 +25,111 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
+import jenkins.security.SlaveToMasterCallable;
 import org.apache.commons.lang.StringUtils;
 
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
+
 public class VaultHelper {
+
     private static final Logger LOGGER = Logger.getLogger(VaultHelper.class.getName());
 
     static String getVaultSecret(@Nonnull String secretPath, @Nonnull String secretKey, @Nonnull Integer engineVersion) {
-        Jenkins jenkins = Jenkins.getInstanceOrNull();
-        if (jenkins == null) {
-            LOGGER.warning("Cannot retrieve secret becuase Jenkins.instance is not available");
-            return null;
-        }
-
-        LOGGER.info(
-            "Retrieving vault secret path=" + secretPath + " key=" + secretKey + " engineVersion="
-                + engineVersion);
-
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
-
-        if (globalConfig == null) {
-            throw new IllegalStateException("Vault plugin has not been configured.");
-        }
-
-        ExtensionList<VaultBuildWrapper.DescriptorImpl> extensionList = jenkins
-            .getExtensionList(VaultBuildWrapper.DescriptorImpl.class);
-        VaultBuildWrapper.DescriptorImpl descriptor = extensionList.get(0);
-
-        VaultConfiguration configuration = globalConfig.getConfiguration();
-
-        if (descriptor == null || configuration == null) {
-            throw new IllegalStateException("Vault plugin has not been configured.");
-        }
-
         try {
-            SslConfig sslConfig = new SslConfig()
-                .verify(configuration.isSkipSslVerification())
-                .build();
+            String secret;
+            SecretRetrieve retrieve = new SecretRetrieve(secretPath, secretKey, engineVersion);
 
-            VaultConfig vaultConfig = new VaultConfig()
-                .address(configuration.getVaultUrl())
-                .sslConfig(sslConfig)
-                .engineVersion(engineVersion);
-
-            if (StringUtils.isNotEmpty(configuration.getVaultNamespace())) {
-                vaultConfig.nameSpace(configuration.getVaultNamespace());
+            Channel channel = Channel.current();
+            if (channel == null) {
+                secret = retrieve.call();
+            } else {
+                secret = channel.call(retrieve);
             }
 
-            if (StringUtils.isNotEmpty(configuration.getPrefixPath())) {
-                vaultConfig.prefixPath(configuration.getPrefixPath());
+            return secret;
+        } catch (IOException | InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static class SecretRetrieve extends SlaveToMasterCallable<String, IOException> {
+
+        private static final long serialVersionUID = 1L;
+
+        private final String secretPath;
+        private final String secretKey;
+        private final Integer engineVersion;
+
+        SecretRetrieve(String secretPath, String secretKey, Integer engineVersion) {
+            this.secretPath = secretPath;
+            this.secretKey = secretKey;
+            this.engineVersion = engineVersion;
+        }
+
+        @Override
+        public String call() throws IOException {
+            Jenkins jenkins = Jenkins.get();
+
+            String msg = String.format(
+                "Retrieving vault secret path=%s key=%s engineVersion=%s",
+                secretPath, secretKey, engineVersion);
+            LOGGER.info(msg);
+
+            GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
+                .get(GlobalVaultConfiguration.class);
+
+            if (globalConfig == null) {
+                throw new IllegalStateException("Vault plugin has not been configured.");
             }
 
-            VaultCredential vaultCredential = retrieveVaultCredentials(
-                configuration.getVaultCredentialId());
+            ExtensionList<VaultBuildWrapper.DescriptorImpl> extensionList = jenkins
+                .getExtensionList(VaultBuildWrapper.DescriptorImpl.class);
+            VaultBuildWrapper.DescriptorImpl descriptor = extensionList.get(0);
 
-            VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
-            vaultAccessor.setMaxRetries(configuration.getMaxRetries());
-            vaultAccessor.setRetryIntervalMilliseconds(
-                configuration.getRetryIntervalMilliseconds());
-            vaultAccessor.init();
+            VaultConfiguration configuration = globalConfig.getConfiguration();
 
-            Map<String, String> values = vaultAccessor.read(secretPath, engineVersion).getData();
-
-            if (!values.containsKey(secretKey)) {
-                throw new VaultPluginException(
-                    "Key " + secretKey + " could not be found in path " + secretPath);
+            if (descriptor == null || configuration == null) {
+                throw new IllegalStateException("Vault plugin has not been configured.");
             }
 
-            return values.get(secretKey);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            try {
+                SslConfig sslConfig = new SslConfig()
+                    .verify(configuration.isSkipSslVerification())
+                    .build();
+
+                VaultConfig vaultConfig = new VaultConfig()
+                    .address(configuration.getVaultUrl())
+                    .sslConfig(sslConfig)
+                    .engineVersion(engineVersion);
+
+                if (isNotEmpty(configuration.getVaultNamespace())) {
+                    vaultConfig.nameSpace(configuration.getVaultNamespace());
+                }
+
+                if (isNotEmpty(configuration.getPrefixPath())) {
+                    vaultConfig.prefixPath(configuration.getPrefixPath());
+                }
+
+                VaultCredential vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId());
+
+                VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
+                vaultAccessor.setMaxRetries(configuration.getMaxRetries());
+                vaultAccessor.setRetryIntervalMilliseconds(configuration.getRetryIntervalMilliseconds());
+                vaultAccessor.init();
+
+                Map<String, String> values = vaultAccessor.read(secretPath, engineVersion).getData();
+
+                if (!values.containsKey(secretKey)) {
+                    String message = String.format(
+                        "Key %s could not be found in path %s",
+                        secretKey, secretPath);
+                    throw new VaultPluginException(message);
+                }
+
+                return values.get(secretKey);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -105,7 +142,7 @@ public class VaultHelper {
         }
         List<VaultCredential> credentials = CredentialsProvider
             .lookupCredentials(VaultCredential.class,
-                Jenkins.getInstance(),
+                Jenkins.get(),
                 ACL.SYSTEM,
                 Collections.<DomainRequirement>emptyList());
         VaultCredential credential = CredentialsMatchers

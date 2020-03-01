@@ -14,13 +14,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
 import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
+import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
 public class VaultUsernamePasswordCredentialBinding extends
     MultiBinding<VaultUsernamePasswordCredential> {
@@ -35,10 +35,8 @@ public class VaultUsernamePasswordCredentialBinding extends
         @Nullable String passwordVariable,
         String credentialsId) {
         super(credentialsId);
-        this.usernameVariable = StringUtils
-            .defaultIfBlank(usernameVariable, DEFAULT_USERNAME_VARIABLE);
-        this.passwordVariable = StringUtils
-            .defaultIfBlank(passwordVariable, DEFAULT_PASSWORD_VARIABLE);
+        this.usernameVariable = defaultIfBlank(usernameVariable, DEFAULT_USERNAME_VARIABLE);
+        this.passwordVariable = defaultIfBlank(passwordVariable, DEFAULT_PASSWORD_VARIABLE);
     }
 
     @Override
