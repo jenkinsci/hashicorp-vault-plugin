@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getCatString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
 import static org.junit.Assert.assertEquals;
@@ -53,7 +54,7 @@ public class VaultSSHUserPrivateKeyIT {
                     + "node {\n"
                     + " withCredentials([sshUserPrivateKey(credentialsId: '" + credentialsId + "', usernameVariable: 'USERNAME', passphraseVariable: 'PASSPHRASE', keyFileVariable: 'SSH_KEY')]) { "
                     + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSPHRASE") + " > script'\n"
-                    + "      " + getShellString() + " 'cat \"" + getVariable("SSH_KEY") + "\" > private_key'\n"
+                    + "      " + getShellString() + " '" + getCatString() + " \"" + getVariable("SSH_KEY") + "\" > private_key'\n"
                     + "  }\n"
                     + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -97,7 +98,7 @@ public class VaultSSHUserPrivateKeyIT {
                     + "node {\n"
                     + " withCredentials([sshUserPrivateKey(credentialsId: '" + credentialsId + "', usernameVariable: 'USERNAME', passphraseVariable: 'PASSPHRASE', keyFileVariable: 'SSH_KEY')]) { "
                     + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSPHRASE") + " > script'\n"
-                    + "      " + getShellString() + " 'cat \"" + getVariable("SSH_KEY") + "\" > private_key'\n"
+                    + "      " + getShellString() + " '" + getCatString() + " \"" + getVariable("SSH_KEY") + "\" > private_key'\n"
                     + "  }\n"
                     + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
@@ -134,7 +135,7 @@ public class VaultSSHUserPrivateKeyIT {
                     + "node {\n"
                     + " withCredentials([sshUserPrivateKey(credentialsId: '" + credentialsId + "', usernameVariable: 'USERNAME', passphraseVariable: 'PASSPHRASE', keyFileVariable: 'SSH_KEY')]) { "
                     + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSPHRASE") + " > script'\n"
-                    + "      " + getShellString() + " 'cat \"" + getVariable("SSH_KEY") + "\" > private_key'\n"
+                    + "      " + getShellString() + " '" + getCatString() + " \"" + getVariable("SSH_KEY") + "\" > private_key'\n"
                     + "  }\n"
                     + "}", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();

@@ -135,6 +135,10 @@ public class VaultConfigurationIT {
         return isWindows() ? "bat" : "sh";
     }
 
+    public static String getCatString() {
+        return isWindows() ? "type" : "cat";
+    }
+
     public static String getVariable(String v) {
         return isWindows() ? "%" + v + "%" : "$" + v;
     }
