@@ -139,6 +139,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultCredential credential = retrieveVaultCredentials(build);
 
+        if (vaultAccessor == null) vaultAccessor = new VaultAccessor();
         vaultAccessor.setConfig(vaultConfig);
         vaultAccessor.setCredential(credential);
         vaultAccessor.setMaxRetries(config.getMaxRetries());
