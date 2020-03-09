@@ -137,7 +137,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
         VaultConfig vaultConfig = config.getVaultConfig();
 
-        VaultCredential credential = retrieveVaultCredentials(build);
+        VaultCredential credential = config.getVaultCredential();
+        if (credential == null) credential = retrieveVaultCredentials(build);
 
         if (vaultAccessor == null) vaultAccessor = new VaultAccessor();
         vaultAccessor.setConfig(vaultConfig);

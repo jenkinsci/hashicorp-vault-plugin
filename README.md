@@ -125,6 +125,32 @@ node {
 ```
 In the future we might migrate to a [BuildStep](http://javadoc.jenkins-ci.org/hudson/tasks/BuildStep.html) instead of a BuildWrapper.
 
+#### Use of dynamic credentials
+
+You may also want to use dynamically allocated credentials:
+```groovy
+import hudson.util.Secret
+import com.cloudbees.plugins.credentials.CredentialsScope
+import com.datapipe.jenkins.vault.credentials.VaultTokenCredential
+
+VaultTokenCredential customCredential = new VaultTokenCredential(
+    CredentialsScope.GLOBAL,
+    'custom-credential',
+    'My Custom Credential',
+    Secret.fromString('This is my token. There are many like it, but this one is mine. My token is my best friend.')
+)
+
+node {
+...
+    def configuration = [vaultUrl: 'http://my-very-other-vault-url.com',
+                         vaultCredential: customCredential]
+...
+```
+
+Setting a `vaultCredential` will override any previously defined `vaultCredentialId`.
+
+Works with any `VaultCredential`: `VaultTokenCredential`, `VaultAppRoleCredential`, etc.
+
 ## Inject Vault Credentials into your Job
 ### Pipeline Usage
 ![withCredentials Block](docs/images/pipeline_withCredentials.png)
