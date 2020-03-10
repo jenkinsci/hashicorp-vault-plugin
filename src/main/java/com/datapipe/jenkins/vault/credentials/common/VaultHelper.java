@@ -110,7 +110,8 @@ public class VaultHelper {
                     vaultConfig.prefixPath(configuration.getPrefixPath());
                 }
 
-                VaultCredential vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId());
+                VaultCredential vaultCredential = configuration.getVaultCredential();
+                if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId());
 
                 VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
                 vaultAccessor.setMaxRetries(configuration.getMaxRetries());
