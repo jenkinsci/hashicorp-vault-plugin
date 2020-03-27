@@ -9,6 +9,7 @@ import com.bettercloud.vault.json.JsonObject;
 import com.github.dockerjava.api.model.Capability;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
@@ -40,7 +41,8 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
         if (!hasDockerDaemon()) {
             return null;
         }
-        return new VaultContainer()
+
+        VaultContainer container = new VaultContainer()
             .withNetwork(CONTAINER_NETWORK)
             .withNetworkAliases("vault")
             .withCopyFileToContainer(forHostPath(
@@ -58,6 +60,78 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
             .withCommand("/bin/sh " + CONTAINER_STARTUP_SCRIPT)
             .withLogConsumer(new Slf4jLogConsumer(LOGGER))
             .waitingFor(Wait.forLogMessage(".+Vault server started!.+", 1));
+
+        // Additionnal SAN can be set on the Vault Certificate. This allows Docker in Docker tests through TCP socket.
+        container.withEnv("ADDITIONNAL_TEST_SAN", Optional.ofNullable(System.getenv("ADDITIONNAL_TEST_SAN")).orElse(""));
+
+        // Propagate proxy settings for Docker in Docker tests
+        if (System.getProperty("http.proxyHost") != null) {
+            StringBuilder http_proxy = new StringBuilder();
+            http_proxy.append("http://");
+            if (System.getProperty("http.proxyUser") != null) {
+                http_proxy.append(System.getProperty("http.proxyUser"))
+                    .append(":")
+                    .append(System.getProperty("http.proxyPassword"))
+                    .append("@");
+            }
+            http_proxy.append(System.getProperty("http.proxyHost"));
+            if (System.getProperty("http.proxyPort") != null) {
+                http_proxy.append(":").append(System.getProperty("http.proxyPort"));
+            }
+            container.withEnv("http_proxy", http_proxy.toString());
+        }
+        if (System.getProperty("http.nonProxyHosts") != null) {
+            container.withEnv("no_proxy", convertNonProxyHostsToNoProxy(System.getProperty("http.nonProxyHosts")));
+        }
+        if (System.getProperty("https.proxyHost") != null) {
+            StringBuilder https_proxy = new StringBuilder();
+            https_proxy.append("http://");
+            if (System.getProperty("https.proxyUser") != null) {
+                https_proxy.append(System.getProperty("https.proxyUser"))
+                    .append(":")
+                    .append(System.getProperty("https.proxyPassword"))
+                    .append("@");
+            }
+            https_proxy.append(System.getProperty("https.proxyHost"));
+            if (System.getProperty("https.proxyPort") != null) {
+                https_proxy.append(":").append(System.getProperty("https.proxyPort"));
+            }
+            container.withEnv("https_proxy", https_proxy.toString());
+        }
+        if (System.getProperty("https.nonProxyHosts") != null) {
+            container.withEnv("no_proxy", convertNonProxyHostsToNoProxy(System.getProperty("https.nonProxyHosts")));
+        }
+
+        // Override with environment proxy settings
+        if (System.getenv("http_proxy") != null) {
+            container.withEnv("http_proxy", System.getenv("http_proxy"));
+        }
+        if (System.getenv("HTTP_PROXY") != null) {
+            container.withEnv("http_proxy", System.getenv("HTTP_PROXY"));
+        }
+        if (System.getenv("https_proxy") != null) {
+            container.withEnv("https_proxy", System.getenv("https_proxy"));
+        }
+        if (System.getenv("HTTPS_PROXY") != null) {
+            container.withEnv("https_proxy", System.getenv("HTTPS_PROXY"));
+        }
+        if (System.getenv("no_proxy") != null) {
+            container.withEnv("no_proxy", System.getenv("no_proxy"));
+        }
+        if (System.getenv("NO_PROXY") != null) {
+            container.withEnv("no_proxy", System.getenv("NO_PROXY"));
+        }
+
+        return container;
+    }
+
+    /**
+     * Convert a Java NON_PROXY_HOSTS variable to a standard NO_PROXY one
+     * @param noProxyHosts
+     * @return
+     */
+    private static String convertNonProxyHostsToNoProxy(final String noProxyHosts) {
+        return noProxyHosts.replaceAll("|", ",").replaceAll("\\*", "");
     }
 
     /**

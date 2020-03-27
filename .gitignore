@@ -8,3 +8,4 @@ work/
 .settings/
 *.sublime*
 tmp/
+src/test/resources/com/datapipe/jenkins/vault/util/ssl/
