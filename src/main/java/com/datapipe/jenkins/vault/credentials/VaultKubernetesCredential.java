@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -46,8 +47,8 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
     public String getToken(Vault vault) {
         String jwt;
-        try {
-            jwt = Files.lines(Paths.get(SERVICE_ACCOUNT_TOKEN_PATH)).collect(Collectors.joining());
+        try (Stream<String> input =  Files.lines(Paths.get(SERVICE_ACCOUNT_TOKEN_PATH)) ) {
+            jwt = input.collect(Collectors.joining());
         } catch (IOException e) {
             throw new VaultPluginException("could not get JWT from Service Account Token", e);
         }
