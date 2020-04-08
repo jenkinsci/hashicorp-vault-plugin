@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class VaultKubernetesAuthenticator extends VaultAuthenticatorWithExpiration {
     private final static Logger LOGGER = Logger.getLogger(VaultKubernetesAuthenticator.class.getName());
@@ -32,8 +33,8 @@ public class VaultKubernetesAuthenticator extends VaultAuthenticatorWithExpirati
     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
     public void authenticate(Vault vault, VaultConfig config) throws VaultException, VaultPluginException {
         if (isTokenTTLExpired()) {
-            try {
-                this.jwt = Files.lines(Paths.get(SERVICE_ACCOUNT_TOKEN_PATH)).collect(Collectors.joining());
+            try (Stream<String> input =  Files.lines(Paths.get(SERVICE_ACCOUNT_TOKEN_PATH)) ) {
+                this.jwt = input.collect(Collectors.joining());
             } catch (IOException e) {
                 throw new VaultPluginException("could not get JWT from Service Account Token", e);
             }
