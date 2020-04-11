@@ -39,6 +39,8 @@ public class VaultConfiguration
 
     private String vaultCredentialId;
 
+    private VaultCredential vaultCredential;
+
     private boolean failIfNotFound = DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
 
     private boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
@@ -66,6 +68,7 @@ public class VaultConfiguration
     public VaultConfiguration(VaultConfiguration toCopy) {
         this.vaultUrl = toCopy.getVaultUrl();
         this.vaultCredentialId = toCopy.getVaultCredentialId();
+        this.vaultCredential = toCopy.getVaultCredential();
         this.failIfNotFound = toCopy.failIfNotFound;
         this.skipSslVerification = toCopy.skipSslVerification;
         this.engineVersion = toCopy.engineVersion;
@@ -81,6 +84,9 @@ public class VaultConfiguration
         VaultConfiguration result = new VaultConfiguration(this);
         if (StringUtils.isBlank(result.getVaultCredentialId())) {
             result.setVaultCredentialId(parent.getVaultCredentialId());
+        }
+        if (result.vaultCredential == null) {
+            result.setVaultCredential(parent.getVaultCredential());
         }
         if (StringUtils.isBlank(result.getVaultUrl())) {
             result.setVaultUrl(parent.getVaultUrl());
@@ -109,6 +115,10 @@ public class VaultConfiguration
         return vaultCredentialId;
     }
 
+    public VaultCredential getVaultCredential() {
+        return vaultCredential;
+    }
+
     @DataBoundSetter
     public void setVaultUrl(String vaultUrl) {
         this.vaultUrl = normalizeUrl(fixEmptyAndTrim(vaultUrl));
@@ -117,6 +127,11 @@ public class VaultConfiguration
     @DataBoundSetter
     public void setVaultCredentialId(String vaultCredentialId) {
         this.vaultCredentialId = fixEmptyAndTrim(vaultCredentialId);
+    }
+
+    @DataBoundSetter
+    public void setVaultCredential(VaultCredential vaultCredential) {
+        this.vaultCredential = vaultCredential;
     }
 
     public boolean isFailIfNotFound() {
