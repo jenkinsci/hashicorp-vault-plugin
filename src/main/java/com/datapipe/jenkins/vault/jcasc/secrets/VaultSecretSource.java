@@ -173,18 +173,24 @@ public class VaultSecretSource extends SecretSource {
 
                 // Parse secrets
                 for (String vaultPath : vaultPathsOpt.get()) {
-
-                    // check if we overwrite an existing key from another path
                     Map<String, String> nextSecrets = vault.logical().read(vaultPath).getData();
+                    Map<String, String> nextSecretsFullPath = new HashMap<String, String>();
+                    // create item where key is full path to secret
+                    for (Map.Entry<String, String> secretEntry : nextSecrets.entrySet()) {
+                        nextSecretsFullPath.put(vaultPath + "/" + secretEntry.getKey(), secretEntry.getValue());
+                    }
+                    // check if we overwrite an existing key from another path
                     // TODO(casz) handle error response
                     for (String key : nextSecrets.keySet()) {
                         if (secrets.containsKey(key)) {
-                            LOGGER.log(Level.WARNING, "Key {0} exists in multiple vault paths.", key);
+                            LOGGER.log(Level.FINE, "Key {0} exists in multiple vault paths. Use full path ({1}) to access value.",
+                                    new Object[]{key, vaultPath + "/" + key});
                         }
                     }
 
                     // merge
                     secrets.putAll(nextSecrets);
+                    secrets.putAll(nextSecretsFullPath);
                 }
             } catch (VaultException e) {
                 LOGGER.log(Level.WARNING, "Unable to fetch secret from Vault", e);
