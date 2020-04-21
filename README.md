@@ -1,4 +1,3 @@
-
 [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/hashicorp-vault-plugin/master)](https://ci.jenkins.io/job/Plugins/job/hashicorp-vault-plugin/job/master/)
 # Jenkins Vault Plugin
 
