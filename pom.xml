@@ -12,7 +12,7 @@
   <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
   <properties>
-    <revision>3.3.1</revision>
+    <revision>3.4.1</revision>
     <changelist>-SNAPSHOT</changelist>
     <jenkins.version>2.164.3</jenkins.version>
     <java.level>8</java.level>
@@ -148,7 +148,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>vault</artifactId>
-      <version>1.12.2</version>
+      <version>1.14.0</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
