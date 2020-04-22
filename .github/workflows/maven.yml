@@ -10,7 +10,7 @@ jobs:
       matrix:
         java: [1.8, 11]
         jenkins-version: [2.138.4, 2.190.1]
-        os: [ubuntu-latest] # remove windows-latest until a fix for https://github.com/actions/virtual-environments/issues/635 is deployed.
+        os: [ubuntu-latest, windows-latest]
         include:
           - jenkins-version: '2.190.1'
             flags: '--define jenkins.version=2.190.1 --define slf4jVersion=1.7.26'
