@@ -222,7 +222,7 @@ credentials:
               token: "${MY_SECRET_TOKEN}"
 ```
 
-See [handling secrets section](https://github.com/jenkinsci/configuration-as-code-plugin#handling-secrets) in JCasC documentation for better security.
+See [handling secrets section](https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc) in JCasC documentation for better security.
 
 You can also configure `VaultGithubTokenCredential`, or `VautGCPCredential` or `VaultAppRoleCredential`
 
@@ -294,6 +294,25 @@ volumes:
 secrets:
   jcasc_vault:
     file: ./secrets/jcasc_vault
+```
+#### Example: HashiCorp Vault Plugin as a Secret Source for JCasC
+Assume Vault has a secret at path `secret/jenkins/passwords` with keys `secretKey1` and `secretKey2`.  Set the value for environment variable `CASC_VAULT_PATHS` to `secret/jenkins/passwords`.
+The Hashicorp Vault Plugin provides two ways of accessing the secrets: using just the key within the secret and using the full path to the secret key.  The full path option allows for you to reference multiple secrets with overlapping keys.
+```yaml
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              description: "Secret using only secret key name"
+              id: "secretUsingKey"
+              scope: GLOBAL
+              token: "${secretKey1}"
+          - string:
+              description: "Secret using full path"
+              id: "secretUsingKey"
+              scope: GLOBAL
+              token: "${secret/jenkins/passwords/secretKey1}"
 ```
 
 ### Vault Agent

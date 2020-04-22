@@ -93,6 +93,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv1WithUser() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV1_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -105,6 +106,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithUser() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -118,6 +120,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithLongPathAndUser() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_LONG_KV2_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -130,6 +133,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithWrongUser() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo(""));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key1}"), equalTo(""));
     }
 
     @Test
@@ -141,6 +145,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv1WithToken() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV1_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -152,6 +157,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithToken() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -163,6 +169,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv1WithWrongToken() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo(""));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV1_1 + "/key1}"), equalTo(""));
     }
 
     @Test
@@ -174,6 +181,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv1WithApprole() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV1_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -185,6 +193,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithApprole() throws ConfiguratorException {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -197,6 +206,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithWrongApprole() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo(""));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key1}"), equalTo(""));
     }
 
     @Test
@@ -208,7 +218,9 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithApproleMultipleKeys() {
         assertThat(SecretSourceResolver.resolve(context, "${key2}"), equalTo("456"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key2}"), equalTo("456"));
         assertThat(SecretSourceResolver.resolve(context, "${key3}"), equalTo("789"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_2 + "/key3}"), equalTo("789"));
     }
 
     @Test
@@ -220,7 +232,10 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv2WithApproleMultipleKeysOverriden() {
         assertThat(SecretSourceResolver.resolve(context, "${key2}"), equalTo("321"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key2}"), equalTo("456"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_3 + "/key2}"), equalTo("321"));
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV2_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -259,6 +274,7 @@ public class VaultSecretSourceTest implements TestConstants {
     })
     public void kv1WithAgent() {
         assertThat(SecretSourceResolver.resolve(context, "${key1}"), equalTo("123"));
+        assertThat(SecretSourceResolver.resolve(context, "${" + VAULT_PATH_KV1_1 + "/key1}"), equalTo("123"));
     }
 
     @Test
@@ -273,5 +289,16 @@ public class VaultSecretSourceTest implements TestConstants {
 
         j.assertBuildStatus(Result.FAILURE, build);
         j.assertLogContains("Vault credentials not found for '" + VAULT_PATH_KV1_1 + "'", build);
+    }
+
+    @Test
+    @ConfiguredWithCode("vault.yml")
+    @EnvsFromFile(VAULT_APPROLE_FILE)
+    @Envs({
+        @Env(name = "CASC_VAULT_PATHS", value = VAULT_PATH_KV2_1 + "," + VAULT_PATH_KV2_2),
+        @Env(name = "CASC_VAULT_ENGINE_VERSION", value = "2")
+    })
+    public void kv2ValidateJsacYaml() {
+        assertThat(j.jenkins.getSystemMessage(), equalTo("Test '123', '456', '789'"));
     }
 }
