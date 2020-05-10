@@ -79,7 +79,7 @@ public class VaultStringCredentialImpl extends BaseStandardCredentials implement
         return Secret.fromString(s);
     }
 
-    @Extension(ordinal = 1)
+    @Extension
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
         @Override

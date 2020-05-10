@@ -12,8 +12,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runners.model.Statement;
-import org.jvnet.hudson.test.RestartableJenkinsRule;
+import org.jvnet.hudson.test.JenkinsRule;
 
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
@@ -24,64 +23,56 @@ import static org.mockito.Mockito.when;
 public class VaultStringCredentialIT {
 
     @Rule
-    public RestartableJenkinsRule story = new RestartableJenkinsRule();
+    public JenkinsRule jenkins = new JenkinsRule();
 
     @Test
-    public void shouldRetrieveCorrectCredentialsFromVault() {
+    public void shouldRetrieveCorrectCredentialsFromVault() throws Exception {
         final String credentialsId = "cid1";
         final String secret = "S3CR3T";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultStringCredential up = mock(VaultStringCredential.class);
-                when(up.getId()).thenReturn(credentialsId);
-                when(up.getSecret()).thenReturn(Secret.fromString(secret));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), up);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(
-                    new CpsFlowDefinition(""
-                        + "node {\n"
-                        + " withCredentials([[$class: 'VaultStringCredentialBinding', credentialsId: '"
-                        + credentialsId
-                        + "', variable: 'SECRET']]) { "
-                        + "      " + getShellString() + " 'echo " + getVariable("SECRET") + " > secret.txt'\n"
-                        + "  }\n"
-                        + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(secret, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("secret.txt");
-                assertEquals(secret, script.readToString().trim());
-            }
-        });
+
+        VaultStringCredential up = mock(VaultStringCredential.class);
+        when(up.getId()).thenReturn(credentialsId);
+        when(up.getSecret()).thenReturn(Secret.fromString(secret));
+        CredentialsProvider.lookupStores(jenkins.getInstance()).iterator().next()
+            .addCredentials(Domain.global(), up);
+        WorkflowJob p = jenkins.createProject(WorkflowJob.class, jobId);
+        p.setDefinition(
+            new CpsFlowDefinition(""
+                + "node {\n"
+                + " withCredentials([[$class: 'VaultStringCredentialBinding', credentialsId: '"
+                + credentialsId
+                + "', variable: 'SECRET']]) { "
+                + "      " + getShellString() + " 'echo " + getVariable("SECRET")
+                + " > secret.txt'\n"
+                + "  }\n"
+                + "}", true));
+        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+        jenkins.assertBuildStatus(Result.SUCCESS, jenkins.waitForCompletion(b));
+        jenkins.assertLogNotContains(secret, b);
+        FilePath script = jenkins.getInstance().getWorkspaceFor(p).child("secret.txt");
+        assertEquals(secret, script.readToString().trim());
     }
 
     @Test
-    public void shouldFailIfMissingCredentials() {
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                final String credentialsId = "cid1";
-                VaultStringCredentialImpl c = new VaultStringCredentialImpl(
-                    null, credentialsId, "Test Credentials");
-                c.setEngineVersion(1);
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "testJob");
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + " withCredentials([[$class: 'VaultStringCredentialBinding', credentialsId: '"
-                    + credentialsId
-                    + "', variable: 'SECRET']]) { "
-                    + "      " + getShellString() + " 'echo " + getVariable("SECRET") + "'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
-                story.j.assertLogContains("Exception", b);
-            }
-        });
+    public void shouldFailIfMissingCredentials() throws Exception {
+        final String credentialsId = "cid1";
+        VaultStringCredentialImpl c = new VaultStringCredentialImpl(
+            null, credentialsId, "Test Credentials");
+        c.setEngineVersion(1);
+        CredentialsProvider.lookupStores(jenkins).iterator().next()
+            .addCredentials(Domain.global(), c);
+        WorkflowJob p = jenkins.createProject(WorkflowJob.class, "testJob");
+        p.setDefinition(new CpsFlowDefinition(""
+            + "node {\n"
+            + " withCredentials([[$class: 'VaultStringCredentialBinding', credentialsId: '"
+            + credentialsId
+            + "', variable: 'SECRET']]) { "
+            + "      " + getShellString() + " 'echo " + getVariable("SECRET") + "'\n"
+            + "  }\n"
+            + "}", true));
+        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+        jenkins.assertBuildStatus(Result.FAILURE, jenkins.waitForCompletion(b));
+        jenkins.assertLogContains("Exception", b);
     }
 }

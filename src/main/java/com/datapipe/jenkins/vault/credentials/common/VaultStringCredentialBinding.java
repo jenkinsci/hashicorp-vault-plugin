@@ -32,7 +32,7 @@ public class VaultStringCredentialBinding extends Binding<VaultStringCredential>
         return new SingleEnvironment(getCredentials(build).getSecret().getPlainText());
     }
 
-    @Symbol("string")
+    @Symbol("vaultString")
     @Extension
     public static class DescriptorImpl extends BindingDescriptor<VaultStringCredential> {
 
