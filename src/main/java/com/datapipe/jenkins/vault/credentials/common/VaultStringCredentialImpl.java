@@ -92,15 +92,14 @@ public class VaultStringCredentialImpl extends BaseStandardCredentials implement
             @QueryParameter("vaultKey") String vaultKey,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
-            String key = null;
             try {
-                key = getVaultSecret(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), engineVersion);
+                getVaultSecret(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }
 
             return FormValidation
-                .ok("Successfully retrieved secret by key " + key);
+                .ok("Successfully retrieved secret by key " + vaultKey);
         }
 
         @SuppressWarnings("unused") // used by stapler
