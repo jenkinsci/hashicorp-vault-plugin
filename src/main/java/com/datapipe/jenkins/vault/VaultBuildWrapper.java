@@ -136,9 +136,17 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
 
         VaultConfig vaultConfig = config.getVaultConfig();
-
         VaultCredential credential = config.getVaultCredential();
         if (credential == null) credential = retrieveVaultCredentials(build);
+
+        String prefixPath = "";
+        if (config.getPrefixPath() == null || config.getPrefixPath().isEmpty()) {
+            logger.printf("No prefixPath provided%n");
+        } else {
+            prefixPath = config.getPrefixPath();
+            vaultConfig.prefixPath(prefixPath);
+            logger.printf("Using prefixPath with Vault: %s%n", config.getPrefixPath());
+        }
 
         if (vaultAccessor == null) vaultAccessor = new VaultAccessor();
         vaultAccessor.setConfig(vaultConfig);
@@ -148,7 +156,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         vaultAccessor.init();
 
         for (VaultSecret vaultSecret : vaultSecrets) {
-            String path = envVars.expand(vaultSecret.getPath());
+            String path = prefixPath + envVars.expand(vaultSecret.getPath());
             Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
                 .orElse(configuration.getEngineVersion());
             try {
