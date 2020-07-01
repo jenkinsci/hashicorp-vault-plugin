@@ -49,6 +49,7 @@ import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
@@ -136,9 +137,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
 
         VaultConfig vaultConfig = config.getVaultConfig();
-
         VaultCredential credential = config.getVaultCredential();
         if (credential == null) credential = retrieveVaultCredentials(build);
+
+        String prefixPath = StringUtils.isBlank(config.getPrefixPath())
+            ? ""
+            : Util.ensureEndsWith(envVars.expand(config.getPrefixPath()), "/");
 
         if (vaultAccessor == null) vaultAccessor = new VaultAccessor();
         vaultAccessor.setConfig(vaultConfig);
@@ -148,7 +152,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         vaultAccessor.init();
 
         for (VaultSecret vaultSecret : vaultSecrets) {
-            String path = envVars.expand(vaultSecret.getPath());
+            String path = prefixPath + envVars.expand(vaultSecret.getPath());
+            logger.printf("Retrieving secret: %s%n", path);
             Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
                 .orElse(configuration.getEngineVersion());
             try {
