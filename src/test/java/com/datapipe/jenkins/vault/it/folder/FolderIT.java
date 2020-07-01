@@ -164,7 +164,7 @@ public class FolderIT {
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(),
             is(FOLDER_1_CREDENTIALS_ID));
-        assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
+        assertThat(vaultBuildWrapper.getConfiguration().getFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
@@ -205,7 +205,7 @@ public class FolderIT {
         verify(mockAccessor, times(1)).init();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(),
             is(FOLDER_1_CREDENTIALS_ID));
-        assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
+        assertThat(vaultBuildWrapper.getConfiguration().getFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
@@ -238,7 +238,7 @@ public class FolderIT {
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(), is("http://folder1.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(),
             is(FOLDER_2_CREDENTIALS_ID));
-        assertThat(vaultBuildWrapper.getConfiguration().isFailIfNotFound(), is(false));
+        assertThat(vaultBuildWrapper.getConfiguration().getFailIfNotFound(), is(false));
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         jenkins.assertLogContains("CredentialsUnavailableException", build);

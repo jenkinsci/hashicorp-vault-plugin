@@ -104,7 +104,7 @@ public class VaultConfigurationSpec {
         parent.setFailIfNotFound(false);
         parent.setVaultNamespace("mynamespace");
         parent.setTimeout(20);
-        assertThat(parent.isFailIfNotFound(), is(false));
+        assertThat(parent.getFailIfNotFound(), is(false));
     }
 
     @Test
