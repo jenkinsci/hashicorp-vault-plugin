@@ -164,8 +164,9 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
                         throw new IllegalArgumentException(
                             "Vault Secret " + vaultKey + " at " + path
                                 + " is either null or empty. Please check the Secret in Vault.");
+                    } else {
+                        valuesToMask.add(secret);
                     }
-                    valuesToMask.add(secret);
                     context.env(value.getEnvVar(), secret);
                 }
             } catch (VaultPluginException ex) {
