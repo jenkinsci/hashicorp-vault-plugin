@@ -94,7 +94,7 @@ public class VaultHelper {
 
             try {
                 SslConfig sslConfig = new SslConfig()
-                    .verify(configuration.isSkipSslVerification())
+                    .verify(configuration.getSkipSslVerification())
                     .build();
 
                 VaultConfig vaultConfig = new VaultConfig()

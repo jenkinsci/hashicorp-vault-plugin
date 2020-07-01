@@ -70,6 +70,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
+import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
 
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
@@ -189,7 +191,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             logger.printf("Access denied to Vault Secrets at '%s'%n", path);
             return true;
         } else if (status == 404) {
-            if (configuration.isFailIfNotFound()) {
+            if (configuration.getFailIfNotFound()) {
                 throw new VaultPluginException(
                     String.format("Vault credentials not found for '%s'", path));
             } else {
@@ -244,6 +246,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
         if (configuration.getEngineVersion() == null) {
             configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
+        }
+        if (configuration.getSkipSslVerification() == null) {
+            configuration.setSkipSslVerification(DEFAULT_SKIP_SSL_VERIFICATION);
+        }
+        if (configuration.getFailIfNotFound() == null) {
+            configuration.setFailIfNotFound(DEFAULT_FAIL_NOT_FOUND);
         }
     }
 

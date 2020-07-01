@@ -41,9 +41,9 @@ public class VaultConfiguration
 
     private VaultCredential vaultCredential;
 
-    private boolean failIfNotFound = DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
+    private Boolean failIfNotFound = DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
 
-    private boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
+    private Boolean skipSslVerification = DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
 
     private Integer engineVersion;
 
@@ -92,7 +92,7 @@ public class VaultConfiguration
             result.setVaultUrl(parent.getVaultUrl());
         }
         if (result.engineVersion == null) {
-            result.engineVersion = parent.getEngineVersion();
+            result.setEngineVersion(parent.getEngineVersion());
         }
         if (StringUtils.isBlank(result.getVaultNamespace())) {
             result.setVaultNamespace(parent.getVaultNamespace());
@@ -103,7 +103,12 @@ public class VaultConfiguration
         if (result.timeout == null) {
             result.setTimeout(parent.getTimeout());
         }
-        result.failIfNotFound = failIfNotFound;
+        if (result.failIfNotFound == null) {
+            result.setFailIfNotFound(parent.failIfNotFound);
+        }
+        if (result.skipSslVerification == null) {
+            result.setSkipSslVerification(parent.skipSslVerification);
+        }
         return result;
     }
 
@@ -134,21 +139,21 @@ public class VaultConfiguration
         this.vaultCredential = vaultCredential;
     }
 
-    public boolean isFailIfNotFound() {
+    public Boolean getFailIfNotFound() {
         return failIfNotFound;
     }
 
     @DataBoundSetter
-    public void setFailIfNotFound(boolean failIfNotFound) {
+    public void setFailIfNotFound(Boolean failIfNotFound) {
         this.failIfNotFound = failIfNotFound;
     }
 
-    public boolean isSkipSslVerification() {
+    public Boolean getSkipSslVerification() {
         return skipSslVerification;
     }
 
     @DataBoundSetter
-    public void setSkipSslVerification(boolean skipSslVerification) {
+    public void setSkipSslVerification(Boolean skipSslVerification) {
         this.skipSslVerification = skipSslVerification;
     }
 
@@ -244,7 +249,7 @@ public class VaultConfiguration
         vaultConfig.address(this.getVaultUrl());
         vaultConfig.engineVersion(this.getEngineVersion());
         try {
-            if (this.isSkipSslVerification()) {
+            if (this.getSkipSslVerification()) {
                 vaultConfig.sslConfig(new SslConfig().verify(false).build());
             }
 
