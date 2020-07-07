@@ -314,7 +314,7 @@ credentials:
               description: "Secret using full path"
               engineVersion: 2
               id: "secretUsingKey"
-              path: "${passwords}"
+              path: "${secret/jenkins/passwords}"
               scope: GLOBAL
               vaultKey: "secretKey2"
 ```
