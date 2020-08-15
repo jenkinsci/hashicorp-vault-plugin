@@ -94,11 +94,11 @@ public class VaultSSHUserPrivateKeyBinding extends
     }
 
     @Extension
-    public static class DescriptorImpl extends BindingDescriptor<VaultUsernamePasswordCredential> {
+    public static class DescriptorImpl extends BindingDescriptor<VaultSSHUserPrivateKey> {
 
         @Override
-        protected Class<VaultUsernamePasswordCredential> type() {
-            return VaultUsernamePasswordCredential.class;
+        protected Class<VaultSSHUserPrivateKey> type() {
+            return VaultSSHUserPrivateKey.class;
         }
 
         @Override
