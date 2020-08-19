@@ -21,6 +21,7 @@ import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 public class VaultStringCredentialImpl extends BaseStandardCredentials implements VaultStringCredential {
 
     public static final String DEFAULT_VAULT_KEY = "secret";
+    public static final Integer DEFAULT_ENGINE_VERSION = 2;
 
     private static final long serialVersionUID = 1L;
 
@@ -32,6 +33,7 @@ public class VaultStringCredentialImpl extends BaseStandardCredentials implement
     public VaultStringCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        setEngineVersion(DEFAULT_ENGINE_VERSION);
     }
 
     @NonNull

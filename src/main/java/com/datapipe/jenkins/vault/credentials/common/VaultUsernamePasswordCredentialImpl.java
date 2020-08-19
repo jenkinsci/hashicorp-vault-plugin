@@ -23,6 +23,7 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
     public static final String DEFAULT_USERNAME_KEY = "username";
     public static final String DEFAULT_PASSWORD_KEY = "password";
+    public static final Integer DEFAULT_ENGINE_VERSION = 2;
 
     private static final long serialVersionUID = 1L;
 
@@ -35,6 +36,7 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
     public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        setEngineVersion(DEFAULT_ENGINE_VERSION);
     }
 
 

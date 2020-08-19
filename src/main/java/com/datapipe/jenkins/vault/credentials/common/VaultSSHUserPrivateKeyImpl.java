@@ -30,6 +30,7 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
     public static final String DEFAULT_USERNAME_KEY = "username";
     public static final String DEFAULT_PRIVATE_KEY_KEY = "private_key";
     public static final String DEFAULT_PASSPHRASE_KEY = "passphrase";
+    public static final Integer DEFAULT_ENGINE_VERSION = 2;
 
     private static final long serialVersionUID = 1L;
 
@@ -43,6 +44,7 @@ public class VaultSSHUserPrivateKeyImpl extends BaseStandardCredentials implemen
     public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        setEngineVersion(DEFAULT_ENGINE_VERSION);
     }
 
     @NonNull
