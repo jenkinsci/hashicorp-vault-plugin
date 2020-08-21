@@ -18,7 +18,7 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
     private final @NonNull
     String roleId;
 
-    private final String path;
+    private String path;
 
     @DataBoundConstructor
     public VaultAppRoleCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
@@ -67,5 +67,12 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
             return "Vault App Role Credential";
         }
 
+    }
+
+    protected Object readResolve() {
+        if (path == null) {
+            path = "approle";
+        }
+        return this;
     }
 }
