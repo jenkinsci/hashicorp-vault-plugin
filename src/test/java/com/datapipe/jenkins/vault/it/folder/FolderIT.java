@@ -76,8 +76,7 @@ public class FolderIT {
 
     @Before
     public void setupJenkins() throws IOException {
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
 
         VaultConfiguration vaultConfig = new VaultConfiguration();
         vaultConfig.setVaultUrl("http://global-vault-url.com");

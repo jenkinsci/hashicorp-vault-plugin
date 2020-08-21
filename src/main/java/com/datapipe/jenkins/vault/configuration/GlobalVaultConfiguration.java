@@ -3,6 +3,7 @@ package com.datapipe.jenkins.vault.configuration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.Item;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
@@ -16,14 +17,8 @@ public class GlobalVaultConfiguration extends GlobalConfiguration {
 
     private VaultConfiguration configuration;
 
-    @NonNull
     public static GlobalVaultConfiguration get() {
-        GlobalVaultConfiguration instance = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
-        if (instance == null) {
-            throw new IllegalStateException();
-        }
-        return instance;
+        return ExtensionList.lookupSingleton(GlobalVaultConfiguration.class);
     }
 
     public GlobalVaultConfiguration() {

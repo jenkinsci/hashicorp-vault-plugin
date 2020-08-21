@@ -73,8 +73,7 @@ public class VaultConfigurationIT {
 
     @Before
     public void setupJenkins() throws IOException {
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();
         vaultConfig.setVaultUrl("http://global-vault-url.com");
@@ -279,8 +278,7 @@ public class VaultConfigurationIT {
 
     @Test
     public void shouldFailIfCredentialsNotConfigured() throws Exception {
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();
         vaultConfig.setVaultUrl("http://global-vault-url.com");
@@ -315,8 +313,7 @@ public class VaultConfigurationIT {
 
     @Test
     public void shouldFailIfUrlNotConfigured() throws Exception {
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();
         vaultConfig.setVaultCredentialId(GLOBAL_CREDENTIALS_ID_2);
@@ -351,8 +348,7 @@ public class VaultConfigurationIT {
 
     @Test
     public void shouldFailIfNoConfigurationExists() throws Exception {
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         globalConfig.setConfiguration(null);
 
@@ -380,8 +376,7 @@ public class VaultConfigurationIT {
 
     @Test
     public void shouldFailIfCredentialsDoNotExist() throws Exception {
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();
         vaultConfig.setVaultUrl("http://example.com");
