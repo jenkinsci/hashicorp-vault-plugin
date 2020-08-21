@@ -7,7 +7,9 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import hudson.Util;
 import hudson.util.Secret;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
@@ -27,11 +29,8 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
         super(scope, id, description);
         this.secretId = secretId;
         this.roleId = roleId;
-        if (path == null) {
-            this.path = "approle";
-        } else {
-            this.path = path;
-        }
+        path = Util.fixEmptyAndTrim(path);
+        this.path = path == null ? "approle" : path;
     }
 
     @NonNull
@@ -70,7 +69,7 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
     }
 
     protected Object readResolve() {
-        if (path == null) {
+        if (StringUtils.isBlank(path)) {
             path = "approle";
         }
         return this;
