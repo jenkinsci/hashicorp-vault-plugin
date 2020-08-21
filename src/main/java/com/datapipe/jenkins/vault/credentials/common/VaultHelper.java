@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
-import com.bettercloud.vault.SslConfig;
 import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -8,12 +7,12 @@ import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.VaultAccessor;
-import com.datapipe.jenkins.vault.VaultBuildWrapper;
 import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-import hudson.ExtensionList;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.remoting.Channel;
 import hudson.security.ACL;
 import java.io.IOException;
@@ -22,19 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
-import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import jenkins.security.SlaveToMasterCallable;
 import org.apache.commons.lang.StringUtils;
-
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 public class VaultHelper {
 
     private static final Logger LOGGER = Logger.getLogger(VaultHelper.class.getName());
 
-    static String getVaultSecret(@Nonnull String secretPath, @Nonnull String secretKey, @Nonnull Integer engineVersion) {
+    static String getVaultSecret(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull Integer engineVersion) {
         try {
             String secret;
             SecretRetrieve retrieve = new SecretRetrieve(secretPath, secretKey, engineVersion);
@@ -58,7 +53,8 @@ public class VaultHelper {
 
         private final String secretPath;
         private final String secretKey;
-        private final Integer engineVersion;
+        @CheckForNull
+        private Integer engineVersion;
 
         SecretRetrieve(String secretPath, String secretKey, Integer engineVersion) {
             this.secretPath = secretPath;
@@ -68,47 +64,26 @@ public class VaultHelper {
 
         @Override
         public String call() throws IOException {
-            Jenkins jenkins = Jenkins.get();
+            GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
+
+            VaultConfiguration configuration = globalConfig.getConfiguration();
+
+            if (configuration == null) {
+                throw new IllegalStateException("Vault plugin has not been configured.");
+            }
+
+            configuration.fixDefaults();
+            if (engineVersion == null) {
+                engineVersion = configuration.getEngineVersion();
+            }
 
             String msg = String.format(
                 "Retrieving vault secret path=%s key=%s engineVersion=%s",
                 secretPath, secretKey, engineVersion);
             LOGGER.info(msg);
 
-            GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-                .get(GlobalVaultConfiguration.class);
-
-            if (globalConfig == null) {
-                throw new IllegalStateException("Vault plugin has not been configured.");
-            }
-
-            ExtensionList<VaultBuildWrapper.DescriptorImpl> extensionList = jenkins
-                .getExtensionList(VaultBuildWrapper.DescriptorImpl.class);
-            VaultBuildWrapper.DescriptorImpl descriptor = extensionList.get(0);
-
-            VaultConfiguration configuration = globalConfig.getConfiguration();
-
-            if (descriptor == null || configuration == null) {
-                throw new IllegalStateException("Vault plugin has not been configured.");
-            }
-
             try {
-                SslConfig sslConfig = new SslConfig()
-                    .verify(configuration.getSkipSslVerification())
-                    .build();
-
-                VaultConfig vaultConfig = new VaultConfig()
-                    .address(configuration.getVaultUrl())
-                    .sslConfig(sslConfig)
-                    .engineVersion(engineVersion);
-
-                if (isNotEmpty(configuration.getVaultNamespace())) {
-                    vaultConfig.nameSpace(configuration.getVaultNamespace());
-                }
-
-                if (isNotEmpty(configuration.getPrefixPath())) {
-                    vaultConfig.prefixPath(configuration.getPrefixPath());
-                }
+                VaultConfig vaultConfig = configuration.getVaultConfig();
 
                 VaultCredential vaultCredential = configuration.getVaultCredential();
                 if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId());
