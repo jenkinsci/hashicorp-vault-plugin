@@ -70,10 +70,6 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_ENGINE_VERSION;
-import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_FAIL_NOT_FOUND;
-import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION;
-
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     private VaultConfiguration configuration;
@@ -250,15 +246,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
             throw new VaultPluginException(
                 "No configuration found - please configure the VaultPlugin.");
         }
-        if (configuration.getEngineVersion() == null) {
-            configuration.setEngineVersion(DEFAULT_ENGINE_VERSION);
-        }
-        if (configuration.getSkipSslVerification() == null) {
-            configuration.setSkipSslVerification(DEFAULT_SKIP_SSL_VERIFICATION);
-        }
-        if (configuration.getFailIfNotFound() == null) {
-            configuration.setFailIfNotFound(DEFAULT_FAIL_NOT_FOUND);
-        }
+        configuration.fixDefaults();
     }
 
     @Override

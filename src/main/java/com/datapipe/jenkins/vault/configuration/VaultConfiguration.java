@@ -266,6 +266,19 @@ public class VaultConfiguration
         return vaultConfig;
     }
 
+    public VaultConfiguration fixDefaults() {
+        if (getEngineVersion() == null) {
+            setEngineVersion(DescriptorImpl.DEFAULT_ENGINE_VERSION);
+        }
+        if (getSkipSslVerification() == null) {
+            setSkipSslVerification(DescriptorImpl.DEFAULT_SKIP_SSL_VERIFICATION);
+        }
+        if (getFailIfNotFound() == null) {
+            setFailIfNotFound(DescriptorImpl.DEFAULT_FAIL_NOT_FOUND);
+        }
+        return this;
+    }
+
     @Restricted(NoExternalUse.class)
     public static ListBoxModel engineVersions(Item context) {
         ListBoxModel options = new ListBoxModel(

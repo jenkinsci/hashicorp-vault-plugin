@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jenkins.model.GlobalConfiguration;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -76,8 +75,7 @@ public class FolderIT {
 
     @Before
     public void setupJenkins() throws IOException {
-        GlobalVaultConfiguration globalConfig = GlobalConfiguration.all()
-            .get(GlobalVaultConfiguration.class);
+        GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
 
         VaultConfiguration vaultConfig = new VaultConfiguration();
         vaultConfig.setVaultUrl("http://global-vault-url.com");
