@@ -38,6 +38,11 @@ public class VaultGCPCredential extends AbstractVaultTokenCredential {
         return role;
     }
 
+    @NonNull
+    public String getAudience() {
+        return audience;
+    }
+
     @Override
     public String getToken(Vault vault) {
         String jwt;

@@ -43,6 +43,11 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
         this.mountPath = mountPath;
     }
 
+    @NonNull
+    public String getRole() {
+        return this.role;
+    }
+
     @Override
     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
     public String getToken(Vault vault) {
@@ -60,7 +65,7 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
                 .loginByJwt(mountPath, role, jwt)
                 .getAuthClientToken();
         } catch (VaultException e) {
-            throw new VaultPluginException("could not log in into vault", e);
+            throw new VaultPluginException("could not log in into vault: " + e.getMessage(), e);
         }
     }
 

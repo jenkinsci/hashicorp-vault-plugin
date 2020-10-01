@@ -1,7 +1,6 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -18,30 +17,18 @@ import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engine
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
-public class VaultStringCredentialImpl extends BaseStandardCredentials implements VaultStringCredential {
+public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredentials implements VaultStringCredential {
 
     public static final String DEFAULT_VAULT_KEY = "secret";
 
     private static final long serialVersionUID = 1L;
 
-    private String path;
     private String vaultKey;
-    private Integer engineVersion;
 
     @DataBoundConstructor
     public VaultStringCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
-    }
-
-    @NonNull
-    public String getPath() {
-        return path;
-    }
-
-    @DataBoundSetter
-    public void setPath(String path) {
-        this.path = path;
     }
 
     @NonNull
@@ -54,25 +41,11 @@ public class VaultStringCredentialImpl extends BaseStandardCredentials implement
         this.vaultKey = defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY);
     }
 
-    public Integer getEngineVersion() {
-        return engineVersion;
-    }
-
-    @DataBoundSetter
-    public void setEngineVersion(Integer engineVersion) {
-        this.engineVersion = engineVersion;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return this.path;
-    }
-
     @NonNull
     @Override
     public Secret getSecret() {
         String k = defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY);
-        String s = getVaultSecret(path, k, engineVersion);
+        String s = getVaultSecretKeyValue(k);
         if (s == null) {
             throw new VaultPluginException("Fetching from Vault failed for key " + k, null);
         }
@@ -90,10 +63,12 @@ public class VaultStringCredentialImpl extends BaseStandardCredentials implement
         public FormValidation doTestConnection(
             @QueryParameter("path") String path,
             @QueryParameter("vaultKey") String vaultKey,
+            @QueryParameter("prefixPath") String prefixPath,
+            @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
             try {
-                getVaultSecret(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), engineVersion);
+                getVaultSecret(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }
@@ -106,5 +81,6 @@ public class VaultStringCredentialImpl extends BaseStandardCredentials implement
         public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
             return engineVersions(context);
         }
+
     }
 }

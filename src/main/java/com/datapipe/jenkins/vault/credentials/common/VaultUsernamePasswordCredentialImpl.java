@@ -1,7 +1,6 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
@@ -18,7 +17,7 @@ import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVault
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
 @SuppressWarnings("ALL")
-public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials implements
+public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStandardCredentials implements
     VaultUsernamePasswordCredential {
 
     public static final String DEFAULT_USERNAME_KEY = "username";
@@ -26,26 +25,13 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
 
     private static final long serialVersionUID = 1L;
 
-    private String path;
     private String usernameKey;
     private String passwordKey;
-    private Integer engineVersion;
 
     @DataBoundConstructor
     public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
-    }
-
-
-    @NonNull
-    public String getPath() {
-        return path;
-    }
-
-    @DataBoundSetter
-    public void setPath(String path) {
-        this.path = path;
     }
 
     @NonNull
@@ -68,36 +54,22 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
         this.passwordKey = defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY);
     }
 
-    public Integer getEngineVersion() {
-        return engineVersion;
-    }
-
-    @DataBoundSetter
-    public void setEngineVersion(Integer engineVersion) {
-        this.engineVersion = engineVersion;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return this.path;
-    }
-
     @NonNull
     @Override
     public String getUsername() {
         String secretKey = defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY);
-        return getVaultSecret(path, secretKey, engineVersion);
+        return getVaultSecretKeyValue(secretKey);
     }
 
     @NonNull
     @Override
     public Secret getPassword() {
         String secretKey = defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY);
-        String secret = getVaultSecret(path, secretKey, engineVersion);
+        String secret = getVaultSecretKeyValue(secretKey);
         return Secret.fromString(secret);
     }
 
-    @Extension(ordinal = 1)
+    @Extension
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
         @Override
@@ -109,17 +81,19 @@ public class VaultUsernamePasswordCredentialImpl extends BaseStandardCredentials
             @QueryParameter("path") String path,
             @QueryParameter("usernameKey") String usernameKey,
             @QueryParameter("passwordKey") String passwordKey,
+            @QueryParameter("prefixPath") String prefixPath,
+            @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
             String username = null;
             try {
-                username = getVaultSecret(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), engineVersion);
+                username = getVaultSecret(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                getVaultSecret(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), engineVersion);
+                getVaultSecret(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve password key: \n" + e);
             }
