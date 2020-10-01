@@ -46,9 +46,6 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
     public Secret getSecret() {
         String k = defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY);
         String s = getVaultSecretKeyValue(k);
-        if (s == null) {
-            throw new VaultPluginException("Fetching from Vault failed for key " + k, null);
-        }
         return Secret.fromString(s);
     }
 
