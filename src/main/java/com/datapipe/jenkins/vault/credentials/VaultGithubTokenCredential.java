@@ -2,6 +2,7 @@ package com.datapipe.jenkins.vault.credentials;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -10,7 +11,7 @@ import hudson.Extension;
 import hudson.util.Secret;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
+public class VaultGithubTokenCredential extends AbstractAuthenticatingVaultTokenCredential {
 
     // https://www.vaultproject.io/docs/auth/github.html#generate-a-github-personal-access-token
     private final @NonNull
@@ -31,9 +32,9 @@ public class VaultGithubTokenCredential extends AbstractVaultTokenCredential {
     }
 
     @Override
-    public String getToken(Vault vault) {
+    public String getToken(Vault vault, Auth auth) {
         try {
-            return vault.auth().loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
+            return auth.loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }

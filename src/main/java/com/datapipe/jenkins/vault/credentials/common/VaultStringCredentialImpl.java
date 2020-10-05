@@ -1,7 +1,6 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;

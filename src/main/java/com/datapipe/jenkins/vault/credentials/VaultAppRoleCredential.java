@@ -2,6 +2,7 @@ package com.datapipe.jenkins.vault.credentials;
 
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -12,7 +13,7 @@ import hudson.util.Secret;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
+public class VaultAppRoleCredential extends AbstractAuthenticatingVaultTokenCredential {
 
     private final @NonNull
     Secret secretId;
@@ -48,9 +49,9 @@ public class VaultAppRoleCredential extends AbstractVaultTokenCredential {
     }
 
     @Override
-    public String getToken(Vault vault) {
+    public String getToken(Vault vault, Auth auth) {
         try {
-            return vault.auth().loginByAppRole(path, roleId, Secret.toString(secretId))
+            return auth.loginByAppRole(path, roleId, Secret.toString(secretId))
                 .getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
