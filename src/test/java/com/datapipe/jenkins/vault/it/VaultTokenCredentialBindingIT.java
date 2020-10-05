@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault.it;
 
-import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
