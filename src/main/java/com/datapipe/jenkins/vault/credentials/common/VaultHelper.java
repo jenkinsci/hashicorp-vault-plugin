@@ -13,6 +13,7 @@ import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Util;
 import hudson.remoting.Channel;
 import hudson.security.ACL;
 import java.io.IOException;
@@ -29,10 +30,10 @@ public class VaultHelper {
 
     private static final Logger LOGGER = Logger.getLogger(VaultHelper.class.getName());
 
-    static String getVaultSecret(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull Integer engineVersion) {
+    static String getVaultSecret(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
         try {
             String secret;
-            SecretRetrieve retrieve = new SecretRetrieve(secretPath, secretKey, engineVersion);
+            SecretRetrieve retrieve = new SecretRetrieve(secretPath, secretKey, prefixPath, namespace, engineVersion);
 
             Channel channel = Channel.current();
             if (channel == null) {
@@ -54,11 +55,17 @@ public class VaultHelper {
         private final String secretPath;
         private final String secretKey;
         @CheckForNull
+        private final String prefixPath;
+        @CheckForNull
+        private final String namespace;
+        @CheckForNull
         private Integer engineVersion;
 
-        SecretRetrieve(String secretPath, String secretKey, Integer engineVersion) {
+        SecretRetrieve(String secretPath, String secretKey, String prefixPath, String namespace, Integer engineVersion) {
             this.secretPath = secretPath;
             this.secretKey = secretKey;
+            this.prefixPath = Util.fixEmptyAndTrim(prefixPath);
+            this.namespace = Util.fixEmptyAndTrim(namespace);
             this.engineVersion = engineVersion;
         }
 
@@ -85,6 +92,14 @@ public class VaultHelper {
             try {
                 VaultConfig vaultConfig = configuration.getVaultConfig();
 
+                if (prefixPath != null) {
+                    vaultConfig.prefixPath(prefixPath);
+                }
+
+                if (namespace != null) {
+                    vaultConfig.nameSpace(namespace);
+                }
+
                 VaultCredential vaultCredential = configuration.getVaultCredential();
                 if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId());
 
@@ -103,6 +118,8 @@ public class VaultHelper {
                 }
 
                 return values.get(secretKey);
+            } catch (VaultPluginException vpe) {
+              throw vpe;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

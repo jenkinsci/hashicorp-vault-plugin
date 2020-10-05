@@ -19,6 +19,10 @@ public class VaultTokenCredential extends AbstractVaultTokenCredential {
         this.token = token;
     }
 
+    @NonNull
+    public Secret getToken() {
+        return token;
+    }
 
     @Override
     public String getToken(Vault vault) {

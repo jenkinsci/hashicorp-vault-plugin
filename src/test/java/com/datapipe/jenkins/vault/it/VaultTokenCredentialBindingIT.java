@@ -1,6 +1,6 @@
 package com.datapipe.jenkins.vault.it;
 
-import com.bettercloud.vault.Vault;
+import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.Domain;
@@ -39,7 +39,7 @@ public class VaultTokenCredentialBindingIT {
             @Override
             public void evaluate() throws Throwable {
                 VaultAppRoleCredential c = mock(VaultAppRoleCredential.class);
-                when(c.getToken(any(Vault.class))).thenReturn(token);
+                when(c.getToken(any(Auth.class))).thenReturn(token);
                 when(c.getId()).thenReturn(credentialsId);
                 CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
                     .addCredentials(Domain.global(), c);

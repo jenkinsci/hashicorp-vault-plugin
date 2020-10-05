@@ -1,7 +1,7 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
+public class VaultKubernetesCredential extends AbstractAuthenticatingVaultTokenCredential {
 
     private static final String SERVICE_ACCOUNT_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
 
@@ -43,9 +43,14 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
         this.mountPath = mountPath;
     }
 
+    @NonNull
+    public String getRole() {
+        return this.role;
+    }
+
     @Override
     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
-    public String getToken(Vault vault) {
+    protected String getToken(Auth auth) {
         String jwt;
         try (Stream<String> input =  Files.lines(Paths.get(SERVICE_ACCOUNT_TOKEN_PATH)) ) {
             jwt = input.collect(Collectors.joining());
@@ -54,13 +59,10 @@ public class VaultKubernetesCredential extends AbstractVaultTokenCredential {
         }
 
         try {
-            return vault
-                .withRetries(5, 500)
-                .auth()
-                .loginByJwt(mountPath, role, jwt)
+            return auth.loginByJwt(mountPath, role, jwt)
                 .getAuthClientToken();
         } catch (VaultException e) {
-            throw new VaultPluginException("could not log in into vault", e);
+            throw new VaultPluginException("could not log in into vault: " + e.getMessage(), e);
         }
     }
 

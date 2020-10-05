@@ -1,7 +1,7 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -18,7 +18,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class VaultGCPCredential extends AbstractVaultTokenCredential {
+public class VaultGCPCredential extends AbstractAuthenticatingVaultTokenCredential {
 
     @NonNull
     private final String role;
@@ -38,8 +38,13 @@ public class VaultGCPCredential extends AbstractVaultTokenCredential {
         return role;
     }
 
+    @NonNull
+    public String getAudience() {
+        return audience;
+    }
+
     @Override
-    public String getToken(Vault vault) {
+    public String getToken(Auth auth) {
         String jwt;
         try {
             jwt = retrieveGoogleJWT();
@@ -48,7 +53,7 @@ public class VaultGCPCredential extends AbstractVaultTokenCredential {
         }
 
         try {
-            return vault.withRetries(5, 500).auth().loginByGCP(role, jwt).getAuthClientToken();
+            return auth.loginByGCP(role, jwt).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }
