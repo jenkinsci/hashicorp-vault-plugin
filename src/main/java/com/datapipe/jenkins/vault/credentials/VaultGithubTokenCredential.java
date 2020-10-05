@@ -32,7 +32,7 @@ public class VaultGithubTokenCredential extends AbstractAuthenticatingVaultToken
     }
 
     @Override
-    public String getToken(Vault vault, Auth auth) {
+    public String getToken(Auth auth) {
         try {
             return auth.loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
         } catch (VaultException e) {

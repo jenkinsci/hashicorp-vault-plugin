@@ -49,7 +49,7 @@ public class VaultAppRoleCredential extends AbstractAuthenticatingVaultTokenCred
     }
 
     @Override
-    public String getToken(Vault vault, Auth auth) {
+    public String getToken(Auth auth) {
         try {
             return auth.loginByAppRole(path, roleId, Secret.toString(secretId))
                 .getAuthClientToken();

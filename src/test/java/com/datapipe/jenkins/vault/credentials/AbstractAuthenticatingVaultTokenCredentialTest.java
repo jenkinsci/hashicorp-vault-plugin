@@ -65,7 +65,7 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
         }
 
         @Override
-        protected String getToken(@NotNull Vault vault, @NotNull Auth auth) {
+        protected String getToken(@NotNull Auth auth) {
             try {
                 return auth.loginByCert().getAuthClientToken();
             } catch (VaultException ve) {

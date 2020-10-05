@@ -40,7 +40,7 @@ public class VaultTokenCredentialBindingIT {
             @Override
             public void evaluate() throws Throwable {
                 VaultAppRoleCredential c = mock(VaultAppRoleCredential.class);
-                when(c.getToken(any(Vault.class), any(Auth.class))).thenReturn(token);
+                when(c.getToken(any(Auth.class))).thenReturn(token);
                 when(c.getId()).thenReturn(credentialsId);
                 CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
                     .addCredentials(Domain.global(), c);

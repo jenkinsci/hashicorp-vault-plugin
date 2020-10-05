@@ -56,16 +56,15 @@ public abstract class AbstractAuthenticatingVaultTokenCredential extends Abstrac
                 auth.withNameSpace(null);
             }
         }
-        return getToken(vault, auth);
+        return getToken(auth);
     }
 
     /**
      * Authenticate with vault using this credential and return the token. The {@code auth} client
      * will be configured with this credentials namespace.
-     * @param vault vault client
      * @param auth vault auth client
      * @return authentication token
      * @throws VaultPluginException if failed to authenticate with vault
      */
-    protected abstract String getToken(@NonNull Vault vault, @NonNull Auth auth);
+    protected abstract String getToken(@NonNull Auth auth);
 }

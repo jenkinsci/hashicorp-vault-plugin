@@ -51,7 +51,7 @@ public class VaultKubernetesCredential extends AbstractAuthenticatingVaultTokenC
 
     @Override
     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME")
-    protected String getToken(Vault vault, Auth auth) {
+    protected String getToken(Auth auth) {
         String jwt;
         try (Stream<String> input =  Files.lines(Paths.get(SERVICE_ACCOUNT_TOKEN_PATH)) ) {
             jwt = input.collect(Collectors.joining());

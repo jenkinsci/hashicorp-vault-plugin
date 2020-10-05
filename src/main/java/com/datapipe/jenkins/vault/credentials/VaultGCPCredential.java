@@ -45,7 +45,7 @@ public class VaultGCPCredential extends AbstractAuthenticatingVaultTokenCredenti
     }
 
     @Override
-    public String getToken(Vault vault, Auth auth) {
+    public String getToken(Auth auth) {
         String jwt;
         try {
             jwt = retrieveGoogleJWT();
