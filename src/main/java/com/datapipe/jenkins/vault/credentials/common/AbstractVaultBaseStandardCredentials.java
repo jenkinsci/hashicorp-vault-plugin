@@ -11,7 +11,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 
 /**
- * Base Vault credentials that contain a {@code path}, {@prefixPath}, {@code namespace},
+ * Base Vault credentials that contain a {@code path}, {@code prefixPath}, {@code namespace},
  * and {@code engineVersion}.
  */
 public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardCredentials {
