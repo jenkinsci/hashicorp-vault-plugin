@@ -9,12 +9,18 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.Secret;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
 public class VaultGithubTokenCredential extends AbstractAuthenticatingVaultTokenCredential {
 
     // https://www.vaultproject.io/docs/auth/github.html#generate-a-github-personal-access-token
     private final @NonNull
     Secret accessToken;
+
+    private @NonNull
+    String mountPath = DescriptorImpl.defaultPath;
 
     @DataBoundConstructor
     public VaultGithubTokenCredential(@CheckForNull CredentialsScope scope,
@@ -30,10 +36,21 @@ public class VaultGithubTokenCredential extends AbstractAuthenticatingVaultToken
         return accessToken;
     }
 
+    @NonNull
+    public String getMountPath() {
+        return mountPath;
+    }
+
+    @DataBoundSetter
+    public void setMountPath(@NonNull String mountPath) {
+        this.mountPath = defaultIfBlank(mountPath, DescriptorImpl.defaultPath);
+    }
+
     @Override
     public String getToken(Auth auth) {
         try {
-            return auth.loginByGithub(Secret.toString(accessToken)).getAuthClientToken();
+            return auth.loginByGithub(Secret.toString(accessToken), mountPath)
+                .getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }
@@ -41,6 +58,8 @@ public class VaultGithubTokenCredential extends AbstractAuthenticatingVaultToken
 
     @Extension
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
+
+        public static final String defaultPath = "github";
 
         @NonNull
         @Override
