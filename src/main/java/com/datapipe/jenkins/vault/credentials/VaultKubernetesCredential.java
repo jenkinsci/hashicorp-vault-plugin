@@ -16,6 +16,8 @@ import java.util.stream.Stream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import static org.apache.commons.lang.StringUtils.defaultIfBlank;
+
 public class VaultKubernetesCredential extends AbstractAuthenticatingVaultTokenCredential {
 
     private static final String SERVICE_ACCOUNT_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
@@ -40,7 +42,7 @@ public class VaultKubernetesCredential extends AbstractAuthenticatingVaultTokenC
 
     @DataBoundSetter
     public void setMountPath(@NonNull String mountPath) {
-        this.mountPath = mountPath;
+        this.mountPath = defaultIfBlank(mountPath, DescriptorImpl.defaultPath);
     }
 
     @NonNull
