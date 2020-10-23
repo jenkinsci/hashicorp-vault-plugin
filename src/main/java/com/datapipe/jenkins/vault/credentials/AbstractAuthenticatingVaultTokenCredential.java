@@ -14,7 +14,8 @@ import org.kohsuke.stapler.DataBoundSetter;
  * authentication token. This credential type can explicitly configure the namespace which
  * the authentication method is mounted.
  */
-public abstract class AbstractAuthenticatingVaultTokenCredential extends AbstractVaultTokenCredential {
+public abstract class AbstractAuthenticatingVaultTokenCredential extends
+    AbstractVaultTokenCredentialWithExpiration {
 
     @CheckForNull
     private String namespace;
