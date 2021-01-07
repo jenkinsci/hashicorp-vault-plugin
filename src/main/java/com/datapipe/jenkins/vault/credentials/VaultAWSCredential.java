@@ -28,13 +28,21 @@ public class VaultAWSCredential extends AbstractVaultTokenCredential {
     private final String role;
     @NonNull
     private final String awsMountPath;
+    @NonNull
+    private final String nonce;
 
     @DataBoundConstructor
-    public VaultAWSCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
-                              @CheckForNull String description, @NonNull String role, @NonNull String awsMountPath) {
+    public VaultAWSCredential(
+                            @CheckForNull CredentialsScope scope,
+                            @CheckForNull String id,
+                            @CheckForNull String description,
+                            @NonNull String role,
+                            @NonNull String awsMountPath,
+                            @NonNull String nonce) {
         super(scope, id, description);
         this.role = role;
         this.awsMountPath = awsMountPath;
+        this.nonce = nonce;
     }
 
     @NonNull
@@ -52,7 +60,7 @@ public class VaultAWSCredential extends AbstractVaultTokenCredential {
         }
 
         try {
-            return vault.withRetries(5, 500).auth().loginByAwsEc2(role, pkcs7, "nonce", awsMountPath).getAuthClientToken();
+            return vault.withRetries(5, 500).auth().loginByAwsEc2(role, pkcs7, nonce, awsMountPath).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }
