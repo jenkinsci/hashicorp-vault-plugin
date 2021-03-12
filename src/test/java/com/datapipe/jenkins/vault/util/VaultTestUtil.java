@@ -5,6 +5,8 @@ import com.bettercloud.vault.VaultConfig;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -13,6 +15,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.shaded.org.apache.commons.lang.SystemUtils;
+import org.testcontainers.utility.PathUtils;
 import org.testcontainers.utility.TestEnvironment;
 import org.testcontainers.vault.VaultContainer;
 
@@ -47,15 +51,31 @@ public class VaultTestUtil implements TestConstants {
         if (!hasDockerDaemon()) {
             return null;
         }
+        String path = getTestPath("vaultTest_adminPolicy.hcl");
         return new VaultContainer<>(VaultTestUtil.VAULT_DOCKER_IMAGE)
             .withVaultToken(VaultTestUtil.VAULT_ROOT_TOKEN)
             .withNetwork(network)
             .withNetworkAliases("vault")
             .withCopyFileToContainer(forHostPath(
-                TestConstants.class.getResource("vaultTest_adminPolicy.hcl").getPath()),
+                path),
                 "/admin.hcl")
             .withExposedPorts(8200)
             .waitingFor(Wait.forHttp("/v1/sys/seal-status").forStatusCode(200));
+    }
+
+    public static String getTestPath(String resource) {
+        URI uri = null;
+        try {
+            uri = VaultTestUtil.class.getResource(resource).toURI();
+        } catch (URISyntaxException e) {
+            // ignored
+        }
+        if (uri == null) return "FileNotFound"; // Should never happen.
+        String result = Paths.get(uri).toFile().getAbsoluteFile().toString();
+        if (SystemUtils.IS_OS_WINDOWS && result.startsWith("/")) {
+            result = PathUtils.createMinGWPath(result).substring(1);
+        }
+        return result;
     }
 
     public static VaultContainer createVaultAgentContainer(
@@ -65,7 +85,7 @@ public class VaultTestUtil implements TestConstants {
             .withNetwork(network)
             .withCreateContainerCmdModifier(cmd -> cmd.withCapAdd(IPC_LOCK))
             .withCopyFileToContainer(forHostPath(
-                TestConstants.class.getResource("vaultTest_agent.hcl").getPath()),
+                getTestPath("vaultTest_agent.hcl")),
                 "/agent.hcl")
             .withCopyFileToContainer(forHostPath(roleIDPath),
                 "/home/vault/role_id")

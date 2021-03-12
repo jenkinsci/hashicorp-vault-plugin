@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import jenkins.tasks.SimpleBuildWrapper;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -74,7 +73,6 @@ public class VaultBuildWrapperTest {
         return secrets;
     }
 
-    @NotNull
     private LogicalResponse getNotFoundResponse() {
         LogicalResponse resp = mock(LogicalResponse.class);
         RestResponse rest = mock(RestResponse.class);
