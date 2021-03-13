@@ -6,7 +6,6 @@ import com.bettercloud.vault.api.Auth;
 import com.bettercloud.vault.response.AuthResponse;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,7 +64,7 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
         }
 
         @Override
-        protected String getToken(@NotNull Auth auth) {
+        protected String getToken(Auth auth) {
             try {
                 return auth.loginByCert().getAuthClientToken();
             } catch (VaultException ve) {

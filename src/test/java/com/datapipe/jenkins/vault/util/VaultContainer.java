@@ -18,6 +18,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import static com.datapipe.jenkins.vault.util.VaultTestUtil.getTestPath;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
 import static org.testcontainers.utility.MountableFile.forHostPath;
 
@@ -46,13 +47,13 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
             .withNetwork(CONTAINER_NETWORK)
             .withNetworkAliases("vault")
             .withCopyFileToContainer(forHostPath(
-                TestConstants.class.getResource("vaultTest_server.hcl").getPath()),
+                getTestPath("vaultTest_server.hcl")),
                 CONTAINER_CONFIG_FILE)
             .withCopyFileToContainer(forHostPath(
-                TestConstants.class.getResource("startup.sh").getPath()),
+                getTestPath("startup.sh")),
                 CONTAINER_STARTUP_SCRIPT)
             .withCopyFileToContainer(forHostPath(
-                TestConstants.class.getResource("libressl.conf").getPath()),
+                getTestPath("libressl.conf")),
                 CONTAINER_OPENSSL_CONFIG_FILE)
             .withFileSystemBind(SSL_DIRECTORY, CONTAINER_SSL_DIRECTORY, BindMode.READ_WRITE)
             .withCreateContainerCmdModifier(command -> command.withCapAdd(Capability.IPC_LOCK))
