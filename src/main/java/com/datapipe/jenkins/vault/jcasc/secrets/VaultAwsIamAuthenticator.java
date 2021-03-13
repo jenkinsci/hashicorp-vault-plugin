@@ -9,7 +9,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import hudson.Util;
 
 public class VaultAwsIamAuthenticator extends VaultAuthenticatorWithExpiration {
     private final static Logger LOGGER = Logger.getLogger(VaultAwsIamAuthenticator.class.getName());
