@@ -1,5 +1,16 @@
 # https://github.com/jenkinsci/.github/blob/master/.github/release-drafter.adoc
 _extends: .github
-version-template: $MAJOR.$MINOR.$PATCH
-tag-template: hashicorp-vault-plugin-$NEXT_PATCH_VERSION
-name-template: $NEXT_PATCH_VERSION
+version-template: '$MAJOR.$MINOR.$PATCH'
+tag-template: 'hashicorp-vault-plugin-$RESOLVED_VERSION'
+name-template: '$RESOLVED_VERSION'
+
+version-resolver:
+  major:
+    labels:
+      - 'breaking'
+  minor:
+    labels:
+      - 'enhancement'
+  patch:
+    labels:
+      - 'bug'
