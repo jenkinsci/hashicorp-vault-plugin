@@ -31,7 +31,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jenkinsci.plugins.workflow.actions.ArgumentsAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.graphanalysis.DepthFirstScanner;
+import org.jenkinsci.plugins.workflow.graphanalysis.NodeStepTypePredicate;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Before;
@@ -41,8 +46,10 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import static hudson.Functions.isWindows;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -254,16 +261,13 @@ public class VaultConfigurationIT {
     public void shouldUseJenkinsfileConfiguration() throws Exception {
         WorkflowJob pipeline = jenkins.createProject(WorkflowJob.class, "Pipeline");
         pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
-            "    wrap([$class: 'VaultBuildWrapperWithMockAccessor', \n" +
-            "                   configuration: [$class: 'VaultConfiguration', \n" +
-            "                             vaultCredentialId: '" + GLOBAL_CREDENTIALS_ID_2 + "', \n"
-            +
-            "                             vaultUrl: '" + JENKINSFILE_URL + "'], \n" +
-            "                   vaultSecrets: [\n" +
-            "                            [$class: 'VaultSecret', path: 'secret/path1', secretValues: [\n"
-            +
-            "                            [$class: 'VaultSecretValue', envVar: 'envVar1', vaultKey: 'key1']]]]]) {\n"
-            +
+            "    withVaultMock(\n" +
+            "        configuration: [ \n" +
+            "            vaultCredentialId: '" + GLOBAL_CREDENTIALS_ID_2 + "', \n" +
+            "            vaultUrl: '" + JENKINSFILE_URL + "'], \n" +
+            "        vaultSecrets: [\n" +
+            "            [path: 'secret/path1', secretValues: [\n" +
+            "                 [envVar: 'envVar1', vaultKey: 'key1']]]]) {\n" +
             "            " + getShellString() + " \"echo ${env.envVar1}\"\n" +
             "      }\n" +
             "}", true));
@@ -273,6 +277,13 @@ public class VaultConfigurationIT {
         jenkins.assertBuildStatus(Result.SUCCESS, build);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
+
+        FlowExecution execution = build.getExecution();
+        DepthFirstScanner scanner = new DepthFirstScanner();
+        List<FlowNode> shellSteps = scanner.filteredNodes(execution, new NodeStepTypePredicate(getShellString()));
+        assertThat(shellSteps, hasSize(1));
+        assertThat(shellSteps.get(0).getAction(ArgumentsAction.class), is(notNullValue()));
+        assertThat(shellSteps.get(0).getAction(ArgumentsAction.class).getArguments(), hasEntry("script", "echo ${envVar1}"));
     }
 
     @Test

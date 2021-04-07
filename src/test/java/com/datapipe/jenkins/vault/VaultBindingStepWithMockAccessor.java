@@ -6,29 +6,36 @@ import com.bettercloud.vault.rest.RestResponse;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
+import hudson.EnvVars;
 import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
-import hudson.tasks.BuildWrapper;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nonnull;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/*
-This class is only used for testing the Jenkinsfile - we can not inject our
- MockAccessor there and therefore need to mimic it's behaviour here.
- */
-public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
-
+public class VaultBindingStepWithMockAccessor extends VaultBindingStep {
     @DataBoundConstructor
-    public VaultBuildWrapperWithMockAccessor(@CheckForNull List<VaultSecret> vaultSecrets) {
+    public VaultBindingStepWithMockAccessor(List<VaultSecret> vaultSecrets) {
         super(vaultSecrets);
-        setVaultAccessor(new VaultAccessor() {
+    }
+
+    @Override
+    public StepExecution start(StepContext context) throws Exception {
+        Execution execution = new Execution(this, context);
+        execution.setVaultAccessor(new VaultAccessor() {
 
             @Override
             public void setConfig(VaultConfig config) {
@@ -73,20 +80,30 @@ public class VaultBuildWrapperWithMockAccessor extends VaultBuildWrapper {
                 return resp;
             }
         });
+        return execution;
     }
 
     @Extension
-    public static final class DescriptorImpl extends Descriptor<BuildWrapper> {
+    public static final class DescriptorImpl extends StepDescriptor {
 
-        public DescriptorImpl() {
-            super(VaultBuildWrapperWithMockAccessor.class);
-            load();
+        @Override
+        public Set<? extends Class<?>> getRequiredContext() {
+            return Collections
+                .unmodifiableSet(
+                    new HashSet<>(Arrays.asList(TaskListener.class, Run.class, EnvVars.class)));
         }
 
-        public boolean isApplicable(AbstractProject<?, ?> item) {
+        @Override
+        public boolean takesImplicitBlockArgument() {
             return true;
         }
 
+        @Override
+        public String getFunctionName() {
+            return "withVaultMock";
+        }
+
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Vault Mock Plugin";
