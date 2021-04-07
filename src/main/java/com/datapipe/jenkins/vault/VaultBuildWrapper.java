@@ -190,8 +190,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         if (restResponse == null) return false;
         int status = restResponse.getStatus();
         if (status == 403) {
-            logger.printf("Access denied to Vault Secrets at '%s'%n", path);
-            return true;
+            throw new VaultPluginException(
+                String.format("Access denied to Vault Secrets at '%s' (hint: set token_num_uses to 0)%n", path));
         } else if (status == 404) {
             if (configuration.getFailIfNotFound()) {
                 throw new VaultPluginException(
