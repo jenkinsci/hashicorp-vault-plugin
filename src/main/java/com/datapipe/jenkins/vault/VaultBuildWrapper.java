@@ -23,24 +23,11 @@
  */
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-import com.bettercloud.vault.json.Json;
-import com.bettercloud.vault.json.JsonArray;
-import com.bettercloud.vault.json.JsonValue;
-import com.bettercloud.vault.response.LogicalResponse;
-import com.bettercloud.vault.rest.RestResponse;
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
-import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
-import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
-import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -49,23 +36,16 @@ import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.Util;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.security.ACL;
 import hudson.tasks.BuildWrapperDescriptor;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import jenkins.tasks.SimpleBuildWrapper;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -113,124 +93,16 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         this.vaultAccessor = vaultAccessor;
     }
 
-    private List<String> retrieveLeaseIds(List<LogicalResponse> logicalResponses) {
-        List<String> leaseIds = new ArrayList<>();
-        for (LogicalResponse response : logicalResponses) {
-            String leaseId = response.getLeaseId();
-            if (leaseId != null && !leaseId.isEmpty()) {
-                leaseIds.add(leaseId);
-            }
+    protected void provideEnvironmentVariablesFromVault(Context context, Run build,
+        EnvVars envVars) {
+        Map<String, String> overrides = VaultAccessor
+            .retrieveVaultSecrets(build, logger, envVars, vaultAccessor,
+                getConfiguration(), getVaultSecrets());
+
+        for (Map.Entry<String, String> secret : overrides.entrySet()) {
+            valuesToMask.add(secret.getValue());
+            context.env(secret.getKey(), secret.getValue());
         }
-        return leaseIds;
-    }
-
-    protected void provideEnvironmentVariablesFromVault(Context context, Run build, EnvVars envVars) {
-        VaultConfiguration config = getConfiguration();
-        String url = config.getVaultUrl();
-
-        if (StringUtils.isBlank(url)) {
-            throw new VaultPluginException(
-                "The vault url was not configured - please specify the vault url to use.");
-        }
-
-        VaultConfig vaultConfig = config.getVaultConfig();
-        VaultCredential credential = config.getVaultCredential();
-        if (credential == null) credential = retrieveVaultCredentials(build);
-
-        String prefixPath = StringUtils.isBlank(config.getPrefixPath())
-            ? ""
-            : Util.ensureEndsWith(envVars.expand(config.getPrefixPath()), "/");
-
-        if (vaultAccessor == null) vaultAccessor = new VaultAccessor();
-        vaultAccessor.setConfig(vaultConfig);
-        vaultAccessor.setCredential(credential);
-        vaultAccessor.setMaxRetries(config.getMaxRetries());
-        vaultAccessor.setRetryIntervalMilliseconds(config.getRetryIntervalMilliseconds());
-        vaultAccessor.init();
-
-        for (VaultSecret vaultSecret : vaultSecrets) {
-            String path = prefixPath + envVars.expand(vaultSecret.getPath());
-            logger.printf("Retrieving secret: %s%n", path);
-            Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
-                .orElse(configuration.getEngineVersion());
-            try {
-                LogicalResponse response = vaultAccessor.read(path, engineVersion);
-                if (responseHasErrors(path, response)) {
-                    continue;
-                }
-                Map<String, String> values = response.getData();
-                for (VaultSecretValue value : vaultSecret.getSecretValues()) {
-                    String vaultKey = value.getVaultKey();
-                    String secret = values.get(vaultKey);
-                    if (StringUtils.isBlank(secret)) {
-                        throw new IllegalArgumentException(
-                            "Vault Secret " + vaultKey + " at " + path
-                                + " is either null or empty. Please check the Secret in Vault.");
-                    } else {
-                        valuesToMask.add(secret);
-                    }
-                    context.env(value.getEnvVar(), secret);
-                }
-            } catch (VaultPluginException ex) {
-                VaultException e = (VaultException) ex.getCause();
-                if (e != null) {
-                    throw new VaultPluginException(String
-                        .format("Vault response returned %d for secret path %s",
-                            e.getHttpStatusCode(), path),
-                        e);
-                }
-                throw ex;
-            }
-        }
-    }
-
-    private boolean responseHasErrors(String path, LogicalResponse response) {
-        RestResponse restResponse = response.getRestResponse();
-        if (restResponse == null) return false;
-        int status = restResponse.getStatus();
-        if (status == 403) {
-            logger.printf("Access denied to Vault Secrets at '%s'%n", path);
-            return true;
-        } else if (status == 404) {
-            if (configuration.getFailIfNotFound()) {
-                throw new VaultPluginException(
-                    String.format("Vault credentials not found for '%s'", path));
-            } else {
-                logger.printf("Vault credentials not found for '%s'%n", path);
-                return true;
-            }
-        } else if (status >= 400) {
-            String errors = Optional
-                .of(Json.parse(new String(restResponse.getBody(), StandardCharsets.UTF_8))).map(JsonValue::asObject)
-                .map(j -> j.get("errors")).map(JsonValue::asArray).map(JsonArray::values)
-                .map(j -> j.stream().map(JsonValue::asString).collect(Collectors.joining("\n")))
-                .orElse("");
-            logger.printf("Vault responded with %d error code.%n", status);
-            if (StringUtils.isNotBlank(errors)) {
-                logger.printf("Vault responded with errors: %s%n", errors);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    protected VaultCredential retrieveVaultCredentials(Run build) {
-        String id = getConfiguration().getVaultCredentialId();
-        if (StringUtils.isBlank(id)) {
-            throw new VaultPluginException(
-                "The credential id was not configured - please specify the credentials to use.");
-        }
-        List<VaultCredential> credentials = CredentialsProvider
-            .lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM,
-                Collections.emptyList());
-        VaultCredential credential = CredentialsMatchers
-            .firstOrNull(credentials, new IdMatcher(id));
-
-        if (credential == null) {
-            throw new CredentialsUnavailableException(id);
-        }
-
-        return credential;
     }
 
     private void pullAndMergeConfiguration(Run<?, ?> build) {
@@ -256,8 +128,8 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
 
 
     /**
-     * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public so
-     * that it can be accessed from views.
+     * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public
+     * so that it can be accessed from views.
      */
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {

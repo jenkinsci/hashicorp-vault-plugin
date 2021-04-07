@@ -3,7 +3,6 @@ package com.datapipe.jenkins.vault;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.rest.RestResponse;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
-import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
@@ -106,15 +105,9 @@ public class VaultBuildWrapperTest {
             provideEnvironmentVariablesFromVault(context, build, envVars);
         }
 
-        @Override
-        protected VaultCredential retrieveVaultCredentials(Run build) {
-            return null;
-        }
-
         public void verifyCalls() {
             verify(mockAccessor, times(2)).init();
             verify(mockAccessor, times(2)).read("not/existing", 2);
         }
     }
-
 }
