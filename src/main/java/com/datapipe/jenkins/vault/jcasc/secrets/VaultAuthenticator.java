@@ -18,4 +18,7 @@ public interface VaultAuthenticator {
     static VaultAuthenticator of(VaultKubernetes vaultKubernetes, String mountPath) {
         return new VaultKubernetesAuthenticator(vaultKubernetes, mountPath);
     }
+    static VaultAuthenticator of(VaultAwsIam vaultAwsIam, String mountPath) {
+        return new VaultAwsIamAuthenticator(vaultAwsIam, mountPath);
+    }
 }

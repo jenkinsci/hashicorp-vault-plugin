@@ -75,6 +75,23 @@ You enter your Vault Kubernetes auth `role`. The JWT will be automatically retri
 mounted secret volume (`/var/run/secrets/kubernetes.io/serviceaccount/token`). This assumes,
 that the jenkins is running in Kubernetes Pod with a Service Account attached.
 
+#### Vault AWS IAM Credential
+
+![AWS IAM Credential](docs/images/aws_iam_credential.png)
+
+Authenticate to Vault using the aws auth method with the
+[IAM](https://www.vaultproject.io/docs/auth/aws#iam-auth-method)
+workflow. The AWS credentials will be automatically retrieved from one
+of [several standard
+locations](https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html).
+The typical use case would be Jenkins master running on an AWS EC2
+instance with the credentials acquired from the [instance
+metadata](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#instance-metadata-security-credentials).
+Optionally enter your AWS IAM auth `role` name and Vault AWS auth
+`mount` path. If the `role` is not provided, Vault will determine it
+from the principal in the IAM identity. If the `mount` path is not
+provided, it defaults to `aws`.
+
 #### Vault Token Credential
 
 ![Token Credential](docs/images/token_credential.png)
@@ -224,7 +241,7 @@ credentials:
 
 See [handling secrets section](https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc) in JCasC documentation for better security.
 
-You can also configure `VaultGithubTokenCredential`, or `VautGCPCredential` or `VaultAppRoleCredential`
+You can also configure `VaultGithubTokenCredential`, `VaultGCPCredential`, `VaultAppRoleCredential` or `VaultAwsIamCredential`.
 
 If you are unsure about how to do it from `yaml`. You can still use the UI to configure credentials.  
 After you configured Credentials and the Global Vault configuration.  
@@ -242,6 +259,8 @@ The secret source for JCasC is configured via environment variables as way to ge
 - The environment variable `CASC_VAULT_APPROLE` must be present, if token is not used and U/P not used. (Vault AppRole ID.)
 - The environment variable `CASC_VAULT_APPROLE_SECRET` must be present, it token is not used and U/P not used. (Vault AppRole Secret ID.)
 - The environment variable `CASC_VAULT_KUBERNETES_ROLE` must be present, if you want to use Kubernetes Service Account. (Vault Kubernetes Role.)
+- The environment variable `CASC_VAULT_AWS_IAM_ROLE` must be present, if you want to use AWS IAM authentiation. (Vault AWS IAM Role.)
+- The environment variable `CASC_VAULT_AWS_IAM_SERVER_ID` must be present when using AWS IAM authentication and the Vault auth method requires a value for the `X-Vault-AWS-IAM-Server-ID` header. (Vault AWS IAM Server ID.)
 - The environment variable `CASC_VAULT_TOKEN` must be present, if U/P is not used. (Vault token.)
 - The environment variable `CASC_VAULT_PATHS` must be present. (Comma separated vault key paths. For example, `secret/jenkins,secret/admin`.)
 - The environment variable `CASC_VAULT_URL` must be present. (Vault url, including port number.)
@@ -253,7 +272,7 @@ The secret source for JCasC is configured via environment variables as way to ge
 - The environment variable `CASC_VAULT_ENGINE_VERSION` is optional. If unset, your vault path is assumed to be using kv version 2. If your vault path uses engine version 1, set this variable to `1`.
 - The issued token should have read access to vault path `auth/token/lookup-self` in order to determine its expiration time. JCasC will re-issue a token if its expiration is reached (except for `CASC_VAULT_TOKEN`).
 
-If the environment variables `CASC_VAULT_URL` and `CASC_VAULT_PATHS` are present, JCasC will try to gather initial secrets from Vault. However for it to work properly there is a need for authentication by either the combination of `CASC_VAULT_USER` and `CASC_VAULT_PW`, a `CASC_VAULT_TOKEN`, the combination of `CASC_VAULT_APPROLE` and `CASC_VAULT_APPROLE_SECRET`, or a `CASC_VAULT_KUBERNETES_ROLE`. The authenticated user must have at least read access.
+If the environment variables `CASC_VAULT_URL` and `CASC_VAULT_PATHS` are present, JCasC will try to gather initial secrets from Vault. However for it to work properly there is a need for authentication by either the combination of `CASC_VAULT_USER` and `CASC_VAULT_PW`, a `CASC_VAULT_TOKEN`, the combination of `CASC_VAULT_APPROLE` and `CASC_VAULT_APPROLE_SECRET`, a `CASC_VAULT_KUBERNETES_ROLE`, or a `CASC_VAULT_AWS_IAM_ROLE`. The authenticated user must have at least read access.
 
 You can also provide a `CASC_VAULT_FILE` environment variable where you load the secrets from a file.
 

@@ -139,6 +139,18 @@
       <artifactId>configuration-as-code</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>aws-java-sdk</artifactId>
+      <version>1.11.955</version>
+      <optional>true</optional>
+      <exclusions>
+        <exclusion>
+          <groupId>joda-time</groupId>
+          <artifactId>joda-time</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <!-- Test Dependencies -->
     <dependency>
       <groupId>io.jenkins.configuration-as-code</groupId>
