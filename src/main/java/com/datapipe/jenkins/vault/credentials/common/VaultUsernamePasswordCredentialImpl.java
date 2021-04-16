@@ -13,7 +13,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
-import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
+import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
 @SuppressWarnings("ALL")
@@ -87,13 +87,13 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
 
             String username = null;
             try {
-                username = getVaultSecret(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion);
+                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                getVaultSecret(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion);
+                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve password key: \n" + e);
             }

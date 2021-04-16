@@ -30,30 +30,36 @@ public class VaultHelper {
 
     private static final Logger LOGGER = Logger.getLogger(VaultHelper.class.getName());
 
-    static String getVaultSecret(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
+    static String getVaultSecretKey(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
         try {
-            String secret;
-            SecretRetrieve retrieve = new SecretRetrieve(secretPath, secretKey, prefixPath, namespace, engineVersion);
+            Map<String, String> values;
+            SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion);
 
             Channel channel = Channel.current();
             if (channel == null) {
-                secret = retrieve.call();
+                values = retrieve.call();
             } else {
-                secret = channel.call(retrieve);
+                values = channel.call(retrieve);
             }
 
-            return secret;
+            if (!values.containsKey(secretKey)) {
+                String message = String.format(
+                    "Key %s could not be found in path %s",
+                    secretKey, secretPath);
+                throw new VaultPluginException(message);
+            }
+
+            return values.get(secretKey);
         } catch (IOException | InterruptedException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private static class SecretRetrieve extends SlaveToMasterCallable<String, IOException> {
+    private static class SecretRetrieve extends SlaveToMasterCallable<Map<String, String>, IOException> {
 
         private static final long serialVersionUID = 1L;
 
         private final String secretPath;
-        private final String secretKey;
         @CheckForNull
         private final String prefixPath;
         @CheckForNull
@@ -61,16 +67,15 @@ public class VaultHelper {
         @CheckForNull
         private Integer engineVersion;
 
-        SecretRetrieve(String secretPath, String secretKey, String prefixPath, String namespace, Integer engineVersion) {
+        SecretRetrieve(String secretPath, String prefixPath, String namespace, Integer engineVersion) {
             this.secretPath = secretPath;
-            this.secretKey = secretKey;
             this.prefixPath = Util.fixEmptyAndTrim(prefixPath);
             this.namespace = Util.fixEmptyAndTrim(namespace);
             this.engineVersion = engineVersion;
         }
 
         @Override
-        public String call() throws IOException {
+        public Map<String, String> call() throws IOException {
             GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
 
             VaultConfiguration configuration = globalConfig.getConfiguration();
@@ -85,8 +90,8 @@ public class VaultHelper {
             }
 
             String msg = String.format(
-                "Retrieving vault secret path=%s key=%s engineVersion=%s",
-                secretPath, secretKey, engineVersion);
+                "Retrieving vault secret path=%s engineVersion=%s",
+                secretPath, engineVersion);
             LOGGER.info(msg);
 
             try {
@@ -108,16 +113,9 @@ public class VaultHelper {
                 vaultAccessor.setRetryIntervalMilliseconds(configuration.getRetryIntervalMilliseconds());
                 vaultAccessor.init();
 
-                Map<String, String> values = vaultAccessor.read(secretPath, engineVersion).getData();
+                return vaultAccessor.read(secretPath, engineVersion).getData();
 
-                if (!values.containsKey(secretKey)) {
-                    String message = String.format(
-                        "Key %s could not be found in path %s",
-                        secretKey, secretPath);
-                    throw new VaultPluginException(message);
-                }
 
-                return values.get(secretKey);
             } catch (VaultPluginException vpe) {
               throw vpe;
             } catch (Exception e) {

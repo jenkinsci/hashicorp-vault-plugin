@@ -8,7 +8,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
+import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
 
 /**
  * Base Vault credentials that contain a {@code path}, {@code prefixPath}, {@code namespace},
@@ -72,7 +72,7 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
      */
     @NonNull
     protected String getVaultSecretKeyValue(String key) {
-        String s = getVaultSecret(this.path, key, this.prefixPath, this.namespace, this.engineVersion);
+        String s = getVaultSecretKey(this.path, key, this.prefixPath, this.namespace, this.engineVersion);
         if (s == null) {
             throw new VaultPluginException("Fetching from Vault failed for key '" + key + "'");
         }
