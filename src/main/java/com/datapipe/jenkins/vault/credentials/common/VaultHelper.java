@@ -30,7 +30,7 @@ public class VaultHelper {
 
     private static final Logger LOGGER = Logger.getLogger(VaultHelper.class.getName());
 
-    static String getVaultSecretKey(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
+    static Map<String, String> getVaultSecret(@NonNull String secretPath, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
         try {
             Map<String, String> values;
             SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion);
@@ -42,6 +42,16 @@ public class VaultHelper {
                 values = channel.call(retrieve);
             }
 
+            return values;
+        } catch (IOException | InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    static String getVaultSecretKey(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
+        try {
+            Map<String, String> values = getVaultSecret(secretPath, prefixPath, namespace, engineVersion);
+
             if (!values.containsKey(secretKey)) {
                 String message = String.format(
                     "Key %s could not be found in path %s",
@@ -50,7 +60,7 @@ public class VaultHelper {
             }
 
             return values.get(secretKey);
-        } catch (IOException | InterruptedException e) {
+        } catch (IllegalStateException e) {
             throw new IllegalStateException(e);
         }
     }
