@@ -8,6 +8,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import org.json.simple.JSONValue;
@@ -19,25 +20,17 @@ import org.kohsuke.stapler.QueryParameter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
+import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
+
 
 
 public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredentials implements VaultFileCredential {
 
-    public static final String DEFAULT_VAULT_KEY = "secret";
-
     private static final long serialVersionUID = 1L;
 
     private String fileName;
-
-    @NonNull
-    public String getFileName() {
-        return fileName;
-    }
-
-    @DataBoundSetter
-    public void setFilePath(String fileName) {
-        this.fileName = fileName;
-    }
+    private Boolean useKey;
+    private String vaultKey;
 
     @DataBoundConstructor
     public VaultFileCredentialImpl(CredentialsScope scope, String id,
@@ -46,12 +39,44 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
         this.fileName = UUID.randomUUID().toString();
     }
 
+    @NonNull
+    public String getVaultKey() {
+        return vaultKey;
+    }
+
+    @DataBoundSetter
+    public void setVaultKey(String vaultKey) {
+        this.vaultKey = vaultKey;
+    }
+
+    @NonNull
+    public Boolean getUseKey() {
+        return useKey;
+    }
+
+    @DataBoundSetter
+    public void setUseKey(Boolean useKey) {
+        this.useKey = useKey;
+    }
+
+
+    @NonNull
+    public String getFileName() {
+        return fileName;
+    }
 
     @NonNull
     @Override
     public InputStream getContent() {
-        Map<String, String> s = getVaultSecretValue();
-        return new ByteArrayInputStream(JSONValue.toJSONString(s).getBytes());
+        String content;
+        if (useKey != null && useKey) {
+            content = getVaultSecretKeyValue(vaultKey);
+        } else {
+            Map<String, String> s = getVaultSecretValue();
+            content = JSONValue.toJSONString(s);
+        }
+
+        return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
     }
 
     @Extension
@@ -64,18 +89,33 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
 
         public FormValidation doTestConnection(
             @QueryParameter("path") String path,
+            @QueryParameter("useKey") Boolean useKey,
+            @QueryParameter("vaultKey") String vaultKey,
             @QueryParameter("prefixPath") String prefixPath,
             @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
+
+
+            String okMessage = "Successfully retrieved secret " + path;
 
             try {
                 getVaultSecret(path, prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }
+            if(useKey) {
+                try {
+                    getVaultSecretKey(path, vaultKey, prefixPath, namespace, engineVersion);
+                } catch (Exception e) {
+                    return FormValidation.error("FAILED to retrieve key '" + vaultKey + "' Vault secret: \n" + e);
+                }
+                okMessage += " with key " + vaultKey;
+            }
+
+
 
             return FormValidation
-                .ok("Successfully retrieved secret " + path);
+                .ok(okMessage);
         }
 
         @SuppressWarnings("unused") // used by stapler
