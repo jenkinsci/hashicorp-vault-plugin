@@ -144,6 +144,10 @@ public class VaultConfigurationIT {
         return isWindows() ? "type" : "cat";
     }
 
+    public static String getCopyString() {
+        return isWindows() ? "copy" : "cp";
+    }
+
     public static String getVariable(String v) {
         return isWindows() ? "%" + v + "%" : "$" + v;
     }
