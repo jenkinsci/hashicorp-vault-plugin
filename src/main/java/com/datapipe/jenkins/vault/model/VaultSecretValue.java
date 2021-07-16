@@ -41,6 +41,7 @@ public class VaultSecretValue
 
     private String envVar;
     private final String vaultKey;
+    private final boolean isRequired;
 
     @Deprecated
     public VaultSecretValue(String envVar, @NonNull String vaultKey) {
@@ -51,6 +52,13 @@ public class VaultSecretValue
     @DataBoundConstructor
     public VaultSecretValue(@NonNull String vaultKey) {
         this.vaultKey = fixEmptyAndTrim(vaultKey);
+        this.isRequired = true;
+    }
+    
+    @DataBoundConstructor
+    public VaultSecretValue(@NonNull String vaultKey, boolean required) {
+        this.vaultKey = fixEmptyAndTrim(vaultKey);
+        this.isRequired = required;
     }
 
     @DataBoundSetter
@@ -70,6 +78,10 @@ public class VaultSecretValue
         return vaultKey;
     }
 
+    public boolean getIsRequired() {
+        return isRequired;
+    }
+    
     @Extension
     public static final class DescriptorImpl
         extends Descriptor<VaultSecretValue> {
