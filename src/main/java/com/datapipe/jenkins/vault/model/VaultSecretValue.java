@@ -47,14 +47,15 @@ public class VaultSecretValue
     public VaultSecretValue(String envVar, @NonNull String vaultKey) {
         this.envVar = fixEmptyAndTrim(envVar);
         this.vaultKey = fixEmptyAndTrim(vaultKey);
+        this.isRequired = true; // Old behavior
     }
 
     @DataBoundConstructor
     public VaultSecretValue(@NonNull String vaultKey) {
         this.vaultKey = fixEmptyAndTrim(vaultKey);
-        this.isRequired = true;
+        this.isRequired = false;
     }
-    
+
     @DataBoundConstructor
     public VaultSecretValue(@NonNull String vaultKey, boolean required) {
         this.vaultKey = fixEmptyAndTrim(vaultKey);
@@ -81,7 +82,7 @@ public class VaultSecretValue
     public boolean getIsRequired() {
         return isRequired;
     }
-    
+
     @Extension
     public static final class DescriptorImpl
         extends Descriptor<VaultSecretValue> {

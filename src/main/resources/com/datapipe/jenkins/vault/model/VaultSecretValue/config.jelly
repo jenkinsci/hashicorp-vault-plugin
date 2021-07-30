@@ -9,6 +9,10 @@
     <f:textbox/>
   </f:entry>
 
+  <f:entry title="Required?" field="isRequired">
+    <f:checkbox/>
+  </f:entry>
+
   <f:entry title="">
     <div align="right">
       <f:repeatableDeleteButton/>
