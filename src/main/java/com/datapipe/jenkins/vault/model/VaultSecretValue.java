@@ -40,8 +40,8 @@ public class VaultSecretValue
     extends AbstractDescribableImpl<VaultSecretValue> {
 
     private String envVar;
+    private boolean isRequired;
     private final String vaultKey;
-    private final boolean isRequired;
 
     @Deprecated
     public VaultSecretValue(String envVar, @NonNull String vaultKey) {
@@ -56,15 +56,14 @@ public class VaultSecretValue
         this.isRequired = false;
     }
 
-    @DataBoundConstructor
-    public VaultSecretValue(@NonNull String vaultKey, boolean required) {
-        this.vaultKey = fixEmptyAndTrim(vaultKey);
-        this.isRequired = required;
-    }
-
     @DataBoundSetter
     public void setEnvVar(String envVar) {
         this.envVar = envVar;
+    }
+
+    @DataBoundSetter
+    public void setIsRequired(boolean isRequired) {
+        this.isRequired = isRequired;
     }
 
     /**
