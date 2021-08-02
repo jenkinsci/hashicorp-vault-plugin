@@ -9,8 +9,8 @@
     <f:textbox/>
   </f:entry>
 
-  <f:entry title="Required?" field="isRequired">
-    <f:checkbox/>
+  <f:entry field="isRequired">
+    <f:checkbox title="Required?" />
   </f:entry>
 
   <f:entry title="">
