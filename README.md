@@ -6,7 +6,7 @@ It also has the ability to inject Vault credentials into a build pipeline or fre
 
 ## Vault Authentication Backends
 This plugin allows authenticating against Vault using the AppRole authentication backend. Hashicorp recommends using AppRole for Servers / automated workflows (like Jenkins) and using Tokens (default mechanism, Github Token, ...) for every developer's machine.
-  Furthermore, this plugin allows using a Github personal access token, or a Vault Token - either configured directly in Jenkins or read from an arbitrary file on the Jenkins Machine.
+  Furthermore, this plugin allows using a Github personal access token, or a Vault Token - either configured directly in Jenkins or read from an arbitrary file on the Jenkins controller.
 
 ### How does AppRole work?
 In short: you register an approle auth backend using a self-chosen name (e.g. Jenkins). This approle is identified by a `role-id` and secured with a `secret_id`. If you have both of those values you can ask Vault for a token that can be used to access vault.
@@ -18,7 +18,7 @@ When registering the approle backend you can set a couple of different parameter
 
 This is just a short introduction, please refer to [Hashicorp itself](https://www.vaultproject.io/docs/auth/approle.html) to get detailed information.
 ### What about other backends?
-Hashicorp explicitly recommends the AppRole Backend for machine-to-machine authentication. Token based auth is mainly supported for backwards compatibility.
+Hashicorp explicitly recommends the AppRole Backend for machine-to-machine authentication. Token based auth is mainly supported for backward compatibility.
 Other backends that might make sense are the AWS EC2 backend, the Azure backend, and the Kubernetes backend. But we do not support these yet. Feel free to contribute!
 
 Implementing additional authentication backends is actually quite easy:
@@ -51,7 +51,7 @@ You enter your `role-id` and `secret-id` there. The description helps to find yo
 The `path` field is the approle authentication path. This is, by default, "approle" and this will also be used if no path is specified here.
 
 #### Migrate current Jenkins Vault configuration to support a new version of plugin.
-After update a plugin from version `2.2.0` you can note - builds failed with an exception `java.lang.NullPointerException`. This steps will help you fix it:
+After update a plugin from version `2.2.0` you can note - builds failed with an exception `java.lang.NullPointerException`. These steps will help you fix it:
 1. If you using AppRole auth method - you need to update Jenkins `Credential` store (in UI) for all kinds `Vault App Role Credential` and set `Path` field for your correct path or just leave the default `approle` and save. 
 2. Go to `Configure` of failed job and change Vault Engine in `Advanced Settings` and choose your version on KV Engine 1 or 2 from a select menu `K/V Engine Version` for ALL `Vault Secrets` and save.
 
@@ -173,7 +173,7 @@ Works with any `VaultCredential`: `VaultTokenCredential`, `VaultAppRoleCredentia
 ![withCredentials Block](docs/images/pipeline_withCredentials.png)
 
 Specify the variables for the vault address and token.  Vault Address and Credentials are both required.  
-`addrVariable` and `tokenVariable` are optional.  They will be set to `VAULT_ADDR` and `VAULT_TOKEN` repectively if omitted.
+`addrVariable` and `tokenVariable` are optional.  They will be set to `VAULT_ADDR` and `VAULT_TOKEN` respectively if omitted.
 
 ```groovy
 node {
@@ -249,7 +249,7 @@ you can use the export feature build into JCasC by visiting `<your-jenkins-domai
 
 ### HashiCorp Vault Plugin as a Secret Source for JCasC
 
-We can provide these initial secrets for JCasC
+We can provide these initial secrets for JCasC.
 The secret source for JCasC is configured via environment variables as way to get access to vault at startup and when configuring Jenkins instance.
 
 [For Security and compatibility considerations please read more here](https://github.com/jenkinsci/configuration-as-code-plugin#security-and-compatibility-considerations)
@@ -257,7 +257,7 @@ The secret source for JCasC is configured via environment variables as way to ge
 - The environment variable `CASC_VAULT_PW` must be present, if token is not used and appRole/Secret is not used. (Vault password.)
 - The environment variable `CASC_VAULT_USER` must be present, if token is not used and appRole/Secret is not used. (Vault username.)
 - The environment variable `CASC_VAULT_APPROLE` must be present, if token is not used and U/P not used. (Vault AppRole ID.)
-- The environment variable `CASC_VAULT_APPROLE_SECRET` must be present, it token is not used and U/P not used. (Vault AppRole Secret ID.)
+- The environment variable `CASC_VAULT_APPROLE_SECRET` must be present, if token is not used and U/P not used. (Vault AppRole Secret ID.)
 - The environment variable `CASC_VAULT_KUBERNETES_ROLE` must be present, if you want to use Kubernetes Service Account. (Vault Kubernetes Role.)
 - The environment variable `CASC_VAULT_AWS_IAM_ROLE` must be present, if you want to use AWS IAM authentiation. (Vault AWS IAM Role.)
 - The environment variable `CASC_VAULT_AWS_IAM_SERVER_ID` must be present when using AWS IAM authentication and the Vault auth method requires a value for the `X-Vault-AWS-IAM-Server-ID` header. (Vault AWS IAM Server ID.)
