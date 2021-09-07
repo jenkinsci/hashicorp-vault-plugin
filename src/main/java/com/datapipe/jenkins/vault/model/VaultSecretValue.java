@@ -39,6 +39,8 @@ import static hudson.Util.fixEmptyAndTrim;
 public class VaultSecretValue
     extends AbstractDescribableImpl<VaultSecretValue> {
 
+    public final static Boolean DEFAULT_IS_REQUIRED = true;
+
     private String envVar;
     private boolean isRequired;
     private final String vaultKey;
@@ -47,13 +49,13 @@ public class VaultSecretValue
     public VaultSecretValue(String envVar, @NonNull String vaultKey) {
         this.envVar = fixEmptyAndTrim(envVar);
         this.vaultKey = fixEmptyAndTrim(vaultKey);
-        this.isRequired = true; // Old behavior
+        this.isRequired = DEFAULT_IS_REQUIRED;
     }
 
     @DataBoundConstructor
     public VaultSecretValue(@NonNull String vaultKey) {
         this.vaultKey = fixEmptyAndTrim(vaultKey);
-        this.isRequired = false;
+        this.isRequired = DEFAULT_IS_REQUIRED;
     }
 
     @DataBoundSetter
