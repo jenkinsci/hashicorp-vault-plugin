@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
-import org.json.simple.JSONValue;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -73,7 +73,7 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
             content = getVaultSecretKeyValue(vaultKey);
         } else {
             Map<String, String> s = getVaultSecretValue();
-            content = JSONValue.toJSONString(s);
+            content = new JSONObject().fromObject(s).toString();
         }
 
         return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
