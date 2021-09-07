@@ -40,20 +40,18 @@ public class VaultSecretValue
     extends AbstractDescribableImpl<VaultSecretValue> {
 
     private String envVar;
-    private boolean isRequired;
+    private boolean isRequired = DescriptorImpl.DEFAULT_IS_REQUIRED;
     private final String vaultKey;
 
     @Deprecated
     public VaultSecretValue(String envVar, @NonNull String vaultKey) {
         this.envVar = fixEmptyAndTrim(envVar);
         this.vaultKey = fixEmptyAndTrim(vaultKey);
-        this.isRequired = DescriptorImpl.DEFAULT_IS_REQUIRED;
     }
 
     @DataBoundConstructor
     public VaultSecretValue(@NonNull String vaultKey) {
         this.vaultKey = fixEmptyAndTrim(vaultKey);
-        this.isRequired = DescriptorImpl.DEFAULT_IS_REQUIRED;
     }
 
     @DataBoundSetter
