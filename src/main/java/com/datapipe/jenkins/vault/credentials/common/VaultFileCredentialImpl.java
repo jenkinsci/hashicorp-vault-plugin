@@ -73,7 +73,7 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
             content = getVaultSecretKeyValue(vaultKey);
         } else {
             Map<String, String> s = getVaultSecretValue();
-            content = new JSONObject().fromObject(s).toString();
+            content = JSONObject.fromObject(s).toString();
         }
 
         return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
