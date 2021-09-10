@@ -40,6 +40,7 @@ public class VaultSecretValue
     extends AbstractDescribableImpl<VaultSecretValue> {
 
     private String envVar;
+    private boolean isRequired = DescriptorImpl.DEFAULT_IS_REQUIRED;
     private final String vaultKey;
 
     @Deprecated
@@ -58,6 +59,11 @@ public class VaultSecretValue
         this.envVar = envVar;
     }
 
+    @DataBoundSetter
+    public void setIsRequired(boolean isRequired) {
+        this.isRequired = isRequired;
+    }
+
     /**
      *
      * @return envVar if value is not empty otherwise return vaultKey
@@ -70,9 +76,15 @@ public class VaultSecretValue
         return vaultKey;
     }
 
+    public boolean getIsRequired() {
+        return isRequired;
+    }
+
     @Extension
     public static final class DescriptorImpl
         extends Descriptor<VaultSecretValue> {
+
+        public final static Boolean DEFAULT_IS_REQUIRED = true;
 
         @Override
         public String getDisplayName() {
