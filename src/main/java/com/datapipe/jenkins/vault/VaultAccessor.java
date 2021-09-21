@@ -174,7 +174,7 @@ public class VaultAccessor implements Serializable {
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
                     String vaultKey = value.getVaultKey();
                     String secret = values.get(vaultKey);
-                    if (StringUtils.isBlank(secret)) {
+                    if (StringUtils.isBlank(secret) && value.getIsRequired()) {
                         throw new IllegalArgumentException(
                             "Vault Secret " + vaultKey + " at " + path
                                 + " is either null or empty. Please check the Secret in Vault.");

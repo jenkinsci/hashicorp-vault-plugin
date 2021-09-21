@@ -9,6 +9,10 @@
     <f:textbox/>
   </f:entry>
 
+  <f:entry field="isRequired">
+    <f:checkbox title="Required?" default="${descriptor.DEFAULT_IS_REQUIRED}" />
+  </f:entry>
+
   <f:entry title="">
     <div align="right">
       <f:repeatableDeleteButton/>
