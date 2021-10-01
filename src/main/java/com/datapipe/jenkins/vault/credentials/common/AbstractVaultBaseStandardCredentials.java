@@ -6,8 +6,10 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
+import java.util.Map;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 
 /**
@@ -72,9 +74,22 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
      */
     @NonNull
     protected String getVaultSecretKeyValue(String key) {
-        String s = getVaultSecret(this.path, key, this.prefixPath, this.namespace, this.engineVersion);
+        String s = getVaultSecretKey(this.path, key, this.prefixPath, this.namespace, this.engineVersion);
         if (s == null) {
             throw new VaultPluginException("Fetching from Vault failed for key '" + key + "'");
+        }
+        return s;
+    }
+
+    /**
+     * Look up the secret key:value map.
+     * @return vault secret value
+     */
+    @NonNull
+    protected Map<String, String> getVaultSecretValue() {
+        Map<String, String> s = getVaultSecret(this.path, this.prefixPath, this.namespace, this.engineVersion);
+        if (s == null) {
+            throw new VaultPluginException("Fetching from Vault failed for secret '" + this.path + "'");
         }
         return s;
     }

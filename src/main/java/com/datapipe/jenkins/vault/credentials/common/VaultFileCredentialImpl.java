@@ -6,28 +6,37 @@ import hudson.Extension;
 import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import hudson.util.Secret;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.UUID;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
+import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
-import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
-public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredentials implements VaultStringCredential {
 
-    public static final String DEFAULT_VAULT_KEY = "secret";
+
+public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredentials implements VaultFileCredential {
 
     private static final long serialVersionUID = 1L;
 
+    private String fileName;
+    private Boolean useKey;
     private String vaultKey;
 
     @DataBoundConstructor
-    public VaultStringCredentialImpl(CredentialsScope scope, String id,
+    public VaultFileCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        this.fileName = UUID.randomUUID().toString();
     }
 
     @NonNull
@@ -37,15 +46,37 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
 
     @DataBoundSetter
     public void setVaultKey(String vaultKey) {
-        this.vaultKey = defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY);
+        this.vaultKey = vaultKey;
+    }
+
+    @NonNull
+    public Boolean getUseKey() {
+        return useKey;
+    }
+
+    @DataBoundSetter
+    public void setUseKey(Boolean useKey) {
+        this.useKey = useKey;
+    }
+
+
+    @NonNull
+    public String getFileName() {
+        return fileName;
     }
 
     @NonNull
     @Override
-    public Secret getSecret() {
-        String k = defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY);
-        String s = getVaultSecretKeyValue(k);
-        return Secret.fromString(s);
+    public InputStream getContent() {
+        String content;
+        if (useKey != null && useKey) {
+            content = getVaultSecretKeyValue(vaultKey);
+        } else {
+            Map<String, String> s = getVaultSecretValue();
+            content = JSONObject.fromObject(s).toString();
+        }
+
+        return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
     }
 
     @Extension
@@ -53,24 +84,38 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
 
         @Override
         public String getDisplayName() {
-            return "Vault Secret Text Credential";
+            return "Vault Secret File Credential";
         }
 
         public FormValidation doTestConnection(
             @QueryParameter("path") String path,
+            @QueryParameter("useKey") Boolean useKey,
             @QueryParameter("vaultKey") String vaultKey,
             @QueryParameter("prefixPath") String prefixPath,
             @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
+
+            String okMessage = "Successfully retrieved secret " + path;
+
             try {
-                getVaultSecretKey(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), prefixPath, namespace, engineVersion);
+                getVaultSecret(path, prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }
+            if(useKey) {
+                try {
+                    getVaultSecretKey(path, vaultKey, prefixPath, namespace, engineVersion);
+                } catch (Exception e) {
+                    return FormValidation.error("FAILED to retrieve key '" + vaultKey + "' Vault secret: \n" + e);
+                }
+                okMessage += " with key " + vaultKey;
+            }
+
+
 
             return FormValidation
-                .ok("Successfully retrieved secret by key " + vaultKey);
+                .ok(okMessage);
         }
 
         @SuppressWarnings("unused") // used by stapler
@@ -79,4 +124,5 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
         }
 
     }
+
 }
