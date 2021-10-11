@@ -10,7 +10,7 @@ import hudson.util.Secret;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.json.simple.JSONValue;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -39,8 +39,7 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
     @Override
     public Secret getPassword() {
         Map<String, String> s = getVaultSecretValue();
-        String key = JSONValue.toJSONString(s);
-        LOGGER.log(Level.WARNING, "got GCR key '" + key + "' from string '" + s +"' from path '" + this.getPath() + "'");
+        String key = JSONObject.fromObject(s).toString();
         return Secret.fromString(key);
     }
 
