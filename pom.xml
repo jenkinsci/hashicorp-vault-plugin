@@ -9,11 +9,10 @@
   </parent>
   <groupId>com.datapipe.jenkins.plugins</groupId>
   <artifactId>hashicorp-vault-plugin</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
   <properties>
-    <revision>3.8.1</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist>9999-SNAPSHOT</changelist>
     <jenkins.version>2.222.4</jenkins.version>
     <java.level>8</java.level>
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
