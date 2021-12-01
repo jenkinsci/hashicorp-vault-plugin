@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -57,6 +58,7 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
         }
 
         public FormValidation doTestConnection(
+            @AncestorInPath ItemGroup<Item> context,
             @QueryParameter("path") String path,
             @QueryParameter("prefixPath") String prefixPath,
             @QueryParameter("namespace") String namespace,
@@ -66,7 +68,7 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
             String okMessage = "Successfully retrieved secret " + path;
 
             try {
-                getVaultSecret(path, prefixPath, namespace, engineVersion);
+                getVaultSecret(path, prefixPath, namespace, engineVersion, context);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }
