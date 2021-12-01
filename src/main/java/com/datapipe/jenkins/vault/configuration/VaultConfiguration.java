@@ -28,9 +28,8 @@ import org.kohsuke.stapler.QueryParameter;
 
 import static hudson.Util.fixEmptyAndTrim;
 
-public class VaultConfiguration
-    extends AbstractDescribableImpl<VaultConfiguration>
-    implements Serializable {
+public class VaultConfiguration extends AbstractDescribableImpl<VaultConfiguration>
+                                implements Serializable {
 
     private static final int RETRY_INTERVAL_MILLISECONDS = 1000;
     private static final int DEFAULT_TIMEOUT = 30;

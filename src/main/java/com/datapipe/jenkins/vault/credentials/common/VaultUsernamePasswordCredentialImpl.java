@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -78,6 +79,7 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
         }
 
         public FormValidation doTestConnection(
+            @AncestorInPath ItemGroup<Item> context,
             @QueryParameter("path") String path,
             @QueryParameter("usernameKey") String usernameKey,
             @QueryParameter("passwordKey") String passwordKey,
@@ -87,13 +89,13 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
 
             String username = null;
             try {
-                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion);
+                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion, context);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion);
+                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion, context);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve password key: \n" + e);
             }

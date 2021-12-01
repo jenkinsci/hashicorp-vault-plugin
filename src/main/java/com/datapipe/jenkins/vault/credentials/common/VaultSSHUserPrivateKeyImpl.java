@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -109,6 +110,7 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
         }
 
         public FormValidation doTestConnection(
+            @AncestorInPath ItemGroup<Item> context,
             @QueryParameter("path") String path,
             @QueryParameter("usernameKey") String usernameKey,
             @QueryParameter("privateKeyKey") String privateKeyKey,
@@ -119,19 +121,19 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
 
             String username;
             try {
-                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion);
+                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion, context);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY), prefixPath, namespace, engineVersion);
+                getVaultSecretKey(path, defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY), prefixPath, namespace, engineVersion, context);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve private key key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY), prefixPath, namespace, engineVersion);
+                getVaultSecretKey(path, defaultIfBlank(passphraseKey, DEFAULT_PASSPHRASE_KEY), prefixPath, namespace, engineVersion, context);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve passphrase key: \n" + e);
             }

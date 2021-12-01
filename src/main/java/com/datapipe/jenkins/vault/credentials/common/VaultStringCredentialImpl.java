@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -25,8 +26,7 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
     private String vaultKey;
 
     @DataBoundConstructor
-    public VaultStringCredentialImpl(CredentialsScope scope, String id,
-        String description) {
+    public VaultStringCredentialImpl(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
     }
 
@@ -57,6 +57,7 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
         }
 
         public FormValidation doTestConnection(
+            @AncestorInPath ItemGroup<Item> context,
             @QueryParameter("path") String path,
             @QueryParameter("vaultKey") String vaultKey,
             @QueryParameter("prefixPath") String prefixPath,
@@ -64,7 +65,7 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
             @QueryParameter("engineVersion") Integer engineVersion) {
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), prefixPath, namespace, engineVersion);
+                getVaultSecretKey(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), prefixPath, namespace, engineVersion, context);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }

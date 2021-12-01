@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.ByteArrayInputStream;
@@ -88,6 +89,7 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
         }
 
         public FormValidation doTestConnection(
+            @AncestorInPath ItemGroup<Item> context,
             @QueryParameter("path") String path,
             @QueryParameter("useKey") Boolean useKey,
             @QueryParameter("vaultKey") String vaultKey,
@@ -98,21 +100,20 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
 
             String okMessage = "Successfully retrieved secret " + path;
 
-            try {
-                getVaultSecret(path, prefixPath, namespace, engineVersion);
-            } catch (Exception e) {
-                return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
-            }
             if(useKey) {
                 try {
-                    getVaultSecretKey(path, vaultKey, prefixPath, namespace, engineVersion);
+                    getVaultSecretKey(path, vaultKey, prefixPath, namespace, engineVersion, context);
                 } catch (Exception e) {
                     return FormValidation.error("FAILED to retrieve key '" + vaultKey + "' Vault secret: \n" + e);
                 }
                 okMessage += " with key " + vaultKey;
+            } else {
+                try {
+                    getVaultSecret(path, prefixPath, namespace, engineVersion, context);
+                } catch (Exception e) {
+                    return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
+                }
             }
-
-
 
             return FormValidation
                 .ok(okMessage);

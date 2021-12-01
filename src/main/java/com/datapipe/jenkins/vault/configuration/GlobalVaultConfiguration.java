@@ -5,6 +5,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
@@ -50,6 +51,11 @@ public class GlobalVaultConfiguration extends GlobalConfiguration {
         @NonNull
         @Override
         public VaultConfiguration forJob(@NonNull Item job) {
+            return getVaultConfig(job.getParent());
+        }
+
+        @Override
+        public VaultConfiguration getVaultConfig(@NonNull ItemGroup itemGroup) {
             return GlobalVaultConfiguration.get().getConfiguration();
         }
     }
