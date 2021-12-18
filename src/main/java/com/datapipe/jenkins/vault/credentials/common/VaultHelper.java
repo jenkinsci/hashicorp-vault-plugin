@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 import jenkins.security.SlaveToMasterCallable;
 import org.apache.commons.lang.StringUtils;
 
@@ -39,7 +40,7 @@ public class VaultHelper {
                                               @NonNull ItemGroup<Item> context) {
         try {
             Map<String, String> values;
-            SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion, context);
+            SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion, context.getFullName());
 
             Channel channel = Channel.current();
             if (channel == null) {
@@ -87,19 +88,25 @@ public class VaultHelper {
         private final String namespace;
         @CheckForNull
         private Integer engineVersion;
-        @NonNull
-        private transient ItemGroup<Item> credentialContext;
+        @CheckForNull
+        private final String credentialContextAsString;
 
-        SecretRetrieve(String secretPath, String prefixPath, String namespace, Integer engineVersion, @NonNull ItemGroup<Item> credentialContext) {
+        SecretRetrieve(String secretPath, String prefixPath, String namespace, Integer engineVersion, String credentialContext) {
             this.secretPath = secretPath;
             this.prefixPath = Util.fixEmptyAndTrim(prefixPath);
             this.namespace = Util.fixEmptyAndTrim(namespace);
             this.engineVersion = engineVersion;
-            this.credentialContext = credentialContext;
+            this.credentialContextAsString = credentialContext;
         }
 
         @Override
         public Map<String, String> call() throws IOException {
+            if (credentialContextAsString == null) {
+                throw new IllegalStateException("The vault credential need a context");
+            }
+
+            ItemGroup<Item> credentialContext = getItemGroup(credentialContextAsString);
+
             if (credentialContext == null) {
                 throw new IllegalStateException("The vault credential need a context");
             }
@@ -140,7 +147,8 @@ public class VaultHelper {
                 }
 
                 VaultCredential vaultCredential = configuration.getVaultCredential();
-                if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId(), credentialContext);
+                if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId(),
+                    credentialContext);
 
                 VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
                 vaultAccessor.setMaxRetries(configuration.getMaxRetries());
@@ -155,6 +163,13 @@ public class VaultHelper {
             }
         }
     }
+
+    @CheckForNull
+    private static ItemGroup<Item> getItemGroup(String path) {
+        Item item = Jenkins.get().getItemByFullName(path);
+        return item instanceof ItemGroup ? (ItemGroup<Item>) item : null;
+    }
+
 
     private static VaultCredential retrieveVaultCredentials(String id, ItemGroup<Item> itemGroup) {
         if (StringUtils.isBlank(id)) {
