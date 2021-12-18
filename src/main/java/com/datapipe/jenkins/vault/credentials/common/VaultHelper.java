@@ -38,7 +38,7 @@ public class VaultHelper {
         @CheckForNull String prefixPath,
         @CheckForNull String namespace,
         @CheckForNull Integer engineVersion,
-        @NonNull ItemGroup<?> context) {
+        @NonNull ItemGroup<? extends Item> context) {
         try {
             Map<String, String> values;
             SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace,
@@ -111,10 +111,6 @@ public class VaultHelper {
 
         @Override
         public Map<String, String> call() throws IOException {
-            if (credentialContextAsString == null) {
-                throw new IllegalStateException("The vault credential need a context");
-            }
-
             ItemGroup<? extends Item> credentialContext = getItemGroup(credentialContextAsString);
             if (credentialContext == null) {
                 throw new IllegalStateException("The vault credential need a context");
