@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.SlaveToMasterCallable;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
 public class VaultHelper {
@@ -37,7 +38,7 @@ public class VaultHelper {
                                               @CheckForNull String prefixPath,
                                               @CheckForNull String namespace,
                                               @CheckForNull Integer engineVersion,
-                                              @NonNull ItemGroup<Item> context) {
+                                              @NonNull ItemGroup<?> context) {
         try {
             Map<String, String> values;
             SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion, context.getFullName());
@@ -60,7 +61,7 @@ public class VaultHelper {
                                     @CheckForNull String prefixPath,
                                     @CheckForNull String namespace,
                                     @CheckForNull Integer engineVersion,
-                                    @NonNull ItemGroup<Item> context) {
+                                    @NonNull ItemGroup<? extends Item> context) {
         try {
             Map<String, String> values = getVaultSecret(secretPath, prefixPath, namespace, engineVersion, context);
 
@@ -105,7 +106,7 @@ public class VaultHelper {
                 throw new IllegalStateException("The vault credential need a context");
             }
 
-            ItemGroup<Item> credentialContext = getItemGroup(credentialContextAsString);
+            ItemGroup<? extends Item> credentialContext = getItemGroup(credentialContextAsString);
 
             if (credentialContext == null) {
                 throw new IllegalStateException("The vault credential need a context");
@@ -165,13 +166,21 @@ public class VaultHelper {
     }
 
     @CheckForNull
-    private static ItemGroup<Item> getItemGroup(String path) {
-        Item item = Jenkins.get().getItemByFullName(path);
-        return item instanceof ItemGroup ? (ItemGroup<Item>) item : null;
+    private static ItemGroup<? extends Item> getItemGroup(String path) {
+        Jenkins instance = Jenkins.get();
+        String normalizedPath = FilenameUtils.normalize(path);
+        if (normalizedPath == null) {
+            return null;
+        }
+        if (normalizedPath.isEmpty() || normalizedPath.equals("/")) {
+            return instance;
+        }
+        Item item = instance.getItemByFullName(normalizedPath);
+        return item instanceof ItemGroup<?> ? (ItemGroup<?>) item : null;
     }
 
 
-    private static VaultCredential retrieveVaultCredentials(String id, ItemGroup<Item> itemGroup) {
+    private static VaultCredential retrieveVaultCredentials(String id, ItemGroup<? extends Item> itemGroup) {
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException(
                 "The credential id was not configured - please specify the credentials to use.");
