@@ -6,12 +6,13 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
+import hudson.model.Item;
 import hudson.model.ItemGroup;
 import java.util.Map;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
+import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
 
 /**
  * Base Vault credentials that contain a {@code path}, {@code prefixPath}, {@code namespace},
@@ -23,7 +24,7 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
     private String prefixPath;
     private String namespace;
     private Integer engineVersion;
-    private ItemGroup context;
+    private ItemGroup<? extends Item> context;
 
     AbstractVaultBaseStandardCredentials(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
@@ -69,11 +70,11 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
         this.engineVersion = engineVersion;
     }
 
-    public void setContext(@NonNull ItemGroup context) {
+    public void setContext(@NonNull ItemGroup<? extends Item> context) {
         this.context = context;
     }
 
-    public ItemGroup getContext() {
+    public ItemGroup<? extends Item> getContext() {
         return this.context;
     }
 

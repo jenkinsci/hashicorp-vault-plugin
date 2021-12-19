@@ -18,6 +18,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Base64;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -40,10 +41,20 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
 
     private String keyStoreKey;
     private String passwordKey;
+    private Supplier<Secret> keystore;
+    private Supplier<Secret> password;
+
+    public VaultCertificateCredentialsImpl(CredentialsScope scope, String id, String description, Supplier<Secret> keystore, Supplier<Secret> password) {
+        super(scope, id, description);
+        this.keystore = keystore;
+        this.password = password;
+    }
 
     @DataBoundConstructor
     public VaultCertificateCredentialsImpl(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
+        keystore = () -> Secret.fromString(getVaultSecretKeyValue(defaultIfBlank(getKeyStoreKeyKey(), DescriptorImpl.DEFAULT_KEYSTORE_KEY)));
+        password = () -> Secret.fromString(getVaultSecretKeyValue(defaultIfBlank(getPasswordKey(), DescriptorImpl.DEFAULT_PASSWORD_KEY)));
     }
 
     @NonNull
@@ -66,11 +77,14 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
         this.passwordKey = defaultIfBlank(passwordKey, DescriptorImpl.DEFAULT_PASSWORD_KEY);
     }
 
+    public Secret getKeyStoreBase64() {
+        return keystore.get();
+    }
+
     @NonNull
     @Override
     public KeyStore getKeyStore() {
-        String secretKey = defaultIfBlank(keyStoreKey, DescriptorImpl.DEFAULT_KEYSTORE_KEY);
-        String base64KeyStore = getVaultSecretKeyValue(secretKey);
+        String base64KeyStore = Secret.toString(getKeyStoreBase64());
 
         KeyStore keyStore;
         try {
@@ -92,9 +106,7 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
     @NonNull
     @Override
     public Secret getPassword() {
-        String secretKey = defaultIfBlank(passwordKey, DescriptorImpl.DEFAULT_PASSWORD_KEY);
-        String secret = getVaultSecretKeyValue(secretKey);
-        return Secret.fromString(secret);
+        return password.get();
     }
 
     @Override

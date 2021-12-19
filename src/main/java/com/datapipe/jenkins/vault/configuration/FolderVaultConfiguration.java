@@ -41,9 +41,9 @@ public class FolderVaultConfiguration extends AbstractFolderProperty<AbstractFol
         }
 
         @Override
-        public VaultConfiguration getVaultConfig(@NonNull ItemGroup itemGroup) {
+        public VaultConfiguration getVaultConfig(@NonNull ItemGroup<? extends Item> itemGroup) {
             VaultConfiguration resultingConfig = null;
-            for (ItemGroup g = itemGroup; g instanceof AbstractFolder; g = ((AbstractFolder) g).getParent()) {
+            for (ItemGroup<?> g = itemGroup; g instanceof AbstractFolder; g = ((AbstractFolder<?>) g).getParent()) {
                 FolderVaultConfiguration folderProperty = ((AbstractFolder<?>) g).getProperties()
                                                                                  .get(FolderVaultConfiguration.class);
                 if (folderProperty == null) {

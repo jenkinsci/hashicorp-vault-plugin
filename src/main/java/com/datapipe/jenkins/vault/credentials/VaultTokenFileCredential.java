@@ -6,12 +6,10 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
-import hudson.FilePath;
-import hudson.remoting.VirtualChannel;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.FileUtils;
-import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VaultTokenFileCredential extends AbstractVaultTokenCredential {
@@ -28,24 +26,9 @@ public class VaultTokenFileCredential extends AbstractVaultTokenCredential {
 
     @Override
     public String getToken(Vault vault) {
-        FilePath file = new FilePath(new File(filepath));
         try {
-            return file.act(new FilePath.FileCallable<String>() {
-                @Override
-                public void checkRoles(RoleChecker roleChecker) throws SecurityException {
-                    //not needed
-                }
-
-                @Override
-                public String invoke(File f, VirtualChannel channel) {
-                    try {
-                        return FileUtils.readFileToString(f);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }).trim();
-        } catch (IOException | InterruptedException e) {
+            return FileUtils.readFileToString(new File(filepath), StandardCharsets.UTF_8);
+        } catch (IOException e) {
             throw new VaultPluginException("Failed to read token from file", e);
         }
     }

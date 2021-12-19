@@ -55,7 +55,7 @@ public class GlobalVaultConfiguration extends GlobalConfiguration {
         }
 
         @Override
-        public VaultConfiguration getVaultConfig(@NonNull ItemGroup itemGroup) {
+        public VaultConfiguration getVaultConfig(@NonNull ItemGroup<? extends Item> itemGroup) {
             return GlobalVaultConfiguration.get().getConfiguration();
         }
     }

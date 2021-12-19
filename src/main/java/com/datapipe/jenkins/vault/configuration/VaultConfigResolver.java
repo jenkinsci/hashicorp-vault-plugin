@@ -10,5 +10,5 @@ public abstract class VaultConfigResolver implements ExtensionPoint {
     @NonNull
     public abstract VaultConfiguration forJob(@NonNull Item job);
 
-    public abstract VaultConfiguration getVaultConfig(@NonNull ItemGroup<Item> itemGroup);
+    public abstract VaultConfiguration getVaultConfig(@NonNull ItemGroup<? extends Item> itemGroup);
 }

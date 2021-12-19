@@ -8,7 +8,7 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
-import java.util.Map;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
@@ -18,16 +18,23 @@ import org.kohsuke.stapler.QueryParameter;
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecret;
 
-
-
 public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials implements VaultGCRLogin {
 
     private final static Logger LOGGER = Logger.getLogger(VaultGCRLoginImpl.class.getName());
+
+    private final Supplier<Secret> password;
+
+    public VaultGCRLoginImpl(CredentialsScope scope, String id,
+        String description, Supplier<Secret> passwordSupplier) {
+        super(scope, id, description);
+        password = passwordSupplier;
+    }
 
     @DataBoundConstructor
     public VaultGCRLoginImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        password = () -> Secret.fromString(JSONObject.fromObject(getVaultSecretValue()).toString());
     }
 
     @Override
@@ -38,9 +45,7 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
     @NonNull
     @Override
     public Secret getPassword() {
-        Map<String, String> s = getVaultSecretValue();
-        String key = JSONObject.fromObject(s).toString();
-        return Secret.fromString(key);
+        return password.get();
     }
 
     @NonNull

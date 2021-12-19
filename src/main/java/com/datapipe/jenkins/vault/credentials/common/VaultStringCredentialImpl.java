@@ -8,6 +8,7 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.util.function.Supplier;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -22,12 +23,19 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
     public static final String DEFAULT_VAULT_KEY = "secret";
 
     private static final long serialVersionUID = 1L;
+    private Supplier<Secret> value;
 
     private String vaultKey;
+
+    public VaultStringCredentialImpl(CredentialsScope scope, String id, String description, Supplier<Secret> valueSupplier) {
+        super(scope, id, description);
+        value = valueSupplier;
+    }
 
     @DataBoundConstructor
     public VaultStringCredentialImpl(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
+        value = () -> Secret.fromString(getVaultSecretKeyValue(getVaultKey()));
     }
 
     @NonNull
@@ -43,9 +51,7 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
     @NonNull
     @Override
     public Secret getSecret() {
-        String k = defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY);
-        String s = getVaultSecretKeyValue(k);
-        return Secret.fromString(s);
+        return value.get();
     }
 
     @Extension

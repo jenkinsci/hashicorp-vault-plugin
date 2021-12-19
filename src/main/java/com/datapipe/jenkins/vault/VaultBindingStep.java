@@ -31,10 +31,12 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
+import hudson.model.ItemGroup;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.Secret;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +60,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class VaultBindingStep extends Step {
 
     private VaultConfiguration configuration;
-    private List<VaultSecret> vaultSecrets;
+    private final List<VaultSecret> vaultSecrets;
 
     @DataBoundConstructor
     public VaultBindingStep(@CheckForNull List<VaultSecret> vaultSecrets) {
@@ -107,23 +109,26 @@ public class VaultBindingStep extends Step {
         }
 
         private void doStart() throws Exception {
-            Run<?, ?> run = getContext().get(Run.class);
-            TaskListener listener = getContext().get(TaskListener.class);
-            EnvVars envVars = getContext().get(EnvVars.class);
+            StepContext context = getContext();
+            Run<?, ?> run = context.get(Run.class);
+            TaskListener listener = context.get(TaskListener.class);
+            EnvVars envVars = context.get(EnvVars.class);
 
-            Map<String, String> overrides = VaultAccessor
-                .retrieveVaultSecrets(run, listener.getLogger(), envVars, vaultAccessor,
+            ItemGroup<?> itemGroup = run != null ? run.getParent().getParent()
+                : null;
+
+            Map<String, String> secrets = VaultAccessor
+                .retrieveVaultSecrets(itemGroup, listener.getLogger(), envVars, vaultAccessor,
                     step.getConfiguration(), step.getVaultSecrets());
 
-            List<String> secretValues = new ArrayList<>();
-            secretValues.addAll(overrides.values());
-
-            getContext().newBodyInvoker()
-                .withContext(EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class),
-                    new VaultBindingStep.Overrider(overrides)))
-                .withContext(BodyInvoker
-                    .mergeConsoleLogFilters(getContext().get(ConsoleLogFilter.class),
-                        new MaskingConsoleLogFilter(run.getCharset().name(), secretValues)))
+            context.newBodyInvoker()
+                .withContexts(
+                    EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class),
+                        new VaultBindingStep.Overrider(secrets)),
+                    BodyInvoker.mergeConsoleLogFilters(getContext().get(ConsoleLogFilter.class),
+                        new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
+                            new ArrayList<>(secrets.values())))
+                )
                 .withCallback(new Callback())
                 .start();
         }
@@ -133,7 +138,7 @@ public class VaultBindingStep extends Step {
 
         private static final long serialVersionUID = 1;
 
-        private final Map<String, Secret> overrides = new HashMap<String, Secret>();
+        private final Map<String, Secret> overrides = new HashMap<>();
 
         Overrider(Map<String, String> overrides) {
             for (Map.Entry<String, String> override : overrides.entrySet()) {
@@ -144,7 +149,7 @@ public class VaultBindingStep extends Step {
         @Override
         public void expand(EnvVars env) throws IOException, InterruptedException {
             for (Map.Entry<String, Secret> override : overrides.entrySet()) {
-                env.override(override.getKey(), override.getValue().getPlainText());
+                env.override(override.getKey(), Secret.toString(override.getValue()));
             }
         }
 

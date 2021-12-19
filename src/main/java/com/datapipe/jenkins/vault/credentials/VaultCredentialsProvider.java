@@ -22,17 +22,17 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 
 /**
- * This class provides the credentials that we need to authenticate against Vault
- * and the credentials stored in Vault, after assigning the right context to them.
+ * This class provides the credentials that we need to authenticate against Vault and the
+ * credentials stored in Vault, after assigning the right context to them.
  *
  * @author Hassan CHAKROUN {@literal <h.chakrouun@gmail.com> }
- *
  */
 @Extension(optional = true, ordinal = 1)
 public class VaultCredentialsProvider extends CredentialsProvider {
 
     @Override
-    public <C extends Credentials> List<C> getCredentials(Class<C> type, ItemGroup itemGroup, Authentication authentication) {
+    public <C extends Credentials> List<C> getCredentials(Class<C> type, ItemGroup itemGroup,
+        Authentication authentication) {
         return getCredentials(type, itemGroup, authentication, Collections.emptyList());
     }
 
@@ -47,7 +47,7 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                                         CredentialsMatchers.always());
         List<C> creds = new ArrayList<C>();
         if (ACL.SYSTEM.equals(authentication)) {
-            for (ItemGroup g = itemGroup; g instanceof AbstractFolder; g = (AbstractFolder.class.cast(g)).getParent()) {
+            for (ItemGroup<?> g = itemGroup; g instanceof AbstractFolder; g = ((AbstractFolder<?>) g).getParent()) {
                 FolderCredentialsProperty property = ((AbstractFolder<?>) g).getProperties()
                                                                            .get(FolderCredentialsProperty.class);
                 if (property == null) {
@@ -81,7 +81,6 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                     ((AbstractVaultBaseStandardCredentials)c).setContext(Jenkins.get());
                 }
             }
-            creds.addAll(globalCreds);
         }
 
         return creds;

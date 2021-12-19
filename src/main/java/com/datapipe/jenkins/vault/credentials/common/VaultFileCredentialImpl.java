@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SecretBytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
@@ -9,9 +10,9 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -24,7 +25,6 @@ import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVault
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
 
 
-
 public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredentials implements VaultFileCredential {
 
     private static final long serialVersionUID = 1L;
@@ -32,12 +32,27 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
     private String fileName;
     private Boolean useKey;
     private String vaultKey;
+    private Supplier<SecretBytes> bytesSupplier;
+
+    public VaultFileCredentialImpl(CredentialsScope scope, String id,
+        String description, Supplier<SecretBytes> secretBytesSupplier) {
+        super(scope, id, description);
+        bytesSupplier = secretBytesSupplier;
+    }
 
     @DataBoundConstructor
     public VaultFileCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
         this.fileName = UUID.randomUUID().toString();
+        bytesSupplier = () -> {
+            if (useKey != null && useKey) {
+                return SecretBytes.fromString(getVaultSecretKeyValue(vaultKey));
+            } else {
+                Map<String, String> s = getVaultSecretValue();
+                return SecretBytes.fromString(JSONObject.fromObject(s).toString());
+            }
+        };
     }
 
     @NonNull
@@ -69,15 +84,7 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
     @NonNull
     @Override
     public InputStream getContent() {
-        String content;
-        if (useKey != null && useKey) {
-            content = getVaultSecretKeyValue(vaultKey);
-        } else {
-            Map<String, String> s = getVaultSecretValue();
-            content = JSONObject.fromObject(s).toString();
-        }
-
-        return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+        return new ByteArrayInputStream(this.bytesSupplier.get().getPlainData());
     }
 
     @Extension

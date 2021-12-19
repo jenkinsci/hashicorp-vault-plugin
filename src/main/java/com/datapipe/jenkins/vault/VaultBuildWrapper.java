@@ -23,9 +23,7 @@
  */
 package com.datapipe.jenkins.vault;
 
-import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
-import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.google.common.annotations.VisibleForTesting;
@@ -33,11 +31,11 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
+import hudson.model.ItemGroup;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -52,8 +50,8 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class VaultBuildWrapper extends SimpleBuildWrapper {
 
     private VaultConfiguration configuration;
-    private List<VaultSecret> vaultSecrets;
-    private List<String> valuesToMask = new ArrayList<>();
+    private final List<VaultSecret> vaultSecrets;
+    private final List<String> valuesToMask = new ArrayList<>();
     private transient VaultAccessor vaultAccessor = new VaultAccessor();
     protected PrintStream logger;
 
@@ -66,12 +64,11 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     public void setUp(Context context, Run<?, ?> build, FilePath workspace,
         Launcher launcher, TaskListener listener, EnvVars initialEnvironment) {
         logger = listener.getLogger();
-        pullAndMergeConfiguration(build);
-
-        // JENKINS-44163 - Build fails with a NullPointerException when no secrets are given for a job
-        if (null != vaultSecrets && !vaultSecrets.isEmpty()) {
-            provideEnvironmentVariablesFromVault(context, build, initialEnvironment);
+        if (vaultSecrets == null || vaultSecrets.isEmpty()) {
+            return;
         }
+
+        provideEnvironmentVariablesFromVault(context, build, initialEnvironment);
     }
 
 
@@ -93,10 +90,12 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         this.vaultAccessor = vaultAccessor;
     }
 
-    protected void provideEnvironmentVariablesFromVault(Context context, Run build,
+    protected void provideEnvironmentVariablesFromVault(Context context, Run<?, ?> run,
         EnvVars envVars) {
+        ItemGroup<?> itemGroup = run != null ? run.getParent().getParent() : null;
+
         Map<String, String> overrides = VaultAccessor
-            .retrieveVaultSecrets(build, logger, envVars, vaultAccessor,
+            .retrieveVaultSecrets(itemGroup, logger, envVars, vaultAccessor,
                 getConfiguration(), getVaultSecrets());
 
         for (Map.Entry<String, String> secret : overrides.entrySet()) {
@@ -105,27 +104,15 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
         }
     }
 
-    private void pullAndMergeConfiguration(Run<?, ?> build) {
-        for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
-            if (configuration != null) {
-                configuration = configuration.mergeWithParent(resolver.forJob(build.getParent()));
-            } else {
-                configuration = resolver.forJob(build.getParent());
-            }
-        }
-        if (configuration == null) {
-            throw new VaultPluginException(
-                "No configuration found - please configure the VaultPlugin.");
-        }
-        configuration.fixDefaults();
-    }
-
     @Override
-    public ConsoleLogFilter createLoggerDecorator(
-        @NonNull final Run<?, ?> build) {
+    public ConsoleLogFilter createLoggerDecorator(@NonNull final Run<?, ?> build) {
         return new MaskingConsoleLogFilter(build.getCharset().name(), valuesToMask);
     }
 
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
+    }
 
     /**
      * Descriptor for {@link VaultBuildWrapper}. Used as a singleton. The class is marked as public

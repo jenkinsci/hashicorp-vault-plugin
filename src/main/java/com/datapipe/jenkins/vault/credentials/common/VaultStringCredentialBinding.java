@@ -5,6 +5,7 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.util.Secret;
 import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,7 +30,7 @@ public class VaultStringCredentialBinding extends Binding<VaultStringCredential>
                                                   @Nullable FilePath workspace,
                                                   @Nullable Launcher launcher,
                                                   @Nonnull TaskListener listener) throws IOException, InterruptedException {
-        return new SingleEnvironment(getCredentials(build).getSecret().getPlainText());
+        return new SingleEnvironment(Secret.toString(getCredentials(build).getSecret()));
     }
 
     @Symbol("vaultString")

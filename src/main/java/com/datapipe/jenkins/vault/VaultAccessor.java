@@ -9,25 +9,21 @@ import com.bettercloud.vault.json.JsonValue;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.response.VaultResponse;
 import com.bettercloud.vault.rest.RestResponse;
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
-import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
+import com.datapipe.jenkins.vault.credentials.common.VaultHelper;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import hudson.EnvVars;
 import hudson.ExtensionList;
 import hudson.Util;
-import hudson.model.Run;
-import hudson.security.ACL;
+import hudson.model.Item;
+import hudson.model.ItemGroup;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,10 +126,10 @@ public class VaultAccessor implements Serializable {
         }
     }
 
-    public static Map<String, String> retrieveVaultSecrets(Run<?,?> run, PrintStream logger, EnvVars envVars, VaultAccessor vaultAccessor, VaultConfiguration initialConfiguration, List<VaultSecret> vaultSecrets) {
+    public static Map<String, String> retrieveVaultSecrets(ItemGroup<? extends Item> itemGroup, PrintStream logger, EnvVars envVars, VaultAccessor vaultAccessor, VaultConfiguration initialConfiguration, List<VaultSecret> vaultSecrets) {
         Map<String, String> overrides = new HashMap<>();
 
-        VaultConfiguration config = pullAndMergeConfiguration(run, initialConfiguration);
+        VaultConfiguration config = pullAndMergeConfiguration(itemGroup, initialConfiguration);
         String url = config.getVaultUrl();
 
         if (StringUtils.isBlank(url)) {
@@ -144,7 +140,7 @@ public class VaultAccessor implements Serializable {
         VaultConfig vaultConfig = config.getVaultConfig();
         VaultCredential credential = config.getVaultCredential();
         if (credential == null) {
-            credential = retrieveVaultCredentials(run, config);
+            credential = retrieveVaultCredentials(itemGroup, config.getVaultCredentialId());
         }
 
         String prefixPath = StringUtils.isBlank(config.getPrefixPath())
@@ -196,24 +192,13 @@ public class VaultAccessor implements Serializable {
         return overrides;
     }
 
-    public static VaultCredential retrieveVaultCredentials(Run build, VaultConfiguration config) {
+    public static VaultCredential retrieveVaultCredentials(ItemGroup<? extends Item> itemGroup, String credentialId) {
         if (Jenkins.getInstanceOrNull() != null) {
-            String id = config.getVaultCredentialId();
-            if (StringUtils.isBlank(id)) {
+            if (StringUtils.isBlank(credentialId)) {
                 throw new VaultPluginException(
                     "The credential id was not configured - please specify the credentials to use.");
             }
-            List<VaultCredential> credentials = CredentialsProvider
-                .lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM,
-                    Collections.emptyList());
-            VaultCredential credential = CredentialsMatchers
-                .firstOrNull(credentials, new IdMatcher(id));
-
-            if (credential == null) {
-                throw new CredentialsUnavailableException(id);
-            }
-
-            return credential;
+            return VaultHelper.retrieveVaultCredentials(credentialId, itemGroup);
         }
 
         return null;
@@ -253,15 +238,15 @@ public class VaultAccessor implements Serializable {
         return false;
     }
 
-    public static VaultConfiguration pullAndMergeConfiguration(Run<?, ?> build,
+    public static VaultConfiguration pullAndMergeConfiguration(ItemGroup<? extends Item> itemGroup,
         VaultConfiguration buildConfiguration) {
         VaultConfiguration configuration = buildConfiguration;
         for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
             if (configuration != null) {
                 configuration = configuration
-                    .mergeWithParent(resolver.forJob(build.getParent()));
+                    .mergeWithParent(resolver.getVaultConfig(itemGroup));
             } else {
-                configuration = resolver.forJob(build.getParent());
+                configuration = resolver.getVaultConfig(itemGroup);
             }
         }
         if (configuration == null) {

@@ -10,6 +10,7 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.util.Secret;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,8 +50,8 @@ public class VaultBindingStepWithMockAccessor extends VaultBindingStep {
             @Override
             public void setCredential(VaultCredential credential) {
                 VaultAppRoleCredential appRoleCredential = (VaultAppRoleCredential) credential;
-                if (!appRoleCredential.getRoleId().equals("role-id-global-2") || !appRoleCredential
-                    .getSecretId().getPlainText().equals("secret-id-global-2")) {
+                if (!appRoleCredential.getRoleId().equals("role-id-global-2") || !Secret.toString(appRoleCredential
+                    .getSecretId()).equals("secret-id-global-2")) {
                     throw new AssertionError(
                         "role-id " + appRoleCredential.getRoleId() + " or secret-id "
                             + appRoleCredential.getSecretId()

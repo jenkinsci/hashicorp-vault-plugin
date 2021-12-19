@@ -8,6 +8,7 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.util.function.Supplier;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -28,11 +29,21 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
 
     private String usernameKey;
     private String passwordKey;
+    private final Supplier<Secret> username;
+    private final Supplier<Secret> password;
+
+    public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id, String description, Supplier<Secret> usernameSupplier, Supplier<Secret> passwordsupplier) {
+        super(scope, id, description);
+        username = usernameSupplier;
+        password = passwordsupplier;
+    }
 
     @DataBoundConstructor
     public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        username = () -> Secret.fromString(getVaultSecretKeyValue(getUsernameKey()));
+        password = () -> Secret.fromString(getVaultSecretKeyValue(getPasswordKey()));
     }
 
     @NonNull
@@ -58,16 +69,13 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
     @NonNull
     @Override
     public String getUsername() {
-        String secretKey = defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY);
-        return getVaultSecretKeyValue(secretKey);
+        return Secret.toString(username.get());
     }
 
     @NonNull
     @Override
     public Secret getPassword() {
-        String secretKey = defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY);
-        String secret = getVaultSecretKeyValue(secretKey);
-        return Secret.fromString(secret);
+        return password.get();
     }
 
     @Extension
