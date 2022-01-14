@@ -58,7 +58,6 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
         }
 
         public FormValidation doTestConnection(
-            @AncestorInPath ItemGroup<Item> context,
             @QueryParameter("path") String path,
             @QueryParameter("prefixPath") String prefixPath,
             @QueryParameter("namespace") String namespace,
@@ -68,7 +67,7 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
             String okMessage = "Successfully retrieved secret " + path;
 
             try {
-                getVaultSecret(path, prefixPath, namespace, engineVersion, context);
+                getVaultSecret(path, prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }
