@@ -7,7 +7,6 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.model.Item;
-import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -36,13 +35,18 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
     VaultCertificateCredentials {
 
     private static final Logger LOGGER = Logger.getLogger(VaultCertificateCredentialsImpl.class.getName());
+
+    public static final String DEFAULT_KEYSTORE_KEY = "keystore";
+    public static final String DEFAULT_PASSWORD_KEY = "password";
+
     private static final long serialVersionUID = 1L;
 
     private String keyStoreKey;
     private String passwordKey;
 
     @DataBoundConstructor
-    public VaultCertificateCredentialsImpl(CredentialsScope scope, String id, String description) {
+    public VaultCertificateCredentialsImpl(CredentialsScope scope, String id,
+        String description) {
         super(scope, id, description);
     }
 
@@ -53,7 +57,7 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
 
     @DataBoundSetter
     public void setKeyStoreKey(String keyStoreKey) {
-        this.keyStoreKey = defaultIfBlank(keyStoreKey, DescriptorImpl.DEFAULT_KEYSTORE_KEY);
+        this.keyStoreKey = defaultIfBlank(keyStoreKey, DEFAULT_KEYSTORE_KEY);
     }
 
     @NonNull
@@ -63,13 +67,13 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
 
     @DataBoundSetter
     public void setPasswordKey(String passwordKey) {
-        this.passwordKey = defaultIfBlank(passwordKey, DescriptorImpl.DEFAULT_PASSWORD_KEY);
+        this.passwordKey = defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY);
     }
 
     @NonNull
     @Override
     public KeyStore getKeyStore() {
-        String secretKey = defaultIfBlank(keyStoreKey, DescriptorImpl.DEFAULT_KEYSTORE_KEY);
+        String secretKey = defaultIfBlank(keyStoreKey, DEFAULT_KEYSTORE_KEY);
         String base64KeyStore = getVaultSecretKeyValue(secretKey);
 
         KeyStore keyStore;
@@ -92,7 +96,7 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
     @NonNull
     @Override
     public Secret getPassword() {
-        String secretKey = defaultIfBlank(passwordKey, DescriptorImpl.DEFAULT_PASSWORD_KEY);
+        String secretKey = defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY);
         String secret = getVaultSecretKeyValue(secretKey);
         return Secret.fromString(secret);
     }
@@ -128,8 +132,6 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
 
     @Extension
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
-        public static final String DEFAULT_KEYSTORE_KEY = "keystore";
-        public static final String DEFAULT_PASSWORD_KEY = "password";
 
         @Override
         public String getDisplayName() {
@@ -137,22 +139,21 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
         }
 
         public FormValidation doTestConnection(
-                                    @AncestorInPath ItemGroup<Item> context,
-                                    @QueryParameter("path") String path,
-                                    @QueryParameter("keyStoreKey") String keyStoreKey,
-                                    @QueryParameter("passwordKey") String passwordKey,
-                                    @QueryParameter("prefixPath") String prefixPath,
-                                    @QueryParameter("namespace") String namespace,
-                                    @QueryParameter("engineVersion") Integer engineVersion) {
+            @QueryParameter("path") String path,
+            @QueryParameter("keyStoreKey") String keyStoreKey,
+            @QueryParameter("passwordKey") String passwordKey,
+            @QueryParameter("prefixPath") String prefixPath,
+            @QueryParameter("namespace") String namespace,
+            @QueryParameter("engineVersion") Integer engineVersion) {
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(keyStoreKey, DEFAULT_KEYSTORE_KEY), prefixPath, namespace, engineVersion, context);
+                getVaultSecretKey(path, defaultIfBlank(keyStoreKey, DEFAULT_KEYSTORE_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve keyStore key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion, context);
+                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve password key: \n" + e);
             }

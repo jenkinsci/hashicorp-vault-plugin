@@ -7,16 +7,13 @@ import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.VaultAccessor;
-import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
+import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import hudson.ExtensionList;
 import hudson.Util;
-import hudson.model.Item;
-import hudson.model.ItemGroup;
 import hudson.remoting.Channel;
 import hudson.security.ACL;
 import java.io.IOException;
@@ -25,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 import jenkins.security.SlaveToMasterCallable;
 import org.apache.commons.lang.StringUtils;
 
@@ -32,14 +30,10 @@ public class VaultHelper {
 
     private static final Logger LOGGER = Logger.getLogger(VaultHelper.class.getName());
 
-    static Map<String, String> getVaultSecret(@NonNull String secretPath,
-                                              @CheckForNull String prefixPath,
-                                              @CheckForNull String namespace,
-                                              @CheckForNull Integer engineVersion,
-                                              @NonNull ItemGroup<Item> context) {
+    static Map<String, String> getVaultSecret(@NonNull String secretPath, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
         try {
             Map<String, String> values;
-            SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion, context);
+            SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion);
 
             Channel channel = Channel.current();
             if (channel == null) {
@@ -54,14 +48,9 @@ public class VaultHelper {
         }
     }
 
-    static String getVaultSecretKey(@NonNull String secretPath,
-                                    @NonNull String secretKey,
-                                    @CheckForNull String prefixPath,
-                                    @CheckForNull String namespace,
-                                    @CheckForNull Integer engineVersion,
-                                    @NonNull ItemGroup<Item> context) {
+    static String getVaultSecretKey(@NonNull String secretPath, @NonNull String secretKey, @CheckForNull String prefixPath, @CheckForNull String namespace, @CheckForNull Integer engineVersion) {
         try {
-            Map<String, String> values = getVaultSecret(secretPath, prefixPath, namespace, engineVersion, context);
+            Map<String, String> values = getVaultSecret(secretPath, prefixPath, namespace, engineVersion);
 
             if (!values.containsKey(secretKey)) {
                 String message = String.format(
@@ -87,32 +76,19 @@ public class VaultHelper {
         private final String namespace;
         @CheckForNull
         private Integer engineVersion;
-        @NonNull
-        private transient ItemGroup<Item> credentialContext;
 
-        SecretRetrieve(String secretPath, String prefixPath, String namespace, Integer engineVersion, @NonNull ItemGroup<Item> credentialContext) {
+        SecretRetrieve(String secretPath, String prefixPath, String namespace, Integer engineVersion) {
             this.secretPath = secretPath;
             this.prefixPath = Util.fixEmptyAndTrim(prefixPath);
             this.namespace = Util.fixEmptyAndTrim(namespace);
             this.engineVersion = engineVersion;
-            this.credentialContext = credentialContext;
         }
 
         @Override
         public Map<String, String> call() throws IOException {
-            if (credentialContext == null) {
-                throw new IllegalStateException("The vault credential need a context");
-            }
+            GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
 
-            VaultConfiguration configuration = null;
-            for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
-                if (configuration != null) {
-                    configuration = configuration
-                        .mergeWithParent(resolver.getVaultConfig(credentialContext));
-                } else {
-                    configuration = resolver.getVaultConfig(credentialContext);
-                }
-            }
+            VaultConfiguration configuration = globalConfig.getConfiguration();
 
             if (configuration == null) {
                 throw new IllegalStateException("Vault plugin has not been configured.");
@@ -140,7 +116,7 @@ public class VaultHelper {
                 }
 
                 VaultCredential vaultCredential = configuration.getVaultCredential();
-                if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId(), credentialContext);
+                if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId());
 
                 VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
                 vaultAccessor.setMaxRetries(configuration.getMaxRetries());
@@ -148,6 +124,8 @@ public class VaultHelper {
                 vaultAccessor.init();
 
                 return vaultAccessor.read(secretPath, engineVersion).getData();
+
+
             } catch (VaultPluginException vpe) {
               throw vpe;
             } catch (Exception e) {
@@ -156,7 +134,7 @@ public class VaultHelper {
         }
     }
 
-    private static VaultCredential retrieveVaultCredentials(String id, ItemGroup<Item> itemGroup) {
+    private static VaultCredential retrieveVaultCredentials(String id) {
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException(
                 "The credential id was not configured - please specify the credentials to use.");
@@ -165,7 +143,7 @@ public class VaultHelper {
         }
         List<VaultCredential> credentials = CredentialsProvider
             .lookupCredentials(VaultCredential.class,
-                itemGroup,
+                Jenkins.get(),
                 ACL.SYSTEM,
                 Collections.<DomainRequirement>emptyList());
         VaultCredential credential = CredentialsMatchers

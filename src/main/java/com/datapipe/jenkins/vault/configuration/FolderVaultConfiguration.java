@@ -37,20 +37,17 @@ public class FolderVaultConfiguration extends AbstractFolderProperty<AbstractFol
         @NonNull
         @Override
         public VaultConfiguration forJob(@NonNull Item job) {
-            return getVaultConfig(job.getParent());
-        }
-
-        @Override
-        public VaultConfiguration getVaultConfig(@NonNull ItemGroup itemGroup) {
             VaultConfiguration resultingConfig = null;
-            for (ItemGroup g = itemGroup; g instanceof AbstractFolder; g = ((AbstractFolder) g).getParent()) {
+            for (ItemGroup g = job.getParent(); g instanceof AbstractFolder;
+                g = ((AbstractFolder) g).getParent()) {
                 FolderVaultConfiguration folderProperty = ((AbstractFolder<?>) g).getProperties()
-                                                                                 .get(FolderVaultConfiguration.class);
+                    .get(FolderVaultConfiguration.class);
                 if (folderProperty == null) {
                     continue;
                 }
                 if (resultingConfig != null) {
-                    resultingConfig = resultingConfig.mergeWithParent(folderProperty.getConfiguration());
+                    resultingConfig = resultingConfig
+                        .mergeWithParent(folderProperty.getConfiguration());
                 } else {
                     resultingConfig = folderProperty.getConfiguration();
                 }

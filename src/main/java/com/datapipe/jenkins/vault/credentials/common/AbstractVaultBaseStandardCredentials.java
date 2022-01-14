@@ -6,7 +6,6 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
-import hudson.model.ItemGroup;
 import java.util.Map;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -23,7 +22,6 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
     private String prefixPath;
     private String namespace;
     private Integer engineVersion;
-    private ItemGroup context;
 
     AbstractVaultBaseStandardCredentials(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
@@ -69,14 +67,6 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
         this.engineVersion = engineVersion;
     }
 
-    public void setContext(@NonNull ItemGroup context) {
-        this.context = context;
-    }
-
-    public ItemGroup getContext() {
-        return this.context;
-    }
-
     /**
      * Look up secret key value.
      * @param key secret key name
@@ -84,7 +74,7 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
      */
     @NonNull
     protected String getVaultSecretKeyValue(String key) {
-        String s = getVaultSecretKey(this.path, key, this.prefixPath, this.namespace, this.engineVersion, this.context);
+        String s = getVaultSecretKey(this.path, key, this.prefixPath, this.namespace, this.engineVersion);
         if (s == null) {
             throw new VaultPluginException("Fetching from Vault failed for key '" + key + "'");
         }
@@ -97,7 +87,7 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
      */
     @NonNull
     protected Map<String, String> getVaultSecretValue() {
-        Map<String, String> s = getVaultSecret(this.path, this.prefixPath, this.namespace, this.engineVersion, this.context);
+        Map<String, String> s = getVaultSecret(this.path, this.prefixPath, this.namespace, this.engineVersion);
         if (s == null) {
             throw new VaultPluginException("Fetching from Vault failed for secret '" + this.path + "'");
         }
