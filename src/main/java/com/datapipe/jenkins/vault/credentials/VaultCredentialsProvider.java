@@ -60,13 +60,6 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                                                     domainRequirements,
                                                     matcher
                                                 );
-
-                if (type != VaultCredential.class) {
-                    for (C c : folderCreds) {
-                        ((AbstractVaultBaseStandardCredentials)c).setContext(g);
-                    }
-                }
-
                 creds.addAll(folderCreds);
             }
 
@@ -76,11 +69,6 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                                                 domainRequirements,
                                                 matcher
                                             );
-            if (type != VaultCredential.class) {
-                for (C c : globalCreds) {
-                    ((AbstractVaultBaseStandardCredentials)c).setContext(Jenkins.get());
-                }
-            }
             creds.addAll(globalCreds);
         }
 

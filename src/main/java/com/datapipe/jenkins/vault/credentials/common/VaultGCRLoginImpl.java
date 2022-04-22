@@ -8,7 +8,7 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
-import java.util.Map;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
@@ -24,10 +24,19 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
 
     private final static Logger LOGGER = Logger.getLogger(VaultGCRLoginImpl.class.getName());
 
+    private final Supplier<Secret> password;
+
+    public VaultGCRLoginImpl(CredentialsScope scope, String id,
+        String description, Supplier<Secret> passwordSupplier) {
+        super(scope, id, description);
+        password = passwordSupplier;
+    }
+
     @DataBoundConstructor
     public VaultGCRLoginImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        password = null;
     }
 
     @Override
@@ -38,9 +47,10 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
     @NonNull
     @Override
     public Secret getPassword() {
-        Map<String, String> s = getVaultSecretValue();
-        String key = JSONObject.fromObject(s).toString();
-        return Secret.fromString(key);
+        if (password != null) {
+            return password.get();
+        }
+        return Secret.fromString(JSONObject.fromObject(getVaultSecretValue()).toString());
     }
 
     @NonNull
@@ -68,7 +78,7 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
             String okMessage = "Successfully retrieved secret " + path;
 
             try {
-                getVaultSecret(path, prefixPath, namespace, engineVersion, context);
+                getVaultSecret(path, prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
             }

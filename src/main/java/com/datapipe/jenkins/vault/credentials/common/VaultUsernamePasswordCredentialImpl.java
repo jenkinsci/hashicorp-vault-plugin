@@ -8,6 +8,7 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.util.function.Supplier;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -28,11 +29,21 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
 
     private String usernameKey;
     private String passwordKey;
+    private final Supplier<Secret> username;
+    private final Supplier<Secret> password;
+
+    public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id, String description, Supplier<Secret> usernameSupplier, Supplier<Secret> passwordsupplier) {
+        super(scope, id, description);
+        username = usernameSupplier;
+        password = passwordsupplier;
+    }
 
     @DataBoundConstructor
     public VaultUsernamePasswordCredentialImpl(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
+        username = null;
+        password = null;
     }
 
     @NonNull
@@ -58,16 +69,19 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
     @NonNull
     @Override
     public String getUsername() {
-        String secretKey = defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY);
-        return getVaultSecretKeyValue(secretKey);
+        if (username != null) {
+            return Secret.toString(username.get());
+        }
+        return Secret.toString(Secret.fromString(getVaultSecretKeyValue(getUsernameKey())));
     }
 
     @NonNull
     @Override
     public Secret getPassword() {
-        String secretKey = defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY);
-        String secret = getVaultSecretKeyValue(secretKey);
-        return Secret.fromString(secret);
+        if (password != null) {
+            return password.get();
+        }
+        return Secret.fromString(getVaultSecretKeyValue(getPasswordKey()));
     }
 
     @Extension
@@ -89,13 +103,13 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
 
             String username = null;
             try {
-                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion, context);
+                username = getVaultSecretKey(path, defaultIfBlank(usernameKey, DEFAULT_USERNAME_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve username key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion, context);
+                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve password key: \n" + e);
             }

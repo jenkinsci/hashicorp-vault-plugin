@@ -102,14 +102,14 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
 
             if(useKey) {
                 try {
-                    getVaultSecretKey(path, vaultKey, prefixPath, namespace, engineVersion, context);
+                    getVaultSecretKey(path, vaultKey, prefixPath, namespace, engineVersion);
                 } catch (Exception e) {
                     return FormValidation.error("FAILED to retrieve key '" + vaultKey + "' Vault secret: \n" + e);
                 }
                 okMessage += " with key " + vaultKey;
             } else {
                 try {
-                    getVaultSecret(path, prefixPath, namespace, engineVersion, context);
+                    getVaultSecret(path, prefixPath, namespace, engineVersion);
                 } catch (Exception e) {
                     return FormValidation.error("FAILED to retrieve Vault secret: \n" + e);
                 }

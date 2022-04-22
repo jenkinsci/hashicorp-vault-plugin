@@ -18,6 +18,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Base64;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -40,10 +41,20 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
 
     private String keyStoreKey;
     private String passwordKey;
+    private Supplier<Secret> keystore;
+    private Supplier<Secret> password;
+
+    public VaultCertificateCredentialsImpl(CredentialsScope scope, String id, String description, Supplier<Secret> keystore, Supplier<Secret> password) {
+        super(scope, id, description);
+        this.keystore = keystore;
+        this.password = password;
+    }
 
     @DataBoundConstructor
     public VaultCertificateCredentialsImpl(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
+        keystore = null;
+        password = null;
     }
 
     @NonNull
@@ -66,11 +77,17 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
         this.passwordKey = defaultIfBlank(passwordKey, DescriptorImpl.DEFAULT_PASSWORD_KEY);
     }
 
+    public Secret getKeyStoreBase64() {
+        if (keystore != null) {
+            return keystore.get();
+        }
+        return Secret.fromString(getVaultSecretKeyValue(defaultIfBlank(getKeyStoreKeyKey(), DescriptorImpl.DEFAULT_KEYSTORE_KEY)));
+    }
+
     @NonNull
     @Override
     public KeyStore getKeyStore() {
-        String secretKey = defaultIfBlank(keyStoreKey, DescriptorImpl.DEFAULT_KEYSTORE_KEY);
-        String base64KeyStore = getVaultSecretKeyValue(secretKey);
+        String base64KeyStore = Secret.toString(getKeyStoreBase64());
 
         KeyStore keyStore;
         try {
@@ -92,9 +109,10 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
     @NonNull
     @Override
     public Secret getPassword() {
-        String secretKey = defaultIfBlank(passwordKey, DescriptorImpl.DEFAULT_PASSWORD_KEY);
-        String secret = getVaultSecretKeyValue(secretKey);
-        return Secret.fromString(secret);
+        if (password != null) {
+            return password.get();
+        }
+        return Secret.fromString(getVaultSecretKeyValue(defaultIfBlank(getPasswordKey(), DescriptorImpl.DEFAULT_PASSWORD_KEY)));
     }
 
     @Override
@@ -146,13 +164,13 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
                                     @QueryParameter("engineVersion") Integer engineVersion) {
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(keyStoreKey, DEFAULT_KEYSTORE_KEY), prefixPath, namespace, engineVersion, context);
+                getVaultSecretKey(path, defaultIfBlank(keyStoreKey, DEFAULT_KEYSTORE_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve keyStore key: \n" + e);
             }
 
             try {
-                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion, context);
+                getVaultSecretKey(path, defaultIfBlank(passwordKey, DEFAULT_PASSWORD_KEY), prefixPath, namespace, engineVersion);
             } catch (Exception e) {
                 return FormValidation.error("FAILED to retrieve password key: \n" + e);
             }
