@@ -99,12 +99,17 @@ public class VaultHelper {
 
 
             VaultConfiguration configuration = null;
+            ItemGroup jenkins = Jenkins.getInstanceOrNull();
+            if (jenkins == null) {
+                throw new IllegalStateException("Vault plugin has no access to jenkins configuration.");
+            }
+
             for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
                 if (configuration != null) {
                     configuration = configuration
-                    .mergeWithParent(resolver.getVaultConfig((ItemGroup)Jenkins.getInstanceOrNull()));
+                    .mergeWithParent(resolver.getVaultConfig(jenkins));
                 } else {
-                    configuration = resolver.getVaultConfig((ItemGroup)Jenkins.getInstanceOrNull());
+                    configuration = resolver.getVaultConfig(jenkins);
                 }
             }
 
