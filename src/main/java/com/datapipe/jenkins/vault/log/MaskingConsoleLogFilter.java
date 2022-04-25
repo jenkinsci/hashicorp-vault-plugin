@@ -1,17 +1,14 @@
 package com.datapipe.jenkins.vault.log;
 
 import hudson.console.ConsoleLogFilter;
-import hudson.console.LineTransformationOutputStream;
 import hudson.model.Run;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import org.apache.commons.lang.StringUtils;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatterns;
 
 /*The logic in this class is borrowed from https://github.com/jenkinsci/credentials-binding-plugin/*/
 public class MaskingConsoleLogFilter extends ConsoleLogFilter
@@ -20,7 +17,7 @@ public class MaskingConsoleLogFilter extends ConsoleLogFilter
     private static final long serialVersionUID = 1L;
 
     private final String charsetName;
-    private List<String> valuesToMask;
+    private final List<String> valuesToMask;
 
 
     public MaskingConsoleLogFilter(final String charsetName,
@@ -32,54 +29,23 @@ public class MaskingConsoleLogFilter extends ConsoleLogFilter
     @Override
     public OutputStream decorateLogger(Run run,
         final OutputStream logger) throws IOException, InterruptedException {
-        return new LineTransformationOutputStream() {
-            Pattern p;
-
-            @Override
-            protected void eol(byte[] b, int len) throws IOException {
-                p = Pattern.compile(getPatternStringForSecrets(valuesToMask));
-                if (StringUtils.isBlank(p.pattern())) {
-                    logger.write(b, 0, len);
-                    return;
-                }
-                Matcher m = p.matcher(new String(b, 0, len, charsetName));
-                if (m.find()) {
-                    logger.write(m.replaceAll("****").getBytes(charsetName));
+        return new SecretPatterns.MaskingOutputStream(logger,
+            () -> {
+                // Only return a non-null pattern once there are secrets to mask. When a non-null
+                // pattern is returned it is cached and not supplied again. In cases like
+                // VaultBuildWrapper the secrets are added to the "valuesToMasker" list AFTER
+                // construction AND AFTER the decorateLogger method is initially called, therefore
+                // the Pattern should only be returned once the secrets have been made available.
+                // Not to mention it is also a slight optimization when there is are no secrets
+                // to mask.
+                List<String> values = valuesToMask.stream().filter(Objects::nonNull).collect(Collectors.toList());
+                if (!values.isEmpty()) {
+                    return SecretPatterns.getAggregateSecretPattern(values);
                 } else {
-                    // Avoid byte → char → byte conversion unless we are actually doing something.
-                    logger.write(b, 0, len);
+                    return null;
                 }
-            }
-        };
-    }
-
-    /**
-     * Utility method for turning a collection of secret strings into a single {@link String} for
-     * pattern compilation.
-     *
-     * @param secrets A collection of secret strings
-     * @return A {@link String} generated from that collection.
-     */
-    public static String getPatternStringForSecrets(Collection<String> secrets) {
-        if (secrets == null) {
-            return "";
-        }
-        StringBuilder b = new StringBuilder();
-        List<String> sortedByLength = new ArrayList<>(secrets.size());
-        for (String secret : secrets) {
-            if (secret != null) {
-                sortedByLength.add(secret);
-            }
-        }
-        sortedByLength.sort((o1, o2) -> o2.length() - o1.length());
-
-        for (String secret : sortedByLength) {
-            if (b.length() > 0) {
-                b.append('|');
-            }
-            b.append(Pattern.quote(secret));
-        }
-        return b.toString();
+            },
+            charsetName);
     }
 
 }
