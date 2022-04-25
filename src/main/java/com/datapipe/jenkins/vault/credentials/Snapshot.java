@@ -18,3 +18,4 @@ public class Snapshot<T> implements Supplier<T>, Serializable {
         return value;
     }
 }
+

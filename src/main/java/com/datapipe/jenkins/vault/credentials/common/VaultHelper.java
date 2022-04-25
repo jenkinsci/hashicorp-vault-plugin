@@ -15,7 +15,6 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.ExtensionList;
 import hudson.Util;
-import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.remoting.Channel;
 import hudson.security.ACL;

@@ -6,7 +6,6 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
-import hudson.model.ItemGroup;
 import java.util.Map;
 import org.kohsuke.stapler.DataBoundSetter;
 

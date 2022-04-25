@@ -18,7 +18,6 @@ import hudson.security.ACL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 
 /**

@@ -7,3 +7,4 @@ public class SecretSnapshot extends Snapshot<Secret> {
         super(value);
     }
 }
+
