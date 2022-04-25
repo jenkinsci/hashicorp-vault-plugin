@@ -36,20 +36,59 @@ public class VaultHelper {
                                               @CheckForNull String prefixPath,
                                               @CheckForNull String namespace,
                                               @CheckForNull Integer engineVersion) {
-        try {
-            Map<String, String> values;
-            SecretRetrieve retrieve = new SecretRetrieve(secretPath, prefixPath, namespace, engineVersion);
+        VaultConfiguration configuration = null;
+        ItemGroup jenkins = Jenkins.get();
 
-            Channel channel = Channel.current();
-            if (channel == null) {
-                values = retrieve.call();
+        for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
+            if (configuration != null) {
+                configuration = configuration
+                    .mergeWithParent(resolver.getVaultConfig(jenkins));
             } else {
-                values = channel.call(retrieve);
+                configuration = resolver.getVaultConfig(jenkins);
+            }
+        }
+
+        if (configuration == null) {
+            throw new IllegalStateException("Vault plugin has not been configured.");
+        }
+
+        configuration.fixDefaults();
+        if (engineVersion == null) {
+            engineVersion = configuration.getEngineVersion();
+        }
+
+        String msg = String.format(
+            "Retrieving vault secret path=%s engineVersion=%s",
+            secretPath, engineVersion);
+        LOGGER.info(msg);
+
+        try {
+            VaultConfig vaultConfig = configuration.getVaultConfig();
+
+            if (prefixPath != null) {
+                vaultConfig.prefixPath(prefixPath);
             }
 
-            return values;
-        } catch (IOException | InterruptedException e) {
-            throw new IllegalStateException(e);
+            if (namespace != null) {
+                vaultConfig.nameSpace(namespace);
+            }
+
+            VaultCredential vaultCredential = configuration.getVaultCredential();
+            if (vaultCredential == null)
+                vaultCredential = retrieveVaultCredentials(
+                    configuration.getVaultCredentialId());
+
+            VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
+            vaultAccessor.setMaxRetries(configuration.getMaxRetries());
+            vaultAccessor.setRetryIntervalMilliseconds(
+                configuration.getRetryIntervalMilliseconds());
+            vaultAccessor.init();
+
+            return vaultAccessor.read(secretPath, engineVersion).getData();
+        } catch (VaultPluginException vpe) {
+            throw vpe;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -71,86 +110,6 @@ public class VaultHelper {
             return values.get(secretKey);
         } catch (IllegalStateException e) {
             throw new IllegalStateException(e);
-        }
-    }
-
-    private static class SecretRetrieve extends SlaveToMasterCallable<Map<String, String>, IOException> {
-
-        private static final long serialVersionUID = 1L;
-
-        private final String secretPath;
-        @CheckForNull
-        private final String prefixPath;
-        @CheckForNull
-        private final String namespace;
-        @CheckForNull
-        private Integer engineVersion;
-
-        SecretRetrieve(String secretPath, String prefixPath, String namespace, Integer engineVersion) {
-            this.secretPath = secretPath;
-            this.prefixPath = Util.fixEmptyAndTrim(prefixPath);
-            this.namespace = Util.fixEmptyAndTrim(namespace);
-            this.engineVersion = engineVersion;
-        }
-
-        @Override
-        public Map<String, String> call() throws IOException {
-
-
-            VaultConfiguration configuration = null;
-            ItemGroup jenkins = Jenkins.getInstanceOrNull();
-            if (jenkins == null) {
-                throw new IllegalStateException("Vault plugin has no access to jenkins configuration.");
-            }
-
-            for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
-                if (configuration != null) {
-                    configuration = configuration
-                    .mergeWithParent(resolver.getVaultConfig(jenkins));
-                } else {
-                    configuration = resolver.getVaultConfig(jenkins);
-                }
-            }
-
-            if (configuration == null) {
-                throw new IllegalStateException("Vault plugin has not been configured.");
-            }
-
-            configuration.fixDefaults();
-            if (engineVersion == null) {
-                engineVersion = configuration.getEngineVersion();
-            }
-
-            String msg = String.format(
-                "Retrieving vault secret path=%s engineVersion=%s",
-                secretPath, engineVersion);
-            LOGGER.info(msg);
-
-            try {
-                VaultConfig vaultConfig = configuration.getVaultConfig();
-
-                if (prefixPath != null) {
-                    vaultConfig.prefixPath(prefixPath);
-                }
-
-                if (namespace != null) {
-                    vaultConfig.nameSpace(namespace);
-                }
-
-                VaultCredential vaultCredential = configuration.getVaultCredential();
-                if (vaultCredential == null) vaultCredential = retrieveVaultCredentials(configuration.getVaultCredentialId());
-
-                VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
-                vaultAccessor.setMaxRetries(configuration.getMaxRetries());
-                vaultAccessor.setRetryIntervalMilliseconds(configuration.getRetryIntervalMilliseconds());
-                vaultAccessor.init();
-
-                return vaultAccessor.read(secretPath, engineVersion).getData();
-            } catch (VaultPluginException vpe) {
-              throw vpe;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 
