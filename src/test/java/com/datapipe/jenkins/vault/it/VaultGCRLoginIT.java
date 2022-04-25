@@ -12,7 +12,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
@@ -33,31 +32,28 @@ public class VaultGCRLoginIT {
         final String username = "_json_token";
         final String password = "skywalker";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultUsernamePasswordCredential up = mock(
-                    VaultUsernamePasswordCredentialImpl.class);
-                when(up.getId()).thenReturn(credentialsId);
-                when(up.getUsername()).thenReturn(username);
-                when(up.getPassword()).thenReturn(Secret.fromString(password));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), up);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + " withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '"
-                    + credentialsId
-                    + "', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) { "
-                    + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSWORD") + " > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(password, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
-                assertEquals(username + ":" + password, script.readToString().trim());
-            }
+        story.then(r -> {
+            VaultUsernamePasswordCredential up = mock(
+                VaultUsernamePasswordCredentialImpl.class);
+            when(up.getId()).thenReturn(credentialsId);
+            when(up.getUsername()).thenReturn(username);
+            when(up.getPassword()).thenReturn(Secret.fromString(password));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), up);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + " withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '"
+                + credentialsId
+                + "', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) { "
+                + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSWORD") + " > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(password, b);
+            FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
+            assertEquals(username + ":" + password, script.readToString().trim());
         });
     }
 
@@ -66,31 +62,28 @@ public class VaultGCRLoginIT {
         final String credentialsId = "cloudfoundry";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultUsernamePasswordCredentialImpl c = new VaultUsernamePasswordCredentialImpl(
-                    null, credentialsId, "Test Credentials");
-                c.setPath("secret/cloudfoundry");
-                c.setUsernameKey(null);
-                c.setPasswordKey(null);
-                c.setEngineVersion(1);
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + " withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '"
-                    + credentialsId
-                    + "', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) { "
-                    + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSWORD") + " > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-                story.j.assertLogContains("credentials", b);
-            }
+        story.then(r -> {
+            VaultUsernamePasswordCredentialImpl c = new VaultUsernamePasswordCredentialImpl(
+                null, credentialsId, "Test Credentials");
+            c.setPath("secret/cloudfoundry");
+            c.setUsernameKey(null);
+            c.setPasswordKey(null);
+            c.setEngineVersion(1);
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), c);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + " withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '"
+                + credentialsId
+                + "', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) { "
+                + "      " + getShellString() + " 'echo " + getVariable("USERNAME") + ":" + getVariable("PASSWORD") + " > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
+            story.j.assertLogContains("credentials", b);
         });
     }
 }

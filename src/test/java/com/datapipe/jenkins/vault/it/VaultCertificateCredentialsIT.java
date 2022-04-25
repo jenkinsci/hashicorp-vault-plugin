@@ -16,7 +16,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getCopyString;
@@ -40,33 +39,30 @@ public class VaultCertificateCredentialsIT {
         final String password = "skywalker";
         final KeyStore keyStore = loadKeyStore(loadKeyStoreAsInputStream(), password);
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultCertificateCredentials up = mock(
-                    VaultCertificateCredentialsImpl.class);
-                when(up.getId()).thenReturn(credentialsId);
-                when(up.getKeyStore()).thenReturn(keyStore);
-                when(up.getPassword()).thenReturn(Secret.fromString(password));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), up);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + " withCredentials([certificate(credentialsId: '" + credentialsId + "', passwordVariable: 'PASSWORD', keystoreVariable: 'KEYSTORE')]) { "
-                    + "      " + getShellString() + " 'echo " + getVariable("PASSWORD") + " > script'\n"
-                    + "      " + getShellString() + " '" + getCopyString() + " \"" + getVariable("KEYSTORE") + "\" keystore'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(password, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
-                assertEquals(password, script.readToString().trim());
-                FilePath ks = story.j.jenkins.getWorkspaceFor(p).child("keystore");
-                KeyStore actualKeyStore = loadKeyStore(ks.read(), password);
-                assertKeyStoreEquals(keyStore, actualKeyStore);
-            }
+        story.then(r -> {
+            VaultCertificateCredentials up = mock(
+                VaultCertificateCredentialsImpl.class);
+            when(up.getId()).thenReturn(credentialsId);
+            when(up.getKeyStore()).thenReturn(keyStore);
+            when(up.getPassword()).thenReturn(Secret.fromString(password));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), up);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + " withCredentials([certificate(credentialsId: '" + credentialsId + "', passwordVariable: 'PASSWORD', keystoreVariable: 'KEYSTORE')]) { "
+                + "      " + getShellString() + " 'echo " + getVariable("PASSWORD") + " > script'\n"
+                + "      " + getShellString() + " '" + getCopyString() + " \"" + getVariable("KEYSTORE") + "\" keystore'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(password, b);
+            FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
+            assertEquals(password, script.readToString().trim());
+            FilePath ks = story.j.jenkins.getWorkspaceFor(p).child("keystore");
+            KeyStore actualKeyStore = loadKeyStore(ks.read(), password);
+            assertKeyStoreEquals(keyStore, actualKeyStore);
         });
     }
 
@@ -76,40 +72,37 @@ public class VaultCertificateCredentialsIT {
         final String password = "skywalker";
         final KeyStore keyStore = loadKeyStore(loadKeyStoreAsInputStream(), password);
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultCertificateCredentialsImpl vup = new VaultCertificateCredentialsImpl(
-                    null, credentialsId, "Test Credentials");
-                vup.setPath("secret/custom");
-                vup.setKeyStoreKey("key");
-                vup.setPasswordKey("secret");
-                vup.setEngineVersion(1);
+        story.then(r -> {
+            VaultCertificateCredentialsImpl vup = new VaultCertificateCredentialsImpl(
+                null, credentialsId, "Test Credentials");
+            vup.setPath("secret/custom");
+            vup.setKeyStoreKey("key");
+            vup.setPasswordKey("secret");
+            vup.setEngineVersion(1);
 
-                VaultCertificateCredentialsImpl vup_spy = spy(vup);
-                doReturn(credentialsId).when(vup_spy).getId();
-                doReturn(keyStore).when(vup_spy).getKeyStore();
-                doReturn(Secret.fromString(password)).when(vup_spy).getPassword();
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), vup_spy);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + " withCredentials([certificate(credentialsId: '" + credentialsId + "', passwordVariable: 'PASSWORD', keystoreVariable: 'KEYSTORE')]) { "
-                    + "      " + getShellString() + " 'echo " + getVariable("PASSWORD") + " > script'\n"
-                    + "      " + getShellString() + " '" + getCopyString() + " \"" + getVariable("KEYSTORE") + "\" keystore'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(password, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
-                String log = script.readToString().trim();
-                assertEquals(password, script.readToString().trim());
-                FilePath ks = story.j.jenkins.getWorkspaceFor(p).child("keystore");
-                KeyStore actualKeyStore = loadKeyStore(ks.read(), password);
-                assertKeyStoreEquals(keyStore, actualKeyStore);
-            }
+            VaultCertificateCredentialsImpl vup_spy = spy(vup);
+            doReturn(credentialsId).when(vup_spy).getId();
+            doReturn(keyStore).when(vup_spy).getKeyStore();
+            doReturn(Secret.fromString(password)).when(vup_spy).getPassword();
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), vup_spy);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + " withCredentials([certificate(credentialsId: '" + credentialsId + "', passwordVariable: 'PASSWORD', keystoreVariable: 'KEYSTORE')]) { "
+                + "      " + getShellString() + " 'echo " + getVariable("PASSWORD") + " > script'\n"
+                + "      " + getShellString() + " '" + getCopyString() + " \"" + getVariable("KEYSTORE") + "\" keystore'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(password, b);
+            FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
+            String log = script.readToString().trim();
+            assertEquals(password, script.readToString().trim());
+            FilePath ks = story.j.jenkins.getWorkspaceFor(p).child("keystore");
+            KeyStore actualKeyStore = loadKeyStore(ks.read(), password);
+            assertKeyStoreEquals(keyStore, actualKeyStore);
         });
     }
 
@@ -118,30 +111,27 @@ public class VaultCertificateCredentialsIT {
         final String credentialsId = "cloudfoundry";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultCertificateCredentialsImpl c = new VaultCertificateCredentialsImpl(
-                    null, credentialsId, "Test Credentials");
-                c.setPath("secret/cloudfoundry");
-                c.setKeyStoreKey(null);
-                c.setPasswordKey(null);
-                c.setEngineVersion(1);
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + " withCredentials([certificate(credentialsId: '" + credentialsId + "', passwordVariable: 'PASSWORD', keystoreVariable: 'KEYSTORE')]) { "
-                    + "      " + getShellString() + " 'echo " + getVariable("PASSWORD") + " > script'\n"
-                    + "      " + getShellString() + " '" + getCopyString() + " \"" + getVariable("KEYSTORE") + "\" keystore'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-                story.j.assertLogContains("credentials", b);
-            }
+        story.then(r -> {
+            VaultCertificateCredentialsImpl c = new VaultCertificateCredentialsImpl(
+                null, credentialsId, "Test Credentials");
+            c.setPath("secret/cloudfoundry");
+            c.setKeyStoreKey(null);
+            c.setPasswordKey(null);
+            c.setEngineVersion(1);
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), c);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + " withCredentials([certificate(credentialsId: '" + credentialsId + "', passwordVariable: 'PASSWORD', keystoreVariable: 'KEYSTORE')]) { "
+                + "      " + getShellString() + " 'echo " + getVariable("PASSWORD") + " > script'\n"
+                + "      " + getShellString() + " '" + getCopyString() + " \"" + getVariable("KEYSTORE") + "\" keystore'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
+            story.j.assertLogContains("credentials", b);
         });
     }
 

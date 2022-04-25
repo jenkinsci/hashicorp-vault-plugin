@@ -14,15 +14,14 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 public class VaultTokenCredentialBindingIT {
 
@@ -35,29 +34,27 @@ public class VaultTokenCredentialBindingIT {
         final String vaultAddr = "https://localhost:8200";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultAppRoleCredential c = mock(VaultAppRoleCredential.class);
-                when(c.getToken(any(Auth.class))).thenReturn(token);
-                when(c.getId()).thenReturn(credentialsId);
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
-                    + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                    + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
-                    + getVariable("VAULT_TOKEN") + " > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
-                assertEquals(vaultAddr + ":" + token, script.readToString().trim());
-            }
+        story.then(r -> {
+            VaultAppRoleCredential c = new VaultAppRoleCredential(CredentialsScope.GLOBAL,
+                credentialsId, "fake description", "roleId", Secret.fromString("fakeAppRoleToken"), "path");
+            VaultAppRoleCredential spy = spy(c);
+            doReturn(token).when(spy).getToken(any(Auth.class));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), spy);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
+                + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
+                + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
+                + getVariable("VAULT_TOKEN") + " > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
+            FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
+            assertEquals(vaultAddr + ":" + token, script.readToString().trim());
         });
     }
 
@@ -67,28 +64,25 @@ public class VaultTokenCredentialBindingIT {
         final String vaultAddr = "https://localhost:8200";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
-                    credentialsId, "fake description", Secret.fromString(token));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
-                    + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                    + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
-                    + getVariable("VAULT_TOKEN") + " > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
-                assertEquals(vaultAddr + ":" + token, script.readToString().trim());
-            }
+        story.then(r -> {
+            VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
+                credentialsId, "fake description", Secret.fromString(token));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), c);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
+                + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
+                + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
+                + getVariable("VAULT_TOKEN") + " > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
+            FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
+            assertEquals(vaultAddr + ":" + token, script.readToString().trim());
         });
     }
 
@@ -99,27 +93,24 @@ public class VaultTokenCredentialBindingIT {
         final String vaultAddr = "https://localhost:8200";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
-                    credentialsId, "fake description", Secret.fromString(token));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
-                    + invalidCredentialId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                    + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
-                    + getVariable("VAULT_TOKEN") + " > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-                story.j.assertLogContains("credentials", b);
-            }
+        story.then(r -> {
+            VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
+                credentialsId, "fake description", Secret.fromString(token));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), c);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
+                + invalidCredentialId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
+                + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
+                + getVariable("VAULT_TOKEN") + " > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
+            story.j.assertLogContains("credentials", b);
         });
     }
 
@@ -128,26 +119,23 @@ public class VaultTokenCredentialBindingIT {
         final String credentialsId = "creds";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
-                    credentialsId, "fake description", Secret.fromString(token));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
-                    + credentialsId + "']]) {\n"
-                    + "      " + getShellString() + " 'echo \"" + getVariable("VAULT_ADDR") + ":"
-                    + getVariable("VAULT_TOKEN") + "\" > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-            }
+        story.then(r -> {
+            VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
+                credentialsId, "fake description", Secret.fromString(token));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), c);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'VAULT_ADDR', tokenVariable: 'VAULT_TOKEN', credentialsId: '"
+                + credentialsId + "']]) {\n"
+                + "      " + getShellString() + " 'echo \"" + getVariable("VAULT_ADDR") + ":"
+                + getVariable("VAULT_TOKEN") + "\" > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
         });
     }
 
@@ -157,28 +145,25 @@ public class VaultTokenCredentialBindingIT {
         final String vaultAddr = "https://localhost:8200";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
-                    credentialsId, "fake description", Secret.fromString(token));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'FOO', tokenVariable: 'BAR', credentialsId: '"
-                    + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                    + "      " + getShellString() + " 'echo " + getVariable("FOO") + ":"
-                    + getVariable("BAR") + " > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
-                assertEquals(vaultAddr + ":" + token, script.readToString().trim());
-            }
+        story.then(r -> {
+            VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
+                credentialsId, "fake description", Secret.fromString(token));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), c);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + "  withCredentials([[$class: 'VaultTokenCredentialBinding', addrVariable: 'FOO', tokenVariable: 'BAR', credentialsId: '"
+                + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
+                + "      " + getShellString() + " 'echo " + getVariable("FOO") + ":"
+                + getVariable("BAR") + " > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
+            FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
+            assertEquals(vaultAddr + ":" + token, script.readToString().trim());
         });
     }
 
@@ -188,28 +173,25 @@ public class VaultTokenCredentialBindingIT {
         final String vaultAddr = "https://localhost:8200";
         final String token = "fakeToken";
         final String jobId = "testJob";
-        story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
-                    credentialsId, "fake description", Secret.fromString(token));
-                CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
-                    .addCredentials(Domain.global(), c);
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
-                p.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + "  withCredentials([[$class: 'VaultTokenCredentialBinding', credentialsId: '"
-                    + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
-                    + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
-                    + getVariable("VAULT_TOKEN") + " > script'\n"
-                    + "  }\n"
-                    + "}", true));
-                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-                story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
-                story.j.assertLogNotContains(token, b);
-                FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
-                assertEquals(vaultAddr + ":" + token, script.readToString().trim());
-            }
+        story.then(r -> {
+            VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,
+                credentialsId, "fake description", Secret.fromString(token));
+            CredentialsProvider.lookupStores(story.j.jenkins).iterator().next()
+                .addCredentials(Domain.global(), c);
+            WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, jobId);
+            p.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + "  withCredentials([[$class: 'VaultTokenCredentialBinding', credentialsId: '"
+                + credentialsId + "', vaultAddr: '" + vaultAddr + "']]) {\n"
+                + "      " + getShellString() + " 'echo " + getVariable("VAULT_ADDR") + ":"
+                + getVariable("VAULT_TOKEN") + " > script'\n"
+                + "  }\n"
+                + "}", true));
+            WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+            story.j.assertBuildStatus(Result.SUCCESS, story.j.waitForCompletion(b));
+            story.j.assertLogNotContains(token, b);
+            FilePath script = story.j.jenkins.getWorkspaceFor(p).child("script");
+            assertEquals(vaultAddr + ":" + token, script.readToString().trim());
         });
     }
 }
