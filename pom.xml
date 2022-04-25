@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.17</version>
+    <version>4.40</version>
     <relativePath />
   </parent>
   <groupId>com.datapipe.jenkins.plugins</groupId>
@@ -13,13 +13,13 @@
   <packaging>hpi</packaging>
   <properties>
     <changelist>9999-SNAPSHOT</changelist>
-    <jenkins.version>2.222.4</jenkins.version>
-    <java.level>8</java.level>
+    <jenkins.version>2.303.3</jenkins.version>
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
+    <gitHubRepo>jenkinsci/${project.artifactId}</gitHubRepo>
   </properties>
   <name>HashiCorp Vault Plugin</name>
   <description>Reading secrets from HashiCorp Vault for a Pipeline or as a Secret Source for JCasC</description>
-  <url>https://github.com/jenkinsci/hashicorp-vault-plugin</url>
+  <url>https://github.com/jenkinsci/${project.artifactId}</url>
   <organization>
     <name>Datapipe, Inc.</name>
     <url>https://www.datapipe.com</url>
@@ -42,9 +42,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:ssh://github.com/jenkinsci/${project.artifactId}.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/${project.artifactId}.git</developerConnection>
-    <url>http://github.com/jenkinsci/${project.artifactId}</url>
+    <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+    <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+    <url>https://github.com/${gitHubRepo}</url>
     <tag>${scmTag}</tag>
   </scm>
   <repositories>
@@ -217,8 +217,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.222.x</artifactId>
-        <version>26</version>
+        <artifactId>bom-2.303.x</artifactId>
+        <version>1289.v5c4b_1c43511b_</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
