@@ -14,18 +14,14 @@ import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.ExtensionList;
-import hudson.Util;
 import hudson.model.ItemGroup;
-import hudson.remoting.Channel;
 import hudson.security.ACL;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import jenkins.security.SlaveToMasterCallable;
 import org.apache.commons.lang.StringUtils;
 
 public class VaultHelper {
