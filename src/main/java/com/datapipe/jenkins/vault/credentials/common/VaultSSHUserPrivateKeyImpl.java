@@ -11,6 +11,7 @@ import hudson.util.Secret;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -41,14 +42,6 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     private Supplier<Secret> privateKey;
     private Supplier<Secret> passphrase;
 
-    public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
-        String description, Supplier<Secret> username, Supplier<Secret> privateKey, Supplier<Secret> passphrase) {
-        super(scope, id, description);
-        this.username = username;
-        this.privateKey = privateKey;
-        this.passphrase = passphrase;
-    }
-
     @DataBoundConstructor
     public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
         String description) {
@@ -57,6 +50,16 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
         privateKey = null;
         passphrase = null;
     }
+
+    public VaultSSHUserPrivateKeyImpl(CredentialsScope scope, String id,
+        String description, Supplier<Secret> username, Supplier<Secret> privateKey, Supplier<Secret> passphrase) {
+        super(scope, id, description);
+        this.username = username;
+        this.privateKey = privateKey;
+        this.passphrase = passphrase;
+        LOGGER.log(Level.WARNING, "constructed ssh key cred");
+    }
+
 
     @NonNull
     public String getUsernameKey() {
@@ -91,19 +94,15 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public String getUsername() {
-        if (username != null) {
-            return Secret.toString(username.get());
-        }
-        return Secret.toString(Secret.fromString(getVaultSecretKeyValue(defaultIfBlank(getUsernameKey(), DEFAULT_USERNAME_KEY))));
+        return Secret.toString(username.get());
+        
     }
 
     @NonNull
     @Override
     public String getPrivateKey() {
-        if (privateKey != null) {
-            return Secret.toString(privateKey.get());
-        }
-        return Secret.toString(Secret.fromString(getVaultSecretKeyValue(defaultIfBlank(getPrivateKeyKey(), DEFAULT_PRIVATE_KEY_KEY))));
+        return Secret.toString(privateKey.get());
+
     }
 
     @NonNull
@@ -115,10 +114,7 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public Secret getPassphrase() {
-        if (passphrase != null) {
-            return passphrase.get();
-        }
-        return Secret.fromString(getVaultSecretKeyValue(defaultIfBlank(getPassphraseKey(), DEFAULT_PASSPHRASE_KEY)));
+        return passphrase.get();
     }
 
     @Extension

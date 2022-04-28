@@ -73,7 +73,7 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
      * @return vault secret value
      */
     @NonNull
-    protected String getVaultSecretKeyValue(String key) {
+    public String getVaultSecretKeyValue(String key) {
         String s = getVaultSecretKey(this.path, key, this.prefixPath, this.namespace, this.engineVersion);
         if (s == null) {
             throw new VaultPluginException("Fetching from Vault failed for key '" + key + "'");
