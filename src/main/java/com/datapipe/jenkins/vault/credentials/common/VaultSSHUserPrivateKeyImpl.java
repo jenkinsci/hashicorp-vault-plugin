@@ -94,13 +94,21 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public String getUsername() {
+        if (username == null) {
+            LOGGER.log(Level.WARNING, "username was null");
+            return Secret.toString(Secret.fromString(getVaultSecretKeyValue(usernameKey)));
+        }
         return Secret.toString(username.get());
-        
     }
 
     @NonNull
     @Override
     public String getPrivateKey() {
+        LOGGER.log(Level.WARNING, "usernameKey: " + usernameKey + " passphraseKey: " + passphraseKey + " privatekeykey: " + privateKeyKey);
+        if (privateKey == null) {
+            LOGGER.log(Level.WARNING, "private key was null");
+            return Secret.toString(Secret.fromString(getVaultSecretKeyValue(privateKeyKey)));
+        }
         return Secret.toString(privateKey.get());
 
     }
@@ -114,6 +122,10 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public Secret getPassphrase() {
+        if (passphrase == null) {
+            LOGGER.log(Level.WARNING, "passphrase was null");
+            return Secret.fromString(getVaultSecretKeyValue(passphraseKey));
+        }
         return passphrase.get();
     }
 
