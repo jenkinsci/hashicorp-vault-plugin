@@ -61,11 +61,11 @@ public class VaultHelper {
         try {
             VaultConfig vaultConfig = configuration.getVaultConfig();
 
-            if (prefixPath != null) {
+            if (prefixPath != null && ! prefixPath.isEmpty()) {
                 vaultConfig.prefixPath(prefixPath);
             }
 
-            if (namespace != null) {
+            if (namespace != null && ! namespace.isEmpty()) {
                 vaultConfig.nameSpace(namespace);
             }
 
