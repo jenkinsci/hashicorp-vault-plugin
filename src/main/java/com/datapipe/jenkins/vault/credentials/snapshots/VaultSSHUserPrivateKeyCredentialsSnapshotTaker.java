@@ -1,12 +1,13 @@
 package com.datapipe.jenkins.vault.credentials.snapshots;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 import com.cloudbees.plugins.credentials.CredentialsSnapshotTaker;
 import com.datapipe.jenkins.vault.credentials.SecretSnapshot;
 import com.datapipe.jenkins.vault.credentials.common.VaultSSHUserPrivateKeyImpl;
 import hudson.util.Secret;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
