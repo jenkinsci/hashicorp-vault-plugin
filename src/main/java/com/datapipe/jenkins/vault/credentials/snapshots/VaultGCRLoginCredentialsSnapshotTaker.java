@@ -3,7 +3,6 @@ package com.datapipe.jenkins.vault.credentials.snapshots;
 import com.cloudbees.plugins.credentials.CredentialsSnapshotTaker;
 import com.datapipe.jenkins.vault.credentials.SecretSnapshot;
 import com.datapipe.jenkins.vault.credentials.common.VaultGCRLoginImpl;
-
 import hudson.Extension;
 
 @Extension
