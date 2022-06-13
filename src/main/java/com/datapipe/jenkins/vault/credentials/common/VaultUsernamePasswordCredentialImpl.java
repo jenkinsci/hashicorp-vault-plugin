@@ -1,12 +1,10 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.datapipe.jenkins.vault.credentials.snapshots.VaultUsernamePasswordCredentialsSnapshotTaker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
-import hudson.remoting.Channel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -48,13 +46,6 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
         password = null;
     }
 
-    private Object writeReplace() {
-        if (Channel.current() == null) {
-            return this;
-        }
-        VaultUsernamePasswordCredentialsSnapshotTaker snapshotter = new VaultUsernamePasswordCredentialsSnapshotTaker();
-        return snapshotter.snapshot(this);
-    }
 
     @NonNull
     public String getUsernameKey() {
