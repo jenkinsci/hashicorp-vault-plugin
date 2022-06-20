@@ -27,6 +27,7 @@ import hudson.security.ACL;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ public class VaultAccessor implements Serializable {
 
     private VaultConfig config;
     private VaultCredential credential;
+    private List<String> policies;
     private int maxRetries = 0;
     private int retryIntervalMilliseconds = 1000;
 
@@ -63,7 +65,7 @@ public class VaultAccessor implements Serializable {
             if (credential == null) {
                 vault = new Vault(config);
             } else {
-                vault = credential.authorizeWithVault(config);
+                vault = credential.authorizeWithVault(config, policies);
             }
 
             vault.withRetries(maxRetries, retryIntervalMilliseconds);
@@ -87,6 +89,14 @@ public class VaultAccessor implements Serializable {
 
     public void setCredential(VaultCredential credential) {
         this.credential = credential;
+    }
+
+    public List<String> getPolicies() {
+        return policies;
+    }
+
+    public void setPolicies(List<String> policies) {
+        this.policies = policies;
     }
 
     public int getMaxRetries() {
@@ -130,6 +140,38 @@ public class VaultAccessor implements Serializable {
         }
     }
 
+    public static String replacePolicyTokens(String policy, EnvVars envVars) {
+        if (!policy.contains("{")) {
+            return policy;
+        }
+        String jobName = envVars.get("JOB_NAME");
+        String jobBaseName = envVars.get("JOB_BASE_NAME");
+        String folder = "";
+        if (!jobName.equals(jobBaseName) && jobName.contains("/")) {
+            String[] jobElements = jobName.split("/");
+            folder = Arrays.stream(jobElements)
+                .limit(jobElements.length - 1)
+                .collect(Collectors.joining("/"));
+        }
+        return policy
+            .replaceAll("\\{job_base_name}", jobBaseName)
+            .replaceAll("\\{job_name}", jobName)
+            .replaceAll("\\{job_name_us}", jobName.replaceAll("/", "_"))
+            .replaceAll("\\{job_folder}", folder)
+            .replaceAll("\\{job_folder_us}", folder.replaceAll("/", "_"))
+            .replaceAll("\\{node_name}", envVars.get("NODE_NAME"));
+    }
+
+    public static List<String> generatePolicies(String policies, EnvVars envVars) {
+        if (StringUtils.isBlank(policies)) {
+            return null;
+        }
+        return Arrays.stream(policies.split("\n"))
+            .filter(StringUtils::isNotBlank)
+            .map(policy -> replacePolicyTokens(policy.trim(), envVars))
+            .collect(Collectors.toList());
+    }
+
     public static Map<String, String> retrieveVaultSecrets(Run<?,?> run, PrintStream logger, EnvVars envVars, VaultAccessor vaultAccessor, VaultConfiguration initialConfiguration, List<VaultSecret> vaultSecrets) {
         Map<String, String> overrides = new HashMap<>();
 
@@ -156,6 +198,7 @@ public class VaultAccessor implements Serializable {
         }
         vaultAccessor.setConfig(vaultConfig);
         vaultAccessor.setCredential(credential);
+        vaultAccessor.setPolicies(generatePolicies(config.getPolicies(), envVars));
         vaultAccessor.setMaxRetries(config.getMaxRetries());
         vaultAccessor.setRetryIntervalMilliseconds(config.getRetryIntervalMilliseconds());
         vaultAccessor.init();

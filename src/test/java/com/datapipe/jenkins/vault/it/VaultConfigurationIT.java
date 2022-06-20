@@ -51,6 +51,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -430,7 +431,7 @@ public class VaultConfigurationIT {
         when(cred.getDescription()).thenReturn("description");
         when(cred.getRoleId()).thenReturn("role-id-" + credentialId);
         when(cred.getSecretId()).thenReturn(Secret.fromString("secret-id-" + credentialId));
-        when(cred.authorizeWithVault(any())).thenReturn(vault);
+        when(cred.authorizeWithVault(any(), eq(null))).thenReturn(vault);
         return cred;
 
     }

@@ -17,6 +17,9 @@
     <f:entry field="engineVersion" title="K/V Engine Version">
       <f:select/>
     </f:entry>
+    <f:entry title="(Optional) Job Policies" field="policies">
+      <f:textarea/>
+    </f:entry>
     <f:entry title="Fail if path is not found" field="failIfNotFound">
       <f:checkbox default="${descriptor.DEFAULT_FAIL_NOT_FOUND}"/>
     </f:entry>

@@ -46,7 +46,7 @@ public abstract class AbstractAuthenticatingVaultTokenCredential extends
     }
 
     @Override
-    protected final String getToken(Vault vault) {
+    protected Auth getVaultAuth(@NonNull Vault vault) {
         // set authentication namespace if configured for this credential.
         // importantly, this will not effect the underlying VaultConfig namespace.
         Auth auth = vault.auth();
@@ -57,7 +57,12 @@ public abstract class AbstractAuthenticatingVaultTokenCredential extends
                 auth.withNameSpace(null);
             }
         }
-        return getToken(auth);
+        return auth;
+    }
+
+    @Override
+    protected final String getToken(Vault vault) {
+        return getToken(getVaultAuth(vault));
     }
 
     /**

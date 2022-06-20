@@ -35,6 +35,14 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
     }
 
     @Test
+    public void nonRootNamespaceFromGetVaultAuth() {
+        ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
+        cred.setNamespace("foo");
+        Auth authRet = cred.getVaultAuth(vault);
+        verify(authRet).withNameSpace("foo");
+    }
+
+    @Test
     public void nonRootNamespace() {
         ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
         cred.setNamespace("foo");
