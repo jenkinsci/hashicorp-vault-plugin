@@ -158,6 +158,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         protected ExampleVaultTokenCredentialWithExpiration(Vault vault) {
             super(CredentialsScope.GLOBAL, "id", "description");
             this.vault = vault;
+            this.setUsePolicies(true);
         }
 
         @Override

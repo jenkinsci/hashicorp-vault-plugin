@@ -7,6 +7,7 @@ import com.bettercloud.vault.api.Auth;
 import com.bettercloud.vault.api.Auth.TokenRequest;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -14,12 +15,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.kohsuke.stapler.DataBoundSetter;
 
 public abstract class AbstractVaultTokenCredentialWithExpiration
     extends AbstractVaultTokenCredential {
 
     protected final static Logger LOGGER = Logger
         .getLogger(AbstractVaultTokenCredentialWithExpiration.class.getName());
+
+    @CheckForNull
+    private Boolean usePolicies;
+
+    /**
+     * Get if the configured policies should be used or not.
+     * @return true if the policies should be used, false or null otherwise
+     */
+    @CheckForNull
+    public Boolean getUsePolicies() {
+        return usePolicies;
+    }
+
+    /**
+     * Set if the configured policies are used or not.
+     * @param usePolicies true if policies should be used, false otherwise
+     */
+    @DataBoundSetter
+    public void setUsePolicies(Boolean usePolicies) {
+        this.usePolicies = usePolicies;
+    }
 
     private Map<String, Calendar> tokenExpiry;
     private Map<String, String> tokenCache;
@@ -43,13 +66,14 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     }
 
     /**
-     * Retrieves a new token with specific policies if a list of requested policies is provided.
+     * Retrieves a new child token with specific policies if this credential is configured to use
+     * policies and a list of requested policies is provided.
      * @param vault the vault instance
      * @param policies the policies list
-     * @return the new token or null if no policies are defined
+     * @return the new token or null if it cannot be provisioned
      */
-    protected String getTokenWithPolicies(Vault vault, List<String> policies) {
-        if (policies == null || policies.isEmpty()) {
+    protected String getChildToken(Vault vault, List<String> policies) {
+        if (usePolicies == null || !usePolicies || policies == null || policies.isEmpty()) {
             return null;
         }
         Auth auth = getVaultAuth(vault);
@@ -59,7 +83,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
                 new Object[] {policies});
             return auth.createToken(tokenRequest).getAuthClientToken();
         } catch (VaultException e) {
-            throw new VaultPluginException("Could not retrieve token with policies from vault", e);
+            throw new VaultPluginException("Could not retrieve token with policies from Vault", e);
         }
     }
 
@@ -90,7 +114,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
             config.token(tokenCache.get(cacheKey));
 
             // After current token is configured, try to retrieve a new child token with limited policies
-            String childToken = getTokenWithPolicies(vault, policies);
+            String childToken = getChildToken(vault, policies);
             if (childToken != null) {
                 // A new token was generated, put it in the cache and configure vault
                 tokenCache.put(cacheKey, childToken);
