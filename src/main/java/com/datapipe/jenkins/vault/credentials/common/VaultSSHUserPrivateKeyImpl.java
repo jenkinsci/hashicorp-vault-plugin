@@ -11,8 +11,6 @@ import hudson.util.Secret;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -25,9 +23,6 @@ import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 @SuppressWarnings("ALL")
 public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredentials implements
     VaultSSHUserPrivateKey {
-
-    private static final Logger LOGGER = Logger
-        .getLogger(VaultSSHUserPrivateKeyImpl.class.getName());
 
     public static final String DEFAULT_USERNAME_KEY = "username";
     public static final String DEFAULT_PRIVATE_KEY_KEY = "private_key";
@@ -57,7 +52,6 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
         this.username = username;
         this.privateKey = privateKey;
         this.passphrase = passphrase;
-        LOGGER.log(Level.WARNING, "constructed ssh key cred");
     }
 
     @NonNull
@@ -94,7 +88,6 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @Override
     public String getUsername() {
         if (username == null) {
-            LOGGER.log(Level.WARNING, "username was null");
             return Secret.toString(Secret.fromString(getVaultSecretKeyValue(usernameKey)));
         }
         return Secret.toString(username.get());
@@ -103,9 +96,7 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public String getPrivateKey() {
-        LOGGER.log(Level.WARNING, "usernameKey: " + usernameKey + " passphraseKey: " + passphraseKey + " privatekeykey: " + privateKeyKey);
         if (privateKey == null) {
-            LOGGER.log(Level.WARNING, "private key was null");
             return Secret.toString(Secret.fromString(getVaultSecretKeyValue(privateKeyKey)));
         }
         return Secret.toString(privateKey.get());
@@ -122,7 +113,6 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @Override
     public Secret getPassphrase() {
         if (passphrase == null) {
-            LOGGER.log(Level.WARNING, "passphrase was null");
             return Secret.fromString(getVaultSecretKeyValue(passphraseKey));
         }
         return passphrase.get();
