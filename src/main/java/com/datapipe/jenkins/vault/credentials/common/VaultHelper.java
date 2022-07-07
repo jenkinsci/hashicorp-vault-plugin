@@ -89,18 +89,18 @@ public class VaultHelper {
     }
 
     static String getVaultSecretKey(@NonNull String secretPath,
-            @NonNull String secretKey,
-            @CheckForNull String prefixPath,
-            @CheckForNull String namespace,
-            @CheckForNull Integer engineVersion,
-            @NonNull ItemGroup<Item> context) {
+                                    @NonNull String secretKey,
+                                    @CheckForNull String prefixPath,
+                                    @CheckForNull String namespace,
+                                    @CheckForNull Integer engineVersion,
+                                    @NonNull ItemGroup<Item> context) {
         try {
             Map<String, String> values = getVaultSecret(secretPath, prefixPath, namespace, engineVersion, context);
 
             if (!values.containsKey(secretKey)) {
                 String message = String.format(
-                        "Key %s could not be found in path %s",
-                        secretKey, secretPath);
+                    "Key %s could not be found in path %s",
+                    secretKey, secretPath);
                 throw new VaultPluginException(message);
             }
 
@@ -113,17 +113,17 @@ public class VaultHelper {
     private static VaultCredential retrieveVaultCredentials(String id, ItemGroup<Item> itemGroup) {
         if (StringUtils.isBlank(id)) {
             throw new VaultPluginException(
-                    "The credential id was not configured - please specify the credentials to use.");
+                "The credential id was not configured - please specify the credentials to use.");
         } else {
             LOGGER.log(Level.INFO, "Retrieving vault credential ID : " + id);
         }
         List<VaultCredential> credentials = CredentialsProvider
-                .lookupCredentials(VaultCredential.class,
-                        itemGroup,
-                        ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList());
+            .lookupCredentials(VaultCredential.class,
+                itemGroup,
+                ACL.SYSTEM,
+                Collections.<DomainRequirement>emptyList());
         VaultCredential credential = CredentialsMatchers
-                .firstOrNull(credentials, new IdMatcher(id));
+            .firstOrNull(credentials, new IdMatcher(id));
 
         if (credential == null) {
             throw new CredentialsUnavailableException(id);
