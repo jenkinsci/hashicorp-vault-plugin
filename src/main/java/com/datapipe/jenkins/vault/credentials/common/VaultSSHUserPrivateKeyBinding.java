@@ -67,7 +67,6 @@ public class VaultSSHUserPrivateKeyBinding extends
         StringBuilder contents = new StringBuilder();
         for (String key : sshKey.getPrivateKeys()) {
             contents.append(key);
-            contents.append('\n');
         }
         keyFile.write(contents.toString(), "UTF-8");
         if (launcher.isUnix()) {

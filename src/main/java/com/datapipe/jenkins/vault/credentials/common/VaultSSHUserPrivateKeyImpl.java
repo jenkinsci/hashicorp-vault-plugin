@@ -90,7 +90,10 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @NonNull
     @Override
     public List<String> getPrivateKeys() {
-        return Collections.singletonList(getPrivateKey());
+        String key = getPrivateKey();
+        // ensure keys end with newline to match the reference implementation
+        // https://github.com/jenkinsci/ssh-credentials-plugin/blob/d141a312701bc9a04de18ac9f97dffdbae19f978/src/main/java/com/cloudbees/jenkins/plugins/sshcredentials/impl/BasicSSHUserPrivateKey.java#L177
+        return Collections.singletonList(key.endsWith("\n") ? key : key + "\n");
     }
 
     @NonNull
