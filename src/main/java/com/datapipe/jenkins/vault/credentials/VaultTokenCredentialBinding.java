@@ -101,7 +101,10 @@ public class VaultTokenCredentialBinding extends MultiBinding<AbstractVaultToken
         Map<String, String> m = new HashMap<>();
         m.put(addrVariable, vaultAddr);
         m.put(namespaceVariable, vaultNamespace);
-        m.put(tokenVariable, getToken(credentials));
+        String token = getToken(credentials);
+        // don't add null token variable, can cause NPE in places where credential bindings impls
+        // are not expecting null env var values.
+        m.put(tokenVariable, StringUtils.defaultString(token));
         return new MultiEnvironment(m);
     }
 

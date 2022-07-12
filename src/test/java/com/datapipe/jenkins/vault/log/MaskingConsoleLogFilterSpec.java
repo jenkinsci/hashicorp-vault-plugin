@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.log;
 
+import hudson.ExtensionList;
 import hudson.model.Run;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -8,17 +9,32 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.credentialsbinding.masking.LiteralSecretPatternFactory;
+import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatternFactory;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MaskingConsoleLogFilterSpec {
+
+    private @Mock(answer = Answers.CALLS_REAL_METHODS) MockedStatic<SecretPatternFactory> secretPatternFactoryMockedStatic;
+
+    @Before
+    public void setup() {
+        ExtensionList<SecretPatternFactory> factories = ExtensionList.create((Jenkins) null, SecretPatternFactory.class);
+        factories.addAll(Collections.singletonList(new LiteralSecretPatternFactory()));
+        secretPatternFactoryMockedStatic.when(SecretPatternFactory::all).thenReturn(factories);
+    }
 
     @Test
     public void shouldCorrectlyMask() throws IOException, InterruptedException {
@@ -75,13 +91,17 @@ public class MaskingConsoleLogFilterSpec {
 
     @Test
     public void shouldFilterNullSecrets() throws Exception {
-        List<String> secrets = Arrays.asList("secret", null, "another", null, "last");
+        List<String> secrets = Arrays.asList("secret", null, "another", null, "test");
+        MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
+            secrets);
 
-        try {
-            String pattern = MaskingConsoleLogFilter.getPatternStringForSecrets(secrets);
-            assertThat(pattern, is("\\Qanother\\E|\\Qsecret\\E|\\Qlast\\E"));
-        } catch (NullPointerException npe) {
-            fail("NullPointerException thrown");
-        }
+        ByteArrayOutputStream resultingLog = new ByteArrayOutputStream();
+
+        OutputStream maskingLogger = filter.decorateLogger(mock(Run.class), resultingLog);
+        maskingLogger.write("This is a test.\n".getBytes(StandardCharsets.UTF_8));
+        String[] resultingLines = resultingLog.toString(StandardCharsets.UTF_8.name()).split("\\n");
+
+        assertThat(resultingLines[0], is("This is a ****."));
     }
+
 }

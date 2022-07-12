@@ -1,5 +1,9 @@
-[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/hashicorp-vault-plugin/master)](https://ci.jenkins.io/job/Plugins/job/hashicorp-vault-plugin/job/master/)
 # Jenkins Vault Plugin
+
+[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/hashicorp-vault-plugin/master)](https://ci.jenkins.io/job/Plugins/job/hashicorp-vault-plugin/job/master/)
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/hashicorp-vault-plugin.svg)](https://plugins.jenkins.io/hashicorp-vault-plugin)
+[![GitHub release](https://img.shields.io/github/release/jenkinsci/hashicorp-vault-plugin.svg?label=release)](https://github.com/jenkinsci/hashicorp-vault-plugin/releases/latest)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/hashicorp-vault-plugin.svg?color=blue)](https://plugins.jenkins.io/hashicorp-vault-plugin)
 
 This plugin adds a build wrapper to set environment variables from a HashiCorp [Vault](https://www.vaultproject.io/) secret. Secrets are generally masked in the build log, so you can't accidentally print them.  
 It also has the ability to inject Vault credentials into a build pipeline or freestyle job for fine-grained vault interactions.
