@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -97,6 +98,7 @@ public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredential
             @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
             String okMessage = "Successfully retrieved secret " + path;
 

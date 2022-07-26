@@ -8,6 +8,7 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -63,6 +64,8 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
             @QueryParameter("prefixPath") String prefixPath,
             @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
+
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
             try {
                 getVaultSecretKey(path, defaultIfBlank(vaultKey, DEFAULT_VAULT_KEY), prefixPath, namespace, engineVersion, context);

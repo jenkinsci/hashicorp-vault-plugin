@@ -11,6 +11,7 @@ import hudson.util.Secret;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -121,6 +122,8 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
             @QueryParameter("prefixPath") String prefixPath,
             @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
+
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
             String username;
             try {

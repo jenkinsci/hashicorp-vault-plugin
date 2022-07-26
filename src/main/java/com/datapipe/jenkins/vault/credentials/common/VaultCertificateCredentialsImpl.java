@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -144,6 +145,8 @@ public class VaultCertificateCredentialsImpl extends AbstractVaultBaseStandardCr
                                     @QueryParameter("prefixPath") String prefixPath,
                                     @QueryParameter("namespace") String namespace,
                                     @QueryParameter("engineVersion") Integer engineVersion) {
+
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
             try {
                 getVaultSecretKey(path, defaultIfBlank(keyStoreKey, DEFAULT_KEYSTORE_KEY), prefixPath, namespace, engineVersion, context);

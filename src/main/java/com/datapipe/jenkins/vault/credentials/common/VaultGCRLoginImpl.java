@@ -10,6 +10,7 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import java.util.Map;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -64,6 +65,7 @@ public class VaultGCRLoginImpl extends AbstractVaultBaseStandardCredentials impl
             @QueryParameter("namespace") String namespace,
             @QueryParameter("engineVersion") Integer engineVersion) {
 
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
             String okMessage = "Successfully retrieved secret " + path;
 
