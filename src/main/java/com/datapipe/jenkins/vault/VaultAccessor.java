@@ -227,8 +227,8 @@ public class VaultAccessor implements Serializable {
         }
         int status = restResponse.getStatus();
         if (status == 403) {
-            logger.printf("Access denied to Vault Secrets at '%s'%n", path);
-            return true;
+            throw new VaultPluginException(
+                String.format("Access denied to Vault path '%s'", path));
         } else if (status == 404) {
             if (configuration.getFailIfNotFound()) {
                 throw new VaultPluginException(

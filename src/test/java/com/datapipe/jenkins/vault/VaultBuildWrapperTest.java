@@ -38,7 +38,11 @@ public class VaultBuildWrapperTest {
     @Test
     public void testWithNonExistingPath() throws IOException, InterruptedException {
         String path = "not/existing";
-        TestWrapper wrapper = new TestWrapper(standardSecrets(path));
+        VaultAccessor mockAccessor = mock(VaultAccessor.class);
+        doReturn(mockAccessor).when(mockAccessor).init();
+        LogicalResponse response = getNotFoundResponse();
+        when(mockAccessor.read(path, 2)).thenReturn(response);
+        TestWrapper wrapper = new TestWrapper(standardSecrets(path), mockAccessor);
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream logger = new PrintStream(baos);
         SimpleBuildWrapper.Context context = null;
@@ -56,9 +60,36 @@ public class VaultBuildWrapperTest {
             assertThat(e.getMessage(), is("Vault credentials not found for 'not/existing'"));
         }
 
-        wrapper.verifyCalls();
+        verify(mockAccessor, times(2)).init();
+        verify(mockAccessor, times(2)).read(path, 2);
         assertThat(new String(baos.toByteArray(), StandardCharsets.UTF_8),
             containsString("Vault credentials not found for 'not/existing'"));
+    }
+
+    @Test
+    public void testWithAccessDeniedPath() throws IOException, InterruptedException {
+        String path = "not/allowed";
+        VaultAccessor mockAccessor = mock(VaultAccessor.class);
+        doReturn(mockAccessor).when(mockAccessor).init();
+        LogicalResponse response = getAccessDeniedResponse();
+        when(mockAccessor.read(path, 2)).thenReturn(response);
+        TestWrapper wrapper = new TestWrapper(standardSecrets(path), mockAccessor);
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream logger = new PrintStream(baos);
+        SimpleBuildWrapper.Context context = null;
+        Run<?, ?> build = mock(Build.class);
+        when(build.getParent()).thenReturn(null);
+        EnvVars envVars = mock(EnvVars.class);
+        when(envVars.expand(path)).thenReturn(path);
+
+        try {
+            wrapper.run(context, build, envVars, logger);
+        } catch (VaultPluginException e) {
+            assertThat(e.getMessage(), is("Access denied to Vault path 'not/allowed'"));
+        }
+
+        verify(mockAccessor).init();
+        verify(mockAccessor).read(path, 2);
     }
 
     private List<VaultSecret> standardSecrets(String path) {
@@ -81,21 +112,25 @@ public class VaultBuildWrapperTest {
         return resp;
     }
 
+    private LogicalResponse getAccessDeniedResponse() {
+        LogicalResponse resp = mock(LogicalResponse.class);
+        RestResponse rest = mock(RestResponse.class);
+        when(resp.getData()).thenReturn(new HashMap<>());
+        when(resp.getRestResponse()).thenReturn(rest);
+        when(rest.getStatus()).thenReturn(403);
+        return resp;
+    }
+
     class TestWrapper extends VaultBuildWrapper {
 
-        VaultAccessor mockAccessor;
         VaultConfiguration vaultConfig = new VaultConfiguration();
 
-        public TestWrapper(List<VaultSecret> vaultSecrets) {
+        public TestWrapper(List<VaultSecret> vaultSecrets, VaultAccessor mockAccessor) {
             super(vaultSecrets);
 
             vaultConfig.setVaultUrl("testmock");
             vaultConfig.setVaultCredentialId("credId");
             vaultConfig.setFailIfNotFound(false);
-            mockAccessor = mock(VaultAccessor.class);
-            doReturn(mockAccessor).when(mockAccessor).init();
-            LogicalResponse response = getNotFoundResponse();
-            when(mockAccessor.read("not/existing", 2)).thenReturn(response);
             setVaultAccessor(mockAccessor);
             setConfiguration(vaultConfig);
         }
@@ -103,11 +138,6 @@ public class VaultBuildWrapperTest {
         public void run(Context context, Run build, EnvVars envVars, PrintStream logger) {
             this.logger = logger;
             provideEnvironmentVariablesFromVault(context, build, envVars);
-        }
-
-        public void verifyCalls() {
-            verify(mockAccessor, times(2)).init();
-            verify(mockAccessor, times(2)).read("not/existing", 2);
         }
     }
 }
