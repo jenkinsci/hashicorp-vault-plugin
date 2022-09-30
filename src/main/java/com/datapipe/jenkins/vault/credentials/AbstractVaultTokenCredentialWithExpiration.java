@@ -78,9 +78,13 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         }
         Auth auth = getVaultAuth(vault);
         try {
-            TokenRequest tokenRequest = (new TokenRequest()).polices(policies);
-            LOGGER.log(Level.FINE, "Requesting child token with policies {0}",
-                new Object[] {policies});
+            String ttl = String.format("%ds", getTokenTTL(vault));
+            TokenRequest tokenRequest = (new TokenRequest())
+                .polices(policies)
+                // Set the TTL to the parent token TTL
+                .ttl(ttl);
+            LOGGER.log(Level.FINE, "Requesting child token with policies {0} and TTL {1}",
+                new Object[] {policies, ttl});
             return auth.createToken(tokenRequest).getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("Could not retrieve token with policies from Vault", e);
@@ -131,10 +135,14 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         return new Vault(config);
     }
 
+    private long getTokenTTL(Vault vault) throws VaultException {
+        return getVaultAuth(vault).lookupSelf().getTTL();
+    }
+
     private void setTokenExpiry(Vault vault, String cacheKey) {
         int tokenTTL = 0;
         try {
-            tokenTTL = (int) getVaultAuth(vault).lookupSelf().getTTL();
+            tokenTTL = (int) getTokenTTL(vault);
         } catch (VaultException e) {
             LOGGER.log(Level.WARNING, "Could not determine token expiration for policies '" +
                 cacheKey + "'. Check if token is allowed to access auth/token/lookup-self. " +
@@ -154,6 +162,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         boolean result = true;
         Calendar now = Calendar.getInstance();
         long timeDiffInMillis = now.getTimeInMillis() - expiry.getTimeInMillis();
+        LOGGER.log(Level.FINE, "Expiration for " + cacheKey + " is " + expiry + ", diff: " + timeDiffInMillis);
         if (timeDiffInMillis < -10000L) {
             // token will be valid for at least another 10s
             result = false;

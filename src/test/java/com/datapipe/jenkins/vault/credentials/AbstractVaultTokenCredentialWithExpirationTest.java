@@ -87,11 +87,12 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
 
     @Test
     public void shouldFetchChildTokenIfPoliciesSpecified() throws VaultException {
-        TokenRequest tokenRequest = (new TokenRequest()).polices(policies);
-        when(auth.createToken(argThat((TokenRequest tr) -> tokenRequest.getPolices() == policies)))
-            .thenReturn(childAuthResponse);
+        when(auth.createToken(argThat((TokenRequest tr) ->
+            tr.getPolices() == policies && tr.getTtl().equals("30s")
+        ))).thenReturn(childAuthResponse);
         when(auth.lookupSelf()).thenReturn(lookupResponse);
-        when(lookupResponse.getTTL()).thenReturn(0L);
+        // First response is for parent, second is for child
+        when(lookupResponse.getTTL()).thenReturn(30L, 0L);
 
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies);
 
