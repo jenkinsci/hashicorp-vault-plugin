@@ -78,7 +78,8 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
             try {
                 tokenTTL = (int) vault.auth().lookupSelf().getTTL();
             } catch (VaultException e) {
-                LOGGER.log(Level.WARNING, "Could not determine token expiration. " +
+                LOGGER.log(Level.WARNING,
+                    String.format("Could not determine token expiration (for key %s). ", key) +
                     "Check if token is allowed to access auth/token/lookup-self. " +
                     "Assuming token TTL expired.", e);
             }
