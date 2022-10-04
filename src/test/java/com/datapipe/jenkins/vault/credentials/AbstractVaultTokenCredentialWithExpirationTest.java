@@ -52,13 +52,36 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
 
     @Test
     public void shouldReuseTheExistingTokenIfNotExpired() throws VaultException {
+        when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(5L);
 
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
 
-        verify(vaultConfig, times(2)).token("fakeToken");
+        verify(vaultConfig, times(2)).token("fakeToken1");
+    }
+
+    @Test
+    public void shouldCacheDifferentTokensPerServer() throws VaultException {
+        when(vaultConfig.getAddress()).thenReturn("http://first");
+        when(vaultConfig.getNameSpace()).thenReturn(null);
+
+        VaultConfig secondVaultConfig = mock(VaultConfig.class);
+        when(secondVaultConfig.getAddress()).thenReturn("http://second");
+        when(secondVaultConfig.getNameSpace()).thenReturn("second");
+
+        when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2", "shouldNeverBeRequested");
+        when(auth.lookupSelf()).thenReturn(lookupResponse);
+        when(lookupResponse.getTTL()).thenReturn(5L);
+
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(secondVaultConfig);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(secondVaultConfig);
+
+        verify(vaultConfig, times(2)).token("fakeToken1");
+        verify(secondVaultConfig, times(2)).token("fakeToken2");
     }
 
     @Test
