@@ -12,7 +12,7 @@
   <version>${changelist}</version>
   <packaging>hpi</packaging>
   <properties>
-    <changelist>9999-SNAPSHOT</changelist>
+    <changelist>356.26310337f_CA-2586_b_3</changelist>
     <jenkins.version>2.303.3</jenkins.version>
     <hpi.compatibleSinceVersion>2.0.0</hpi.compatibleSinceVersion>
     <gitHubRepo>jenkinsci/${project.artifactId}</gitHubRepo>

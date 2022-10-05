@@ -19,9 +19,9 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     private final static Logger LOGGER = Logger
         .getLogger(AbstractVaultTokenCredentialWithExpiration.class.getName());
 
-    public static class CacheKey implements Serializable {
-        private final transient String vaultUrl;
-        private final transient String namespace;
+    public static class CacheKey {
+        private final String vaultUrl;
+        private final String namespace;
 
         public CacheKey(String vaultUrl, String namespace) {
             this.vaultUrl = vaultUrl;
@@ -52,10 +52,10 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         }
     }
 
-    public static class TokenHolder implements Serializable {
-        private final transient CacheKey key;
-        private transient Calendar tokenExpiry;
-        private transient String token;
+    public static class TokenHolder {
+        private final CacheKey key;
+        private Calendar tokenExpiry;
+        private String token;
 
         public TokenHolder(CacheKey key) {
             this.key = key;
