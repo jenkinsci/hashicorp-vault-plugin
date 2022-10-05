@@ -4,6 +4,7 @@ import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Objects;
@@ -109,7 +110,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         }
     }
 
-    private final transient ConcurrentMap<CacheKey, TokenHolder> cache = new ConcurrentHashMap<>();
+    private transient ConcurrentMap<CacheKey, TokenHolder> cache = new ConcurrentHashMap<>();
 
     protected AbstractVaultTokenCredentialWithExpiration(CredentialsScope scope, String id,
         String description) {
@@ -128,5 +129,10 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
 
     protected Vault getVault(VaultConfig config) {
         return new Vault(config);
+    }
+
+    private void readObject(java.io.ObjectInputStream in)
+        throws IOException, ClassNotFoundException {
+        cache = new ConcurrentHashMap<>();
     }
 }
