@@ -23,7 +23,7 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
     private String prefixPath;
     private String namespace;
     private Integer engineVersion;
-    private ItemGroup context;
+    private transient ItemGroup context;
 
     AbstractVaultBaseStandardCredentials(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
