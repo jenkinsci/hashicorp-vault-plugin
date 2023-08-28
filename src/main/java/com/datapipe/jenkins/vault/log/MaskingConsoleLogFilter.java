@@ -7,8 +7,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatterns;
 
 /*The logic in this class is borrowed from https://github.com/jenkinsci/credentials-binding-plugin/*/
