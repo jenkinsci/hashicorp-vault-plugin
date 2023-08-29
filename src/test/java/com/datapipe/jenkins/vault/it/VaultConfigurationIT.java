@@ -17,6 +17,7 @@ import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
+import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
@@ -164,7 +165,7 @@ public class VaultConfigurationIT {
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
         this.project.getBuildersList().add(echoSecret());
 
-        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0, new Cause.UserIdCause()).get();
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(),
             is("http://global-vault-url.com"));
         assertThat(vaultBuildWrapper.getConfiguration().getVaultCredentialId(),
@@ -203,7 +204,7 @@ public class VaultConfigurationIT {
         vaultBuildWrapper.setConfiguration(vaultConfig);
         this.project.getBuildersList().add(echoSecret());
 
-        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(),
             is("http://job-vault-url.com"));
@@ -245,7 +246,7 @@ public class VaultConfigurationIT {
         vaultBuildWrapper.setConfiguration(vaultConfig);
         this.project.getBuildersList().add(echoSecret());
 
-        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
         assertThat(vaultBuildWrapper.getConfiguration().getVaultUrl(),
             is("http://job-vault-url.com"));
@@ -314,7 +315,7 @@ public class VaultConfigurationIT {
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
         this.project.getBuildersList().add(echoSecret());
 
-        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         VaultConfig config = new VaultConfig().address(anyString());
@@ -348,7 +349,7 @@ public class VaultConfigurationIT {
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
         this.project.getBuildersList().add(echoSecret());
 
-        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         VaultConfig config = new VaultConfig().address(anyString());
@@ -377,7 +378,7 @@ public class VaultConfigurationIT {
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
         this.project.getBuildersList().add(echoSecret());
 
-        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         VaultConfig config = new VaultConfig().address(anyString());
@@ -412,7 +413,7 @@ public class VaultConfigurationIT {
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
         this.project.getBuildersList().add(echoSecret());
 
-        FreeStyleBuild build = this.project.scheduleBuild2(0).get();
+        FreeStyleBuild build = this.project.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
         jenkins.assertBuildStatus(Result.FAILURE, build);
         VaultConfig config = new VaultConfig().address(anyString());
