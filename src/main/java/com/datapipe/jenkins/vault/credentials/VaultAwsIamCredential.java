@@ -41,13 +41,13 @@ public class VaultAwsIamCredential extends AbstractAuthenticatingVaultTokenCrede
     }
 
     public String getTargetIamRole() {
-		return targetIamRole;
-	}
+        return targetIamRole;
+    }
 
     @DataBoundSetter
-	public void setTargetIamRole(String targetIamRole) {
-		this.targetIamRole = targetIamRole;
-    }    
+    public void setTargetIamRole(String targetIamRole) {
+        this.targetIamRole = targetIamRole;
+    }
 
     @NonNull
     public String getServerId() {
