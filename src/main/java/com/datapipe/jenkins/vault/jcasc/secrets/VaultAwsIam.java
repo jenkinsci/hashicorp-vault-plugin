@@ -10,7 +10,7 @@ public class VaultAwsIam {
 
     @NonNull
     private String role;
-    
+
     private String targetIamRole;
 
     @NonNull
@@ -26,7 +26,7 @@ public class VaultAwsIam {
     public String getRole() {
         return role;
     }
-    
+
     public String getTargetIAMRole() {
         return targetIamRole;
     }

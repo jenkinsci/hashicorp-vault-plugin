@@ -10,10 +10,8 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-
 import com.amazonaws.DefaultRequest;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentials;
@@ -28,7 +26,6 @@ import com.bettercloud.vault.api.Auth;
 import com.bettercloud.vault.json.JsonArray;
 import com.bettercloud.vault.json.JsonObject;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
-
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
@@ -88,12 +85,13 @@ public class AwsHelper {
 
             if (credentials == null) {
                 LOGGER.fine("Acquiring AWS credentials");
-                credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-                if (targetIamRole != null && !targetIamRole.isEmpty()) {
+                if (targetIamRole == null || targetIamRole.isEmpty()) {
+                	credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
+                } else {
                 	AWSSecurityTokenService stsClient = AWSSecurityTokenServiceClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build();
-                	STSAssumeRoleSessionCredentialsProvider remoteCred = new STSAssumeRoleSessionCredentialsProvider.Builder(targetIamRole, vault_session_name).withStsClient(stsClient).build();
-                	credentials = remoteCred.getCredentials();
-                }
+                    STSAssumeRoleSessionCredentialsProvider assumedCred = new STSAssumeRoleSessionCredentialsProvider.Builder(targetIamRole, vault_session_name).withStsClient(stsClient).build();
+                	credentials = assumedCred.getCredentials();
+                }       
                 LOGGER.log(Level.FINER, "AWS Access Key ID: {0}", credentials.getAWSAccessKeyId());
             }
 
