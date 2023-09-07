@@ -1,5 +1,19 @@
 package com.datapipe.jenkins.vault;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+
 import com.amazonaws.DefaultRequest;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentials;
@@ -14,21 +28,10 @@ import com.bettercloud.vault.api.Auth;
 import com.bettercloud.vault.json.JsonArray;
 import com.bettercloud.vault.json.JsonObject;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
+
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 
 public class AwsHelper {
 
@@ -36,11 +39,11 @@ public class AwsHelper {
 
     @NonNull
     public static String getToken(@NonNull Auth auth, @CheckForNull AWSCredentials credentials,
-                                  @CheckForNull String role, @CheckForNull String target_iam_role, @CheckForNull String serverIdValue,
+                                  @CheckForNull String role, @CheckForNull String targetIamRole, @CheckForNull String serverIdValue,
                                   @CheckForNull String mountPath) throws VaultPluginException {
         final EncodedIdentityRequest request;
         try {
-            request = new EncodedIdentityRequest(credentials, target_iam_role, serverIdValue);
+            request = new EncodedIdentityRequest(credentials, targetIamRole, serverIdValue);
         } catch (IOException | URISyntaxException e) {
             throw new VaultPluginException("could not get IAM request from AWS metadata", e);
         }
@@ -70,9 +73,9 @@ public class AwsHelper {
 
         private static final String data = "Action=GetCallerIdentity&Version=2011-06-15";
         private static final String endpoint = "https://sts.amazonaws.com";
-        private static final String vault_session_name = "vaule-jenkins";
+        private static final String vault_session_name = "vault-jenkins";
 
-        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String target_iam_role, @CheckForNull String serverIdValue) throws IOException, URISyntaxException {
+        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String targetIamRole, @CheckForNull String serverIdValue) throws IOException, URISyntaxException {
             LOGGER.fine("Creating GetCallerIdentity request");
             final DefaultRequest request = new DefaultRequest("sts");
             request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
@@ -84,11 +87,11 @@ public class AwsHelper {
             request.setEndpoint(new URI(this.endpoint));
 
             if (credentials == null) {
-                LOGGER.info("Acquiring AWS credentials");
+                LOGGER.fine("Acquiring AWS credentials");
                 credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-                if (target_iam_role != null) {
+                if (targetIamRole != null && !targetIamRole.isEmpty()) {
                 	AWSSecurityTokenService stsClient = AWSSecurityTokenServiceClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build();
-                	STSAssumeRoleSessionCredentialsProvider remoteCred = new STSAssumeRoleSessionCredentialsProvider.Builder(target_iam_role, vault_session_name).withStsClient(stsClient).build();
+                	STSAssumeRoleSessionCredentialsProvider remoteCred = new STSAssumeRoleSessionCredentialsProvider.Builder(targetIamRole, vault_session_name).withStsClient(stsClient).build();
                 	credentials = remoteCred.getCredentials();
                 }
                 LOGGER.log(Level.FINER, "AWS Access Key ID: {0}", credentials.getAWSAccessKeyId());

@@ -37,6 +37,7 @@ public class VaultSecretSource extends SecretSource {
     private static final String CASC_VAULT_APPROLE_SECRET = "CASC_VAULT_APPROLE_SECRET";
     private static final String CASC_VAULT_KUBERNETES_ROLE = "CASC_VAULT_KUBERNETES_ROLE";
     private static final String CASC_VAULT_AWS_IAM_ROLE = "CASC_VAULT_AWS_IAM_ROLE";
+    private static final String CASC_VAULT_AWS_TARGET_IAM_ROLE = "CASC_VAULT_AWS_TARGET_IAM_ROLE";
     private static final String CASC_VAULT_AWS_IAM_SERVER_ID = "CASC_VAULT_AWS_IAM_SERVER_ID";
     private static final String CASC_VAULT_NAMESPACE = "CASC_VAULT_NAMESPACE";
     private static final String CASC_VAULT_PREFIX_PATH = "CASC_VAULT_PREFIX_PATH";
@@ -170,9 +171,10 @@ public class VaultSecretSource extends SecretSource {
 
     private void awsIam(String role) {
         Optional<String> serverId = getVariable(CASC_VAULT_AWS_IAM_SERVER_ID);
+        Optional<String> targetIamRole = getVariable(CASC_VAULT_AWS_TARGET_IAM_ROLE);
         Optional<String> mount = getVariable(CASC_VAULT_MOUNT);
         setAuthenticator(VaultAuthenticator
-            .of(new VaultAwsIam(role, serverId.orElse("")), mount.orElse(DEFAULT_AWS_IAM_BACKEND)));
+            .of(new VaultAwsIam(role, targetIamRole.orElse(""), serverId.orElse("")), mount.orElse(DEFAULT_AWS_IAM_BACKEND)));
     }
 
     private void readSecretsFromVault() {
