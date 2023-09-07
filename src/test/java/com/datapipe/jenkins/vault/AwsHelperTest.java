@@ -74,7 +74,7 @@ public class AwsHelperTest {
             .thenReturn(resp);
         when(resp.getAuthClientToken()).thenReturn("mocktoken");
 
-        final String vaultToken = AwsHelper.getToken(auth, credentials, role, serverId, mount);
+        final String vaultToken = AwsHelper.getToken(auth, credentials, role, null, serverId, mount);
         assertThat(vaultToken, is("mocktoken"));
 
         final ArgumentCaptor<String> roleArg = ArgumentCaptor.forClass(String.class);

@@ -4,7 +4,10 @@ import com.amazonaws.DefaultRequest;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
 import com.amazonaws.http.HttpMethodName;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.util.RuntimeHttpUtils;
 import com.bettercloud.vault.VaultException;
 import com.bettercloud.vault.api.Auth;
@@ -33,11 +36,11 @@ public class AwsHelper {
 
     @NonNull
     public static String getToken(@NonNull Auth auth, @CheckForNull AWSCredentials credentials,
-                                  @CheckForNull String role, @CheckForNull String serverIdValue,
+                                  @CheckForNull String role, @CheckForNull String target_iam_role, @CheckForNull String serverIdValue,
                                   @CheckForNull String mountPath) throws VaultPluginException {
         final EncodedIdentityRequest request;
         try {
-            request = new EncodedIdentityRequest(credentials, serverIdValue);
+            request = new EncodedIdentityRequest(credentials, target_iam_role, serverIdValue);
         } catch (IOException | URISyntaxException e) {
             throw new VaultPluginException("could not get IAM request from AWS metadata", e);
         }
@@ -67,8 +70,9 @@ public class AwsHelper {
 
         private static final String data = "Action=GetCallerIdentity&Version=2011-06-15";
         private static final String endpoint = "https://sts.amazonaws.com";
+        private static final String vault_session_name = "vaule-jenkins";
 
-        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String serverIdValue) throws IOException, URISyntaxException {
+        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String target_iam_role, @CheckForNull String serverIdValue) throws IOException, URISyntaxException {
             LOGGER.fine("Creating GetCallerIdentity request");
             final DefaultRequest request = new DefaultRequest("sts");
             request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
@@ -80,8 +84,13 @@ public class AwsHelper {
             request.setEndpoint(new URI(this.endpoint));
 
             if (credentials == null) {
-                LOGGER.fine("Acquiring AWS credentials");
+                LOGGER.info("Acquiring AWS credentials");
                 credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
+                if (target_iam_role != null) {
+                	AWSSecurityTokenService stsClient = AWSSecurityTokenServiceClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build();
+                	STSAssumeRoleSessionCredentialsProvider remoteCred = new STSAssumeRoleSessionCredentialsProvider.Builder(target_iam_role, vault_session_name).withStsClient(stsClient).build();
+                	credentials = remoteCred.getCredentials();
+                }
                 LOGGER.log(Level.FINER, "AWS Access Key ID: {0}", credentials.getAWSAccessKeyId());
             }
 

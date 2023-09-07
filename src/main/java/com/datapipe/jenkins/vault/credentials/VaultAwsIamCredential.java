@@ -15,8 +15,11 @@ public class VaultAwsIamCredential extends AbstractAuthenticatingVaultTokenCrede
 
     @NonNull
     private String role = "";
-
+    
     @NonNull
+    private String target_iam_role = "";
+
+	@NonNull
     private String serverId = "";
 
     @NonNull
@@ -37,6 +40,16 @@ public class VaultAwsIamCredential extends AbstractAuthenticatingVaultTokenCrede
     public void setRole(@NonNull String role) {
         this.role = role;
     }
+    
+    @NonNull
+    public String getTarget_iam_role() {
+		return target_iam_role;
+	}
+
+    @DataBoundSetter
+	public void setTarget_iam_role(@NonNull String target_iam_role) {
+		this.target_iam_role = target_iam_role;
+	}    
 
     @NonNull
     public String getServerId() {
@@ -60,7 +73,7 @@ public class VaultAwsIamCredential extends AbstractAuthenticatingVaultTokenCrede
 
     @Override
     public String getToken(Auth auth) {
-        return AwsHelper.getToken(auth, null, this.role, this.serverId, this.mountPath);
+        return AwsHelper.getToken(auth, null, this.role, this.target_iam_role, this.serverId, this.mountPath);
     }
 
     @Extension

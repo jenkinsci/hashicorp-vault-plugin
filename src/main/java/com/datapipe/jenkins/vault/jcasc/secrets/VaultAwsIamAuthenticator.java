@@ -27,7 +27,7 @@ public class VaultAwsIamAuthenticator extends VaultAuthenticatorWithExpiration {
     public void authenticate(@NonNull Vault vault, @NonNull VaultConfig config) throws VaultException, VaultPluginException {
         if (isTokenTTLExpired()) {
             // authenticate
-            currentAuthToken = AwsHelper.getToken(vault.auth(), null, awsIam.getRole(), awsIam.getServerId(), mountPath);
+            currentAuthToken = AwsHelper.getToken(vault.auth(), null, awsIam.getRole(), awsIam.getTargetIAMRole(), awsIam.getServerId(), mountPath);
             config.token(currentAuthToken).build();
             LOGGER.log(Level.FINE, "Login to Vault using AWS IAM successful");
             getTTLExpiryOfCurrentToken(vault);

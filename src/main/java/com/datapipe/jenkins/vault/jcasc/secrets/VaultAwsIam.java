@@ -10,6 +10,9 @@ public class VaultAwsIam {
 
     @NonNull
     private String role;
+    
+    @NonNull
+    private String target_iam_role;
 
     @NonNull
     private String serverId;
@@ -22,6 +25,11 @@ public class VaultAwsIam {
     @NonNull
     public String getRole() {
         return role;
+    }
+    
+    @NonNull
+    public String getTargetIAMRole() {
+        return target_iam_role;
     }
 
     @NonNull
