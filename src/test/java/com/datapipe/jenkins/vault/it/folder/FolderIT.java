@@ -49,6 +49,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential2;
+import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential3;
 
 public class FolderIT {
     // check that you cannot access another credentials folder
@@ -87,8 +89,8 @@ public class FolderIT {
         globalConfig.setConfiguration(vaultConfig);
         globalConfig.save();
 
-        FOLDER_1_CREDENTIAL = createTokenCredential(FOLDER_1_CREDENTIALS_ID);
-        FOLDER_2_CREDENTIAL = createTokenCredential(FOLDER_2_CREDENTIALS_ID);
+        FOLDER_1_CREDENTIAL = createTokenCredential2(FOLDER_1_CREDENTIALS_ID);
+        FOLDER_2_CREDENTIAL = createTokenCredential3(FOLDER_2_CREDENTIALS_ID);
 
         FolderCredentialsProvider.FolderCredentialsProperty folder1CredProperty = new FolderCredentialsProvider.FolderCredentialsProperty(
             new DomainCredentials[]{
@@ -100,7 +102,7 @@ public class FolderIT {
                 new DomainCredentials(Domain.global(),
                     Collections.singletonList(FOLDER_2_CREDENTIAL))});
 
-        GLOBAL_CREDENTIAL_1 = createTokenCredential(GLOBAL_CREDENTIALS_ID_1);
+        GLOBAL_CREDENTIAL_1 = createTokenCredential2(GLOBAL_CREDENTIALS_ID_1);
         GLOBAL_CREDENTIAL_2 = createTokenCredential(GLOBAL_CREDENTIALS_ID_2);
 
         SystemCredentialsProvider.getInstance()
