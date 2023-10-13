@@ -55,7 +55,7 @@ public class VaultBuildWrapper extends SimpleBuildWrapper {
     private List<VaultSecret> vaultSecrets;
     private List<String> valuesToMask = new ArrayList<>();
     private transient VaultAccessor vaultAccessor = new VaultAccessor();
-    protected PrintStream logger;
+    protected transient PrintStream logger;
 
     @DataBoundConstructor
     public VaultBuildWrapper(@CheckForNull List<VaultSecret> vaultSecrets) {
