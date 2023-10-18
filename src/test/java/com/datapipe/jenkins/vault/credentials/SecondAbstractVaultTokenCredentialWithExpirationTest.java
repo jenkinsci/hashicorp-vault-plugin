@@ -17,7 +17,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AbstractVaultTokenCredentialWithExpirationTest {
+public class SecondAbstractVaultTokenCredentialWithExpirationTest {
 
     private Vault vault;
     private VaultConfig vaultConfig;
@@ -37,28 +37,33 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
 
         when(vault.auth()).thenReturn(auth);
         when(auth.loginByCert()).thenReturn(authResponse);
-        when(authResponse.getAuthClientToken()).thenReturn("fakeToken");
     }
 
     @Test
-    public void shouldBeAbleToFetchTokenOnInit() throws VaultException {
+    public void shouldFetchNewTokenIfExpired() throws VaultException {
+        when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(auth.lookupSelf()).thenReturn(lookupResponse);
-        when(lookupResponse.getTTL()).thenReturn(5L);
+        when(lookupResponse.getTTL()).thenReturn(0L);
 
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
 
-        verify(vaultConfig).token("fakeToken");
+        verify(vaultConfig, times(2)).token(anyString());
+        verify(vaultConfig).token("fakeToken1");
+        verify(vaultConfig).token("fakeToken2");
     }
 
     @Test
-    public void shouldReuseTheExistingTokenIfNotExpired() throws VaultException {
-        when(auth.lookupSelf()).thenReturn(lookupResponse);
-        when(lookupResponse.getTTL()).thenReturn(5L);
+    public void shouldExpireTokenImmediatelyIfExceptionFetchingTTL() throws VaultException {
+        when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
+        when(auth.lookupSelf()).thenThrow(new VaultException("Fail for testing"));
 
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
 
-        verify(vaultConfig, times(2)).token("fakeToken");
+        verify(vaultConfig, times(2)).token(anyString());
+        verify(vaultConfig).token("fakeToken1");
+        verify(vaultConfig).token("fakeToken2");
     }
 
     static class ExampleVaultTokenCredentialWithExpiration extends
