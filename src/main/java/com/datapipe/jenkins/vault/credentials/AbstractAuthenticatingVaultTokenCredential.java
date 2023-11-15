@@ -15,7 +15,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  * the authentication method is mounted.
  */
 public abstract class AbstractAuthenticatingVaultTokenCredential extends
-    AbstractVaultTokenCredentialWithExpiration {
+    AbstractVaultTokenCredential {
 
     @CheckForNull
     private String namespace;

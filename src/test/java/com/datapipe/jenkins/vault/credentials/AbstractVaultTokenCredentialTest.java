@@ -17,23 +17,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AbstractVaultTokenCredentialWithExpirationTest {
+public class AbstractVaultTokenCredentialTest {
 
-    private Vault vault;
     private VaultConfig vaultConfig;
     private Auth auth;
     private AuthResponse authResponse;
     private LookupResponse lookupResponse;
-    private ExampleVaultTokenCredentialWithExpiration vaultTokenCredentialWithExpiration;
+    private ExampleVaultTokenCredential vaultTokenCredential;
 
     @Before
     public void setUp() throws VaultException {
-        vault = mock(Vault.class);
+        Vault vault = mock(Vault.class);
         vaultConfig = mock(VaultConfig.class);
         auth = mock(Auth.class);
         authResponse = mock(AuthResponse.class);
         lookupResponse = mock(LookupResponse.class);
-        vaultTokenCredentialWithExpiration = new ExampleVaultTokenCredentialWithExpiration(vault);
+        vaultTokenCredential = new ExampleVaultTokenCredential(vault);
 
         when(vault.auth()).thenReturn(auth);
         when(auth.loginByCert()).thenReturn(authResponse);
@@ -45,7 +44,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(5L);
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
+        vaultTokenCredential.authorizeWithVault(vaultConfig);
 
         verify(vaultConfig).token("fakeToken");
     }
@@ -55,8 +54,8 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(5L);
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
+        vaultTokenCredential.authorizeWithVault(vaultConfig);
+        vaultTokenCredential.authorizeWithVault(vaultConfig);
 
         verify(vaultConfig, times(2)).token("fakeToken");
     }
@@ -67,8 +66,8 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(0L);
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
+        vaultTokenCredential.authorizeWithVault(vaultConfig);
+        vaultTokenCredential.authorizeWithVault(vaultConfig);
 
         verify(vaultConfig, times(2)).token(anyString());
         verify(vaultConfig).token("fakeToken1");
@@ -80,20 +79,19 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(auth.lookupSelf()).thenThrow(new VaultException("Fail for testing"));
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig);
+        vaultTokenCredential.authorizeWithVault(vaultConfig);
+        vaultTokenCredential.authorizeWithVault(vaultConfig);
 
         verify(vaultConfig, times(2)).token(anyString());
         verify(vaultConfig).token("fakeToken1");
         verify(vaultConfig).token("fakeToken2");
     }
 
-    static class ExampleVaultTokenCredentialWithExpiration extends
-        AbstractVaultTokenCredentialWithExpiration {
+    static class ExampleVaultTokenCredential extends AbstractVaultTokenCredential {
 
         private final Vault vault;
 
-        protected ExampleVaultTokenCredentialWithExpiration(Vault vault) {
+        protected ExampleVaultTokenCredential(Vault vault) {
             super(CredentialsScope.GLOBAL, "id", "description");
             this.vault = vault;
         }
