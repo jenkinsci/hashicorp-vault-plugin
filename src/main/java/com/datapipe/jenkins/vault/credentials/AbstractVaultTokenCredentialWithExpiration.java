@@ -62,8 +62,8 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         boolean result = true;
         Calendar now = Calendar.getInstance();
         long timeDiffInMillis = now.getTimeInMillis() - tokenExpiry.getTimeInMillis();
-        if (timeDiffInMillis < -2000L) {
-            // token will be valid for at least another 2s
+        if (timeDiffInMillis < -10000L) {
+            // token will be valid for at least another 10s
             result = false;
             LOGGER.log(Level.FINE, "Auth token is still valid");
         } else {
