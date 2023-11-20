@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.text.StringSubstitutor;
 
 public class VaultAccessor implements Serializable {
 
@@ -140,10 +141,7 @@ public class VaultAccessor implements Serializable {
         }
     }
 
-    public static String replacePolicyTokens(String policy, EnvVars envVars) {
-        if (!policy.contains("{")) {
-            return policy;
-        }
+    private static StringSubstitutor getPolicyTokenSubstitutor(EnvVars envVars) {
         String jobName = envVars.get("JOB_NAME");
         String jobBaseName = envVars.get("JOB_BASE_NAME");
         String folder = "";
@@ -153,22 +151,23 @@ public class VaultAccessor implements Serializable {
                 .limit(jobElements.length - 1)
                 .collect(Collectors.joining("/"));
         }
-        return policy
-            .replaceAll("\\{job_base_name}", jobBaseName)
-            .replaceAll("\\{job_name}", jobName)
-            .replaceAll("\\{job_name_us}", jobName.replaceAll("/", "_"))
-            .replaceAll("\\{job_folder}", folder)
-            .replaceAll("\\{job_folder_us}", folder.replaceAll("/", "_"))
-            .replaceAll("\\{node_name}", envVars.get("NODE_NAME"));
+        Map<String, String> valueMap = new HashMap<>();
+        valueMap.put("job_base_name", jobBaseName);
+        valueMap.put("job_name", jobName);
+        valueMap.put("job_name_us", jobName.replaceAll("/", "_"));
+        valueMap.put("job_folder", folder);
+        valueMap.put("job_folder_us", folder.replaceAll("/", "_"));
+        valueMap.put("node_name", envVars.get("NODE_NAME"));
+        return new StringSubstitutor(valueMap);
     }
 
-    public static List<String> generatePolicies(String policies, EnvVars envVars) {
+    protected static List<String> generatePolicies(String policies, EnvVars envVars) {
         if (StringUtils.isBlank(policies)) {
             return null;
         }
-        return Arrays.stream(policies.split("\n"))
+        return Arrays.stream(getPolicyTokenSubstitutor(envVars).replace(policies).split("\n"))
             .filter(StringUtils::isNotBlank)
-            .map(policy -> replacePolicyTokens(policy.trim(), envVars))
+            .map(String::trim)
             .collect(Collectors.toList());
     }
 

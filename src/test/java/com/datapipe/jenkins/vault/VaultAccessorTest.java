@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 public class VaultAccessorTest {
 
     private static final String POLICIES_STR =
-        "\npol1\n\nbase_{job_base_name}\njob/{job_name}\n job_{job_name_us}\nfolder/{job_folder}\nfolder_{job_folder_us}\nnode_{node_name}\n";
+        "\npol1\n\nbase_${job_base_name}\njob/${job_name}\n job_${job_name_us}\nfolder/${job_folder}\nfolder_${job_folder_us}\nnode_${node_name}\n";
 
     @Test
     public void testGeneratePolicies() {
