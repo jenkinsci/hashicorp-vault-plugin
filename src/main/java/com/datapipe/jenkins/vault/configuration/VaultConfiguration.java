@@ -50,6 +50,10 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String prefixPath;
 
+    private String policies;
+
+    private Boolean disableChildPoliciesOverride;
+
     private Integer timeout = DEFAULT_TIMEOUT;
 
     @DataBoundConstructor
@@ -73,6 +77,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.engineVersion = toCopy.engineVersion;
         this.vaultNamespace = toCopy.vaultNamespace;
         this.prefixPath = toCopy.prefixPath;
+        this.policies = toCopy.policies;
+        this.disableChildPoliciesOverride = toCopy.disableChildPoliciesOverride;
         this.timeout = toCopy.timeout;
     }
 
@@ -98,6 +104,10 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         }
         if (StringUtils.isBlank(result.getPrefixPath())) {
             result.setPrefixPath(parent.getPrefixPath());
+        }
+        if (StringUtils.isBlank(result.getPolicies()) ||
+                (parent.getDisableChildPoliciesOverride() != null && parent.getDisableChildPoliciesOverride())) {
+            result.setPolicies(parent.getPolicies());
         }
         if (result.timeout == null) {
             result.setTimeout(parent.getTimeout());
@@ -181,6 +191,24 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
     @DataBoundSetter
     public void setPrefixPath(String prefixPath) {
         this.prefixPath = fixEmptyAndTrim(prefixPath);
+    }
+
+    public String getPolicies() {
+        return policies;
+    }
+
+    @DataBoundSetter
+    public void setPolicies(String policies) {
+        this.policies = fixEmptyAndTrim(policies);
+    }
+
+    public Boolean getDisableChildPoliciesOverride() {
+        return disableChildPoliciesOverride;
+    }
+
+    @DataBoundSetter
+    public void setDisableChildPoliciesOverride(Boolean disableChildPoliciesOverride) {
+        this.disableChildPoliciesOverride = disableChildPoliciesOverride;
     }
 
     public Integer getTimeout() {

@@ -4,12 +4,14 @@ import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.response.LogicalResponse;
 import com.bettercloud.vault.rest.RestResponse;
+import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.datapipe.jenkins.vault.VaultAccessor;
 import com.datapipe.jenkins.vault.VaultBuildWrapper;
+import com.datapipe.jenkins.vault.configuration.FolderVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
@@ -49,8 +51,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -152,6 +157,33 @@ public class VaultConfigurationIT {
         return isWindows() ? "%" + v + "%" : "$" + v;
     }
 
+    private void assertOverridePolicies(String globalPolicies, Boolean globalDisableOverride, Boolean folderDisableOverride,
+        String policiesResult) throws Exception {
+        VaultConfiguration globalConfig = GlobalVaultConfiguration.get().getConfiguration();
+        globalConfig.setPolicies(globalPolicies);
+        globalConfig.setDisableChildPoliciesOverride(globalDisableOverride);
+
+        Folder folder = jenkins.createProject(Folder.class, "sub1");
+        VaultConfiguration folderConfig = new VaultConfiguration();
+        folderConfig.setPolicies("folder-policies");
+        folderConfig.setDisableChildPoliciesOverride(folderDisableOverride);
+        folder.addProperty(new FolderVaultConfiguration(folderConfig));
+
+        FreeStyleProject project = folder.createProject(FreeStyleProject.class, "test");
+        FreeStyleBuild build = mock(FreeStyleBuild.class);
+        when(build.getParent()).thenReturn(project);
+        VaultConfiguration vaultConfig = new VaultConfiguration();
+        vaultConfig.setPolicies("job-policies");
+
+        assertThat(VaultAccessor.pullAndMergeConfiguration(build, vaultConfig).getPolicies(),
+            equalTo(policiesResult));
+    }
+
+    private void assertOverridePolicies(Boolean globalDisableOverride, Boolean folderDisableOverride,
+        String policiesResult) throws Exception {
+        assertOverridePolicies("global-policies", globalDisableOverride, folderDisableOverride, policiesResult);
+    }
+
     @Test
     public void shouldUseGlobalConfiguration() throws Exception {
         List<VaultSecret> secrets = standardSecrets();
@@ -220,6 +252,27 @@ public class VaultConfigurationIT {
         verify(mockAccessor, times(1)).read("secret/path1", GLOBAL_ENGINE_VERSION_2);
         jenkins.assertLogContains("echo ****", build);
         jenkins.assertLogNotContains("some-secret", build);
+        assertThat(VaultAccessor.pullAndMergeConfiguration(build, vaultConfig).getPolicies(), nullValue());
+    }
+
+    @Test
+    public void shouldUseJobConfigurationWithoutDisableOverrides() throws Exception {
+        assertOverridePolicies(false, false, "job-policies");
+    }
+
+    @Test
+    public void shouldUseFolderConfigurationWithDisableOverrides() throws Exception {
+        assertOverridePolicies(false, true, "folder-policies");
+    }
+
+    @Test
+    public void shouldUseGlobalConfigurationWithDisableOverrides() throws Exception {
+        assertOverridePolicies(true, false, "global-policies");
+    }
+
+    @Test
+    public void shouldUseEmptyGlobalConfigurationWithDisableOverrides() throws Exception {
+        assertOverridePolicies(null, true, true, null);
     }
 
     @Test
@@ -430,7 +483,7 @@ public class VaultConfigurationIT {
         when(cred.getDescription()).thenReturn("description");
         when(cred.getRoleId()).thenReturn("role-id-" + credentialId);
         when(cred.getSecretId()).thenReturn(Secret.fromString("secret-id-" + credentialId));
-        when(cred.authorizeWithVault(any())).thenReturn(vault);
+        when(cred.authorizeWithVault(any(), eq(null))).thenReturn(vault);
         return cred;
 
     }

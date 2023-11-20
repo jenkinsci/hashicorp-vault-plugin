@@ -21,6 +21,24 @@ When registering the approle backend you can set a couple of different parameter
 * many more
 
 This is just a short introduction, please refer to [Hashicorp itself](https://www.vaultproject.io/docs/auth/approle.html) to get detailed information.
+
+### Isolating policies for different jobs
+It may be desirable to have jobs or folders with separate Vault policies allocated. This may be done
+with the optional `policies` configuration option combined with authentication such as the AppRole
+credential. The process is the following:
+* The Jenkins job attempts to retrieve a secret from Vault
+* The AppRole authentication is used to retrieve a new token (if the old one has not expired yet)
+* The Vault plugin then uses the `policies` configuration value with job info to come up with a list of policies
+* If this list is not empty, the AppRole token is used to retrieve a new token that only has the specified policies applied
+* This token is then used for all Vault plugin operations in the job
+
+The policies list may be templatized with values that can come from each job in order to customize
+policies per job or folder. See the `policies` configuration help for more information on available
+tokens to use in the configuration. The `Limit Token Policies` option must also be enabled on the
+auth credential. Please note that the AppRole (or other authentication method) should have all policies
+configured as `token_policies` and not `identity_policies`, as job-specific tokens inherit all
+`identity_policies` automatically.  
+
 ### What about other backends?
 Hashicorp explicitly recommends the AppRole Backend for machine-to-machine authentication. Token based auth is mainly supported for backward compatibility.
 Other backends that might make sense are the AWS EC2 backend, the Azure backend, and the Kubernetes backend. But we do not support these yet. Feel free to contribute!
