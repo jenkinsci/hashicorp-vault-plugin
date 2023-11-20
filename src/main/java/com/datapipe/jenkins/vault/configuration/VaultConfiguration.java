@@ -52,6 +52,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String policies;
 
+    private Boolean disableChildPoliciesOverride;
+
     private Integer timeout = DEFAULT_TIMEOUT;
 
     @DataBoundConstructor
@@ -76,6 +78,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultNamespace = toCopy.vaultNamespace;
         this.prefixPath = toCopy.prefixPath;
         this.policies = toCopy.policies;
+        this.disableChildPoliciesOverride = toCopy.disableChildPoliciesOverride;
         this.timeout = toCopy.timeout;
     }
 
@@ -102,7 +105,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         if (StringUtils.isBlank(result.getPrefixPath())) {
             result.setPrefixPath(parent.getPrefixPath());
         }
-        if (StringUtils.isBlank(result.getPolicies())) {
+        if (StringUtils.isBlank(result.getPolicies()) ||
+                (parent.getDisableChildPoliciesOverride() != null && parent.getDisableChildPoliciesOverride())) {
             result.setPolicies(parent.getPolicies());
         }
         if (result.timeout == null) {
@@ -195,7 +199,16 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     @DataBoundSetter
     public void setPolicies(String policies) {
-        this.policies = fixEmptyAndTrim(policies);;
+        this.policies = fixEmptyAndTrim(policies);
+    }
+
+    public Boolean getDisableChildPoliciesOverride() {
+        return disableChildPoliciesOverride;
+    }
+
+    @DataBoundSetter
+    public void setDisableChildPoliciesOverride(Boolean disableChildPoliciesOverride) {
+        this.disableChildPoliciesOverride = disableChildPoliciesOverride;
     }
 
     public Integer getTimeout() {
