@@ -106,7 +106,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(childAuthResponse.getAuthClientToken()).thenReturn("childToken1", "childToken2");
         when(auth.lookupSelf()).thenReturn(lookupResponse);
-        when(lookupResponse.getTTL()).thenReturn(5L);
+        when(lookupResponse.getTTL()).thenReturn(30L);
 
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
         vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
