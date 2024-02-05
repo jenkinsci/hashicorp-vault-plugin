@@ -44,8 +44,8 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         this.usePolicies = usePolicies;
     }
 
-    private Map<String, Calendar> tokenExpiry;
-    private Map<String, String> tokenCache;
+    private transient Map<String, Calendar> tokenExpiry;
+    private transient Map<String, String> tokenCache;
 
     protected AbstractVaultTokenCredentialWithExpiration(CredentialsScope scope, String id,
         String description) {
