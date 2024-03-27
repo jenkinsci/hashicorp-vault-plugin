@@ -8,6 +8,8 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -85,7 +87,7 @@ public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredent
     @Override
     public String getPrivateKey() {
         String secretKey = defaultIfBlank(privateKeyKey, DEFAULT_PRIVATE_KEY_KEY);
-        return getVaultSecretKeyValue(secretKey);
+        return new String(Base64.getMimeDecoder().decode(getVaultSecretKeyValue(secretKey)), StandardCharsets.UTF_8);
     }
 
     @NonNull
