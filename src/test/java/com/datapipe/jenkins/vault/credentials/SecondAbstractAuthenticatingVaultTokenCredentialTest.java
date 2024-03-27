@@ -10,12 +10,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AbstractAuthenticatingVaultTokenCredentialTest {
+public class SecondAbstractAuthenticatingVaultTokenCredentialTest {
 
     private Vault vault;
     private Auth auth;
@@ -27,25 +28,23 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
         auth = mock(Auth.class);
         authResponse = mock(AuthResponse.class);
         when(vault.auth()).thenReturn(auth);
-        when(auth.withNameSpace(anyString())).thenReturn(auth);
         when(auth.loginByCert()).thenReturn(authResponse);
         when(authResponse.getAuthClientToken()).thenReturn("12345");
     }
 
     @Test
-    public void nonRootNamespaceFromGetVaultAuth() {
+    public void rootNamespace() {
         ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
-        cred.setNamespace("foo");
-        Auth authRet = cred.getVaultAuth(vault);
-        verify(authRet).withNameSpace("foo");
+        cred.setNamespace("/");
+        assertEquals("12345", cred.getToken(vault));
+        verify(auth).withNameSpace(null);
     }
 
     @Test
-    public void nonRootNamespace() {
+    public void nullNamespace() {
         ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
-        cred.setNamespace("foo");
         assertEquals("12345", cred.getToken(vault));
-        verify(auth).withNameSpace("foo");
+        verify(auth, never()).withNameSpace(any());
     }
 
     static class ExampleVaultTokenCredential extends AbstractAuthenticatingVaultTokenCredential {
