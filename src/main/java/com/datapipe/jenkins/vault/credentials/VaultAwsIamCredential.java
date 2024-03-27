@@ -24,7 +24,7 @@ public class VaultAwsIamCredential extends AbstractAuthenticatingVaultTokenCrede
 
     @DataBoundConstructor
     public VaultAwsIamCredential(@CheckForNull CredentialsScope scope, @CheckForNull String id,
-                                 @CheckForNull String description) {
+            @CheckForNull String description) {
         super(scope, id, description);
     }
 

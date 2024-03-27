@@ -2,7 +2,7 @@ package com.datapipe.jenkins.vault.credentials.common;
 
 import hudson.Extension;
 import hudson.FilePath;
-import java.io.IOException;;
+import java.io.IOException;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
 import org.jenkinsci.plugins.credentialsbinding.impl.AbstractOnDiskBinding;
