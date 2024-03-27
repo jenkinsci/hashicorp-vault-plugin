@@ -1,0 +1,39 @@
+<div>
+  The Vault policies to use when requesting a token for a job, separated by newlines. If left empty,
+  this will use all policies from the configured authentication. This is useful for
+  AppRole authentication where the AppRole can have many policies attached it and divide
+  up the policies per job based on the job folder or name. This allows you to restrict access on
+  specific jobs or folders. Each policy can use the following tokens to templatize the policies:
+  <ul>
+    <li>${job_base_name} - equal to the JOB_BASE_NAME env var</li>
+    <li>${job_name} - equal to the JOB_NAME env var</li>
+    <li>${job_name_us} - same as ${job_name} with slashes converted to underscores</li>
+    <li>${job_folder} - the folder of the job (JOB_NAME - JOB_BASE_NAME without the trailing slash)</li>
+    <li>${job_folder_us} - same as ${job_folder} with slashes converted to underscores</li>
+    <li>${node_name} - equal to the NODE_NAME env var</li>
+  </ul>
+
+  For example, a policy list such as:
+  <ul>
+    <li>pol_jenkins_base</li>
+    <li>pol_jenkins_job_base_${job_base_name}</li>
+    <li>pol_jenkins_folder_us_${job_name_folder_us}</li>
+    <li>pol_jenkins/folder/${job_folder}</li>
+    <li>pol_jenkins_job_us_${job_name_us}</li>
+    <li>pol_jenkins/job/${job_name}</li>
+  </ul>
+
+  Would result in six policies being applied to each job run. If the JOB_NAME was
+  "folder1/folder2/job1" and the JOB_BASE_NAME was "job1", the policies applied would be:
+  <ul>
+    <li>pol_jenkins_base</li>
+    <li>pol_jenkins_job_base_job1</li>
+    <li>pol_jenkins_folder_us_folder1_folder2</li>
+    <li>pol_jenkins/folder/folder1/folder2</li>
+    <li>pol_jenkins_job_us_folder1_folder2_job1</li>
+    <li>pol_jenkins/job/folder1/folder2/job1</li>
+  </ul>
+
+  Please note that the AppRole should have all policies configured as token_policies and not
+  identity_policies, as job-specific tokens inherit all identity_policies automatically.
+</div>

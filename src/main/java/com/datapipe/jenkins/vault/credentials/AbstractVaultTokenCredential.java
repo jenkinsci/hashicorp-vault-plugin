@@ -4,6 +4,7 @@ import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
+import java.util.List;
 
 public abstract class AbstractVaultTokenCredential
     extends BaseStandardCredentials implements VaultCredential {
@@ -15,7 +16,7 @@ public abstract class AbstractVaultTokenCredential
     protected abstract String getToken(Vault vault);
 
     @Override
-    public Vault authorizeWithVault(VaultConfig config) {
+    public Vault authorizeWithVault(VaultConfig config, List<String> policies) {
         Vault vault = new Vault(config);
         return new Vault(config.token(getToken(vault)));
     }
