@@ -28,6 +28,7 @@ import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
@@ -43,7 +44,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback.TailCall;
 import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
 import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
@@ -182,7 +182,7 @@ public class VaultBindingStep extends Step {
             return "withVault";
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Vault Plugin";

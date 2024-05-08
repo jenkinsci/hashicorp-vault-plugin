@@ -1,5 +1,6 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.FilePath;
@@ -13,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
 import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
 import org.jenkinsci.plugins.credentialsbinding.impl.UnbindableDir;
@@ -46,7 +46,7 @@ public class VaultCertificateCredentialsBinding extends
     }
 
     @Override
-    public MultiEnvironment bind(@Nonnull Run<?, ?> build, FilePath workspace, Launcher launcher,
+    public MultiEnvironment bind(@NonNull Run<?, ?> build, FilePath workspace, Launcher launcher,
         TaskListener listener)
         throws IOException, InterruptedException {
         VaultCertificateCredentials credentials = this.getCredentials(build);

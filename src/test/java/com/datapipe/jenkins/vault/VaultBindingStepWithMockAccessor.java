@@ -6,6 +6,7 @@ import com.bettercloud.vault.rest.RestResponse;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.Run;
@@ -17,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
@@ -103,7 +103,7 @@ public class VaultBindingStepWithMockAccessor extends VaultBindingStep {
             return "withVaultMock";
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Vault Mock Plugin";

@@ -1,13 +1,13 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import java.io.IOException;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.credentialsbinding.Binding;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
@@ -25,10 +25,10 @@ public class VaultStringCredentialBinding extends Binding<VaultStringCredential>
         return VaultStringCredential.class;
     }
 
-    @Override public SingleEnvironment bindSingle(@Nonnull Run<?,?> build,
+    @Override public SingleEnvironment bindSingle(@NonNull Run<?,?> build,
                                                   @Nullable FilePath workspace,
                                                   @Nullable Launcher launcher,
-                                                  @Nonnull TaskListener listener) throws IOException, InterruptedException {
+                                                  @NonNull TaskListener listener) throws IOException, InterruptedException {
         return new SingleEnvironment(getCredentials(build).getSecret().getPlainText());
     }
 
