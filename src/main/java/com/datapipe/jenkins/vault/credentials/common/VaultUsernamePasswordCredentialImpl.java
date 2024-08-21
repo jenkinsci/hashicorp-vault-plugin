@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.CredentialsSnapshotTaker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
@@ -110,6 +111,42 @@ public class VaultUsernamePasswordCredentialImpl extends AbstractVaultBaseStanda
         @SuppressWarnings("unused") // used by stapler
         public ListBoxModel doFillEngineVersionItems(@AncestorInPath Item context) {
             return engineVersions(context);
+        }
+    }
+
+    static class SelfContained extends VaultUsernamePasswordCredentialImpl {
+        private final String username;
+        private final Secret password;
+
+        public SelfContained(VaultUsernamePasswordCredentialImpl base) {
+            super(base.getScope(), base.getId(), base.getDescription());
+            username = base.getUsername();
+            password = base.getPassword();
+        }
+
+        @NonNull
+        @Override
+        public String getUsername() {
+            return username;
+        }
+
+        @NonNull
+        @Override
+        public Secret getPassword() {
+            return password;
+        }
+    }
+
+    @Extension
+    public static class SnapshotTaker extends CredentialsSnapshotTaker<VaultUsernamePasswordCredentialImpl> {
+        @Override
+        public Class<VaultUsernamePasswordCredentialImpl> type() {
+            return VaultUsernamePasswordCredentialImpl.class;
+        }
+
+        @Override
+        public VaultUsernamePasswordCredentialImpl snapshot(VaultUsernamePasswordCredentialImpl credentials) {
+            return new SelfContained(credentials);
         }
     }
 }

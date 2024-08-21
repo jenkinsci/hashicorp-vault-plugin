@@ -1,6 +1,7 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.CredentialsSnapshotTaker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
@@ -82,5 +83,33 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
             return engineVersions(context);
         }
 
+    }
+
+    static class SelfContained extends VaultStringCredentialImpl {
+        private final Secret secret;
+
+        public SelfContained(VaultStringCredentialImpl base) {
+            super(base.getScope(), base.getId(), base.getDescription());
+            secret = base.getSecret();
+        }
+
+        @NonNull
+        @Override
+        public Secret getSecret() {
+            return secret;
+        }
+    }
+
+    @Extension
+    public static class SnapshotTaker extends CredentialsSnapshotTaker<VaultStringCredentialImpl> {
+        @Override
+        public Class<VaultStringCredentialImpl> type() {
+            return VaultStringCredentialImpl.class;
+        }
+
+        @Override
+        public VaultStringCredentialImpl snapshot(VaultStringCredentialImpl credentials) {
+            return new SelfContained(credentials);
+        }
     }
 }
