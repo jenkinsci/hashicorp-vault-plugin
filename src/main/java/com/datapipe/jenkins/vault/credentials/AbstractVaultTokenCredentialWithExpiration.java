@@ -44,14 +44,14 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         this.usePolicies = usePolicies;
     }
 
-    // Renamed to prevent XStream from attempting to deserialize old instances of this class which had the type `Calendar` prior to https://github.com/jenkinsci/hashicorp-vault-plugin/pull/223.
-    private transient Map<String, Calendar> tokenExpiry2;
+    // Renamed from tokenExpiry to prevent XStream from attempting to deserialize old instances of this class which had the type `Calendar` prior to https://github.com/jenkinsci/hashicorp-vault-plugin/pull/223.
+    private transient Map<String, Calendar> tokenExpiryCache;
     private transient Map<String, String> tokenCache;
 
     protected AbstractVaultTokenCredentialWithExpiration(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
-        tokenExpiry2 = new HashMap<>();
+        tokenExpiryCache = new HashMap<>();
         tokenCache = new HashMap<>();
     }
 
@@ -109,7 +109,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         // Upgraded instances can have these not initialized in the constructor (serialized jobs possibly)
         if (tokenCache == null) {
             tokenCache = new HashMap<>();
-            tokenExpiry2 = new HashMap<>();
+            tokenExpiryCache = new HashMap<>();
         }
 
         String cacheKey = getCacheKey(policies);
@@ -151,11 +151,11 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         }
         Calendar expiry = Calendar.getInstance();
         expiry.add(Calendar.SECOND, tokenTTL);
-        tokenExpiry2.put(cacheKey, expiry);
+        tokenExpiryCache.put(cacheKey, expiry);
     }
 
     private boolean tokenExpired(String cacheKey) {
-        Calendar expiry = tokenExpiry2.get(cacheKey);
+        Calendar expiry = tokenExpiryCache.get(cacheKey);
         if (expiry == null) {
             return true;
         }
