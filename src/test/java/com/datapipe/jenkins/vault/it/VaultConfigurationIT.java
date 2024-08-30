@@ -360,7 +360,7 @@ public class VaultConfigurationIT {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-        VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
+        VaultAccessor mockAccessor = mockVaultAccessor2(GLOBAL_ENGINE_VERSION_2);
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
@@ -394,7 +394,7 @@ public class VaultConfigurationIT {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-        VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
+        VaultAccessor mockAccessor = mockVaultAccessor2(GLOBAL_ENGINE_VERSION_2);
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
@@ -423,7 +423,7 @@ public class VaultConfigurationIT {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-        VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
+        VaultAccessor mockAccessor = mockVaultAccessor2(GLOBAL_ENGINE_VERSION_2);
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
@@ -458,7 +458,7 @@ public class VaultConfigurationIT {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-        VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
+        VaultAccessor mockAccessor = mockVaultAccessor2(GLOBAL_ENGINE_VERSION_2);
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         this.project.getBuildWrappersList().add(vaultBuildWrapper);
@@ -486,5 +486,27 @@ public class VaultConfigurationIT {
         when(cred.authorizeWithVault(any(), eq(null))).thenReturn(vault);
         return cred;
 
+    }
+
+    public static VaultAppRoleCredential createTokenCredential2(final String credentialId) {
+        Vault vault = mock(Vault.class, withSettings().serializable());
+        VaultAppRoleCredential cred = mock(VaultAppRoleCredential.class, withSettings().serializable());
+        when(cred.getId()).thenReturn(credentialId);
+        when(cred.getDescription()).thenReturn("description");
+        return cred;
+    }
+
+    public static VaultAppRoleCredential createTokenCredential3(final String credentialId) {
+        Vault vault = mock(Vault.class, withSettings().serializable());
+        VaultAppRoleCredential cred = mock(VaultAppRoleCredential.class, withSettings().serializable());
+        return cred;
+    }
+    private VaultAccessor mockVaultAccessor2(Integer engineVersion) {
+        VaultAccessor vaultAccessor = mock(VaultAccessor.class);
+        Map<String, String> returnValue = new HashMap<>();
+        returnValue.put("key1", "some-secret");
+        LogicalResponse resp = mock(LogicalResponse.class);
+        RestResponse rest = mock(RestResponse.class);
+        return vaultAccessor;
     }
 }
