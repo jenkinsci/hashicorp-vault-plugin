@@ -70,7 +70,7 @@ public class VaultSecretSource extends SecretSource {
             .orElseGet(() -> getVariable(CASC_VAULT_URL));
         Optional<String> vaultNamespace = getVariable(CASC_VAULT_NAMESPACE);
         Optional<String> vaultPrefixPath = getVariable(CASC_VAULT_PREFIX_PATH);
-        Optional<String[]> vaultPaths = getCommaSeparatedVariables(CASC_VAULT_PATHS);
+        Optional<String[]> vaultPaths = getSeparatedVariables(CASC_VAULT_PATHS);
         getVariable(CASC_VAULT_PATH).ifPresent(s -> LOGGER
             .log(Level.SEVERE, "{0} is deprecated, please switch to {1}",
                 new Object[]{CASC_VAULT_PATH, CASC_VAULT_PATHS}));
@@ -239,8 +239,8 @@ public class VaultSecretSource extends SecretSource {
         return Optional.ofNullable(prop.getProperty(key, System.getenv(key)));
     }
 
-    private Optional<String[]> getCommaSeparatedVariables(String key) {
-        return getVariable(key).map(str -> str.split(","));
+    private Optional<String[]> getSeparatedVariables(String key) {
+        return getVariable(key).map(str -> str.split("\\s*(\\s|,)\\s*"));
     }
 
     @Override
