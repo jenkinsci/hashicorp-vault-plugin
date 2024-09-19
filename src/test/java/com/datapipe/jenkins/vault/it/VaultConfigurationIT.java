@@ -16,6 +16,7 @@ import com.datapipe.jenkins.vault.configuration.GlobalVaultConfiguration;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
+import com.datapipe.jenkins.vault.credentials.VaultCredential.VaultAuthorizationResult;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.model.VaultSecret;
 import com.datapipe.jenkins.vault.model.VaultSecretValue;
@@ -483,7 +484,8 @@ public class VaultConfigurationIT {
         when(cred.getDescription()).thenReturn("description");
         when(cred.getRoleId()).thenReturn("role-id-" + credentialId);
         when(cred.getSecretId()).thenReturn(Secret.fromString("secret-id-" + credentialId));
-        when(cred.authorizeWithVault(any(), eq(null))).thenReturn(vault);
+        when(cred.authorizeWithVault(any(), eq(null))).thenReturn(
+            new VaultAuthorizationResult(vault, "token-" + credentialId));
         return cred;
 
     }
