@@ -66,7 +66,7 @@ public class VaultAccessor implements Serializable {
             if (credential == null) {
                 vault = new Vault(config);
             } else {
-                vault = credential.authorizeWithVault(config, policies);
+                vault = credential.authorizeWithVault(config, policies).getVault();
             }
 
             vault.withRetries(maxRetries, retryIntervalMilliseconds);
@@ -161,7 +161,7 @@ public class VaultAccessor implements Serializable {
         return new StringSubstitutor(valueMap);
     }
 
-    protected static List<String> generatePolicies(String policies, EnvVars envVars) {
+    public static List<String> generatePolicies(String policies, EnvVars envVars) {
         if (StringUtils.isBlank(policies)) {
             return null;
         }
