@@ -1,7 +1,5 @@
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.response.LogicalResponse;
-import com.bettercloud.vault.rest.RestResponse;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import com.datapipe.jenkins.vault.model.VaultSecret;
@@ -9,6 +7,8 @@ import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import hudson.EnvVars;
 import hudson.model.Build;
 import hudson.model.Run;
+import io.github.jopenlibs.vault.response.LogicalResponse;
+import io.github.jopenlibs.vault.rest.RestResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;

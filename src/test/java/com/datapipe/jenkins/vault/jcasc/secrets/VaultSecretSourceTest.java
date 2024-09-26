@@ -41,7 +41,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-// Inspired by https://github.com/BetterCloud/vault-java-driver/blob/master/src/test-integration/java/com/bettercloud/vault/util/VaultContainer.java
+// Inspired by https://github.com/jopenlibs/vault-java-driver/blob/master/src/test-integration/java/io/github/jopenlibs/vault/util/VaultContainer.java
 public class VaultSecretSourceTest implements TestConstants {
 
     private final static Logger LOGGER = Logger.getLogger(VaultSecretSourceTest.class.getName());
