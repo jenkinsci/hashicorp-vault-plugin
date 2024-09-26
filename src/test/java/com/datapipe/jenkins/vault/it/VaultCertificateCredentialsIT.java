@@ -6,6 +6,7 @@ import com.datapipe.jenkins.vault.credentials.common.VaultCertificateCredentials
 import com.datapipe.jenkins.vault.credentials.common.VaultCertificateCredentialsImpl;
 import hudson.FilePath;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.util.Secret;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -23,6 +24,7 @@ import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -42,6 +44,7 @@ public class VaultCertificateCredentialsIT {
         story.then(r -> {
             VaultCertificateCredentials up = mock(
                 VaultCertificateCredentialsImpl.class);
+            when(up.forRun(any(Run.class))).thenReturn(up);
             when(up.getId()).thenReturn(credentialsId);
             when(up.getKeyStore()).thenReturn(keyStore);
             when(up.getPassword()).thenReturn(Secret.fromString(password));

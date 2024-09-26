@@ -1,7 +1,5 @@
 package com.datapipe.jenkins.vault.it.buildwrapper;
 
-import com.bettercloud.vault.SslConfig;
-import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.Domain;
@@ -12,10 +10,11 @@ import com.datapipe.jenkins.vault.util.TestConstants;
 import com.datapipe.jenkins.vault.util.VaultContainer;
 import hudson.model.Result;
 import hudson.util.Secret;
+import io.github.jopenlibs.vault.SslConfig;
+import io.github.jopenlibs.vault.VaultConfig;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -54,7 +53,7 @@ public class SSLTest implements TestConstants {
     private static final String credentialsId = "vaultToken";
 
     @BeforeClass
-    public static void setupClass() throws IOException, InterruptedException {
+    public static void setupClass() throws Exception {
         assumeTrue(hasDockerDaemon());
         container.initAndUnsealVault();
         container.setBasicSecrets();

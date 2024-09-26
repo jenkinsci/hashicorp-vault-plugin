@@ -1,8 +1,8 @@
 package com.datapipe.jenkins.vault.jcasc.secrets;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
 
 public class VaultSingleTokenAuthenticator implements VaultAuthenticator {
     private String token;

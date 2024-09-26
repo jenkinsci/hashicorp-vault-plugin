@@ -1,14 +1,5 @@
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-import com.bettercloud.vault.json.Json;
-import com.bettercloud.vault.json.JsonArray;
-import com.bettercloud.vault.json.JsonValue;
-import com.bettercloud.vault.response.LogicalResponse;
-import com.bettercloud.vault.response.VaultResponse;
-import com.bettercloud.vault.rest.RestResponse;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
@@ -24,6 +15,15 @@ import hudson.ExtensionList;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.security.ACL;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
+import io.github.jopenlibs.vault.json.Json;
+import io.github.jopenlibs.vault.json.JsonArray;
+import io.github.jopenlibs.vault.json.JsonValue;
+import io.github.jopenlibs.vault.response.LogicalResponse;
+import io.github.jopenlibs.vault.response.VaultResponse;
+import io.github.jopenlibs.vault.rest.RestResponse;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
@@ -64,7 +64,7 @@ public class VaultAccessor implements Serializable {
             config.build();
 
             if (credential == null) {
-                vault = new Vault(config);
+                vault = Vault.create(config);
             } else {
                 vault = credential.authorizeWithVault(config, policies);
             }

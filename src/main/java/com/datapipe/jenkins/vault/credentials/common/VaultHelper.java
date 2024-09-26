@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault.credentials.common;
 
-import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
@@ -17,6 +16,7 @@ import hudson.ExtensionList;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
+import io.github.jopenlibs.vault.VaultConfig;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

@@ -1,12 +1,12 @@
 package com.datapipe.jenkins.vault.util;
 
-import com.bettercloud.vault.SslConfig;
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-import com.bettercloud.vault.json.Json;
-import com.bettercloud.vault.json.JsonObject;
 import com.github.dockerjava.api.model.Capability;
+import io.github.jopenlibs.vault.SslConfig;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
+import io.github.jopenlibs.vault.json.Json;
+import io.github.jopenlibs.vault.json.JsonObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
@@ -193,7 +193,7 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
      * @return
      */
     public Vault getVault(final VaultConfig config, final Integer maxRetries, final Integer retryMillis) {
-        Vault vault = new Vault(config);
+        Vault vault = Vault.create(config);
         if (maxRetries != null && retryMillis != null) {
             vault = vault.withRetries(maxRetries, retryMillis);
         } else if (maxRetries != null) {
@@ -254,7 +254,7 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
                 .readTimeout(30)
                 .sslConfig(new SslConfig().pemFile(new File(CERT_PEMFILE)).build())
                 .build();
-        return new Vault(config).withRetries(MAX_RETRIES, RETRY_MILLIS);
+        return Vault.create(config).withRetries(MAX_RETRIES, RETRY_MILLIS);
     }
 
     /**
@@ -272,7 +272,7 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
                 .readTimeout(30)
                 .sslConfig(new SslConfig().pemFile(new File(CERT_PEMFILE)).build())
                 .build();
-        return new Vault(config).withRetries(MAX_RETRIES, RETRY_MILLIS);
+        return Vault.create(config).withRetries(MAX_RETRIES, RETRY_MILLIS);
     }
 
     /**

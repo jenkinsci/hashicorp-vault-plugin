@@ -1,14 +1,14 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-import com.bettercloud.vault.api.Auth;
-import com.bettercloud.vault.api.Auth.TokenRequest;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
+import io.github.jopenlibs.vault.api.Auth;
+import io.github.jopenlibs.vault.api.Auth.TokenRequest;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -133,7 +133,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     }
 
     protected Vault getVault(VaultConfig config) {
-        return new Vault(config);
+        return Vault.create(config);
     }
 
     private long getTokenTTL(Vault vault) throws VaultException {
