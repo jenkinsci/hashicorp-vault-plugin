@@ -107,7 +107,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     @Override
     public Vault authorizeWithVault(VaultConfig config, List<String> policies) {
         // Upgraded instances can have these not initialized in the constructor (serialized jobs possibly)
-        if (tokenCache == null) {
+        if (tokenCache == null || tokenExpiryCache == null) {
             tokenCache = new HashMap<>();
             tokenExpiryCache = new HashMap<>();
         }
