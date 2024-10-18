@@ -10,3 +10,4 @@ work/
 tmp/
 src/test/resources/com/datapipe/jenkins/vault/util/ssl/
 .DS_Store
+.vscode/
