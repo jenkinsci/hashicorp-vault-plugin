@@ -105,7 +105,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     }
 
     @Override
-    public Vault authorizeWithVault(VaultConfig config, List<String> policies) {
+    public VaultAuthorizationResult authorizeWithVault(VaultConfig config, List<String> policies) {
         // Upgraded instances can have these not initialized in the constructor (serialized jobs possibly)
         if (tokenCache == null || tokenExpiryCache == null) {
             tokenCache = new HashMap<>();
@@ -129,7 +129,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         } else {
             config.token(tokenCache.get(cacheKey));
         }
-        return vault;
+        return new VaultAuthorizationResult(vault, config.getToken());
     }
 
     protected Vault getVault(VaultConfig config) {

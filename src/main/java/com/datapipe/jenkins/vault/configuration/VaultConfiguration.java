@@ -276,9 +276,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         vaultConfig.address(this.getVaultUrl());
         vaultConfig.engineVersion(this.getEngineVersion());
         try {
-            if (this.getSkipSslVerification()) {
-                vaultConfig.sslConfig(new SslConfig().verify(false).build());
-            }
+            vaultConfig.sslConfig(new SslConfig().verify(!this.getSkipSslVerification()).build());
 
             if (StringUtils.isNotEmpty(this.getVaultNamespace())) {
                 vaultConfig.nameSpace(this.getVaultNamespace());
