@@ -1,8 +1,5 @@
 package com.datapipe.jenkins.vault.configuration;
 
-import com.bettercloud.vault.SslConfig;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
@@ -16,6 +13,9 @@ import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
+import io.github.jopenlibs.vault.SslConfig;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
 import java.io.Serializable;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;

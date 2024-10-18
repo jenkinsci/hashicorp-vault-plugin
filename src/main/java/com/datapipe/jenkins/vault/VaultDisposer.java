@@ -1,12 +1,12 @@
 package com.datapipe.jenkins.vault;
 
-import com.bettercloud.vault.VaultConfig;
 import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import io.github.jopenlibs.vault.VaultConfig;
 import java.io.IOException;
 import java.util.List;
 import jenkins.tasks.SimpleBuildWrapper;

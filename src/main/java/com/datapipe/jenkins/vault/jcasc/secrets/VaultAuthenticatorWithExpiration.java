@@ -1,7 +1,7 @@
 package com.datapipe.jenkins.vault.jcasc.secrets;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultException;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultException;
 import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;

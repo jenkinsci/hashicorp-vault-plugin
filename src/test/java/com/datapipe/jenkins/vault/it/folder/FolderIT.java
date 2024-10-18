@@ -1,7 +1,5 @@
 package com.datapipe.jenkins.vault.it.folder;
 
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.response.LogicalResponse;
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider;
 import com.cloudbees.plugins.credentials.Credentials;
@@ -19,6 +17,8 @@ import com.datapipe.jenkins.vault.model.VaultSecretValue;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.response.LogicalResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;

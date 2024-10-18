@@ -6,6 +6,7 @@ import com.datapipe.jenkins.vault.credentials.common.VaultSSHUserPrivateKey;
 import com.datapipe.jenkins.vault.credentials.common.VaultSSHUserPrivateKeyImpl;
 import hudson.FilePath;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.util.Secret;
 import java.util.Collections;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -19,6 +20,7 @@ import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getCatString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -39,6 +41,7 @@ public class VaultSSHUserPrivateKeyIT {
         story.then(r -> {
             VaultSSHUserPrivateKey up = mock(
                 VaultSSHUserPrivateKeyImpl.class);
+            when(up.forRun(any(Run.class))).thenReturn(up);
             when(up.getId()).thenReturn(credentialsId);
             when(up.getUsername()).thenReturn(username);
             when(up.getPrivateKey()).thenReturn(privateKey);

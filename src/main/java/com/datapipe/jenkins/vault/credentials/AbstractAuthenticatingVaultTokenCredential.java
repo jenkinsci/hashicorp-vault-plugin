@@ -1,12 +1,12 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Util;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.api.Auth;
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**

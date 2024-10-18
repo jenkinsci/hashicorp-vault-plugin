@@ -6,6 +6,7 @@ import com.datapipe.jenkins.vault.credentials.common.VaultFileCredential;
 import com.datapipe.jenkins.vault.credentials.common.VaultFileCredentialImpl;
 import hudson.FilePath;
 import hudson.model.Result;
+import hudson.model.Run;
 import java.io.ByteArrayInputStream;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -16,6 +17,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +33,7 @@ public class VaultFileCredentialIT {
         final String jobId = "testJob";
 
         VaultFileCredential up = mock(VaultFileCredential.class);
+        when(up.forRun(any(Run.class))).thenReturn(up);
         when(up.getId()).thenReturn(credentialsId);
         when(up.getContent()).thenReturn(new ByteArrayInputStream("fake".getBytes()));
         when(up.getFileName()).thenReturn(fileName);
