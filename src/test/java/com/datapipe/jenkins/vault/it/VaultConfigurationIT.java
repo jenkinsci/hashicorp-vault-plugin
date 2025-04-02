@@ -1,9 +1,5 @@
 package com.datapipe.jenkins.vault.it;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.response.LogicalResponse;
-import com.bettercloud.vault.rest.RestResponse;
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -26,6 +22,10 @@ import hudson.tasks.BatchFile;
 import hudson.tasks.CommandInterpreter;
 import hudson.tasks.Shell;
 import hudson.util.Secret;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.response.LogicalResponse;
+import io.github.jopenlibs.vault.rest.RestResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;

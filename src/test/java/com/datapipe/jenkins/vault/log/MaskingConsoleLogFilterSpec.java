@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
+import jenkins.util.JenkinsJVM;
 import org.jenkinsci.plugins.credentialsbinding.masking.LiteralSecretPatternFactory;
 import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatternFactory;
 import org.junit.Before;
@@ -28,6 +29,8 @@ import static org.mockito.Mockito.mock;
 public class MaskingConsoleLogFilterSpec {
 
     private @Mock(answer = Answers.CALLS_REAL_METHODS) MockedStatic<SecretPatternFactory> secretPatternFactoryMockedStatic;
+
+    private @Mock MockedStatic<JenkinsJVM> jenkinsJvmMockedStatic;
 
     @Before
     public void setup() {

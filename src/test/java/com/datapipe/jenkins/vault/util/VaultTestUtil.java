@@ -1,7 +1,8 @@
 package com.datapipe.jenkins.vault.util;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
+import hudson.Functions;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.shaded.org.apache.commons.lang.SystemUtils;
 import org.testcontainers.utility.PathUtils;
 import org.testcontainers.utility.TestEnvironment;
 import org.testcontainers.vault.VaultContainer;
@@ -72,7 +72,7 @@ public class VaultTestUtil implements TestConstants {
         }
         if (uri == null) return "FileNotFound"; // Should never happen.
         String result = Paths.get(uri).toFile().getAbsoluteFile().toString();
-        if (SystemUtils.IS_OS_WINDOWS && result.startsWith("/")) {
+        if (Functions.isWindows() && result.startsWith("/")) {
             result = PathUtils.createMinGWPath(result).substring(1);
         }
         return result;
@@ -130,7 +130,7 @@ public class VaultTestUtil implements TestConstants {
             // Retrieve AppRole credentials
             VaultConfig config = new VaultConfig().address(getAddress(container))
                 .token(VAULT_ROOT_TOKEN).engineVersion(1).build();
-            Vault vaultClient = new Vault(config);
+            Vault vaultClient = Vault.create(config);
             final String roleID = vaultClient.logical().read("auth/approle/role/admin/role-id")
                 .getData().get("role_id");
             final String secretID = vaultClient.logical().write("auth/approle/role/admin/secret-id",

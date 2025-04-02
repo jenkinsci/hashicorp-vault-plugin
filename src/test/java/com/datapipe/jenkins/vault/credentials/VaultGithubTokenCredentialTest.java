@@ -1,10 +1,10 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultException;
-import com.bettercloud.vault.api.Auth;
-import com.bettercloud.vault.response.AuthResponse;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultException;
+import io.github.jopenlibs.vault.api.Auth;
+import io.github.jopenlibs.vault.response.AuthResponse;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

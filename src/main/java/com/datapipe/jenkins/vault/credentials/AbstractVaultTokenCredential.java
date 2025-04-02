@@ -1,9 +1,9 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
 import java.util.List;
 
 public abstract class AbstractVaultTokenCredential
@@ -17,7 +17,7 @@ public abstract class AbstractVaultTokenCredential
 
     @Override
     public Vault authorizeWithVault(VaultConfig config, List<String> policies) {
-        Vault vault = new Vault(config);
-        return new Vault(config.token(getToken(vault)));
+        Vault vault = Vault.create(config);
+        return Vault.create(config.token(getToken(vault)));
     }
 }
