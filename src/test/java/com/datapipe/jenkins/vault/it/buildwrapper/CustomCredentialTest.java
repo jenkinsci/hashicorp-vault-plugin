@@ -5,7 +5,6 @@ import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.util.TestConstants;
 import com.datapipe.jenkins.vault.util.VaultContainer;
 import hudson.model.Result;
-import java.io.IOException;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -37,7 +36,7 @@ public class CustomCredentialTest implements TestConstants {
     private static WorkflowJob pipeline;
 
     @BeforeClass
-    public static void setupClass() throws IOException, InterruptedException {
+    public static void setupClass() throws Exception {
         assumeTrue(hasDockerDaemon());
         container.initAndUnsealVault();
         container.setBasicSecrets();

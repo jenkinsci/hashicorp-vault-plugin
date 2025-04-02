@@ -1,6 +1,5 @@
 package com.datapipe.jenkins.vault.it;
 
-import com.bettercloud.vault.api.Auth;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.Domain;
@@ -9,6 +8,7 @@ import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import hudson.FilePath;
 import hudson.model.Result;
 import hudson.util.Secret;
+import io.github.jopenlibs.vault.api.Auth;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;

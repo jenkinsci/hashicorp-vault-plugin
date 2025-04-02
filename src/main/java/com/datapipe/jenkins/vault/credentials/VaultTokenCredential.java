@@ -1,11 +1,11 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.Secret;
+import io.github.jopenlibs.vault.Vault;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VaultTokenCredential extends AbstractVaultTokenCredential {

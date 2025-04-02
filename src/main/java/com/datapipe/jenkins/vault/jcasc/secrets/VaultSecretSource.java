@@ -1,9 +1,9 @@
 package com.datapipe.jenkins.vault.jcasc.secrets;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
 import hudson.Extension;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
 import io.jenkins.plugins.casc.SecretSource;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -110,7 +110,7 @@ public class VaultSecretSource extends SecretSource {
             LOGGER.log(Level.WARNING, "Could not configure vault client", e);
         }
 
-        vault = new Vault(vaultConfig);
+        vault = Vault.create(vaultConfig);
     }
 
     private void determineAuthenticator() {
