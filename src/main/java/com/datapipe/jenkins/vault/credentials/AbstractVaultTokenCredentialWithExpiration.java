@@ -1,14 +1,14 @@
 package com.datapipe.jenkins.vault.credentials;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
-import com.bettercloud.vault.api.Auth;
-import com.bettercloud.vault.api.Auth.TokenRequest;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
+import io.github.jopenlibs.vault.api.Auth;
+import io.github.jopenlibs.vault.api.Auth.TokenRequest;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -44,13 +44,14 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         this.usePolicies = usePolicies;
     }
 
-    private transient Map<String, Calendar> tokenExpiry;
+    // Renamed from tokenExpiry to prevent XStream from attempting to deserialize old instances of this class which had the type `Calendar` prior to https://github.com/jenkinsci/hashicorp-vault-plugin/pull/223.
+    private transient Map<String, Calendar> tokenExpiryCache;
     private transient Map<String, String> tokenCache;
 
     protected AbstractVaultTokenCredentialWithExpiration(CredentialsScope scope, String id,
         String description) {
         super(scope, id, description);
-        tokenExpiry = new HashMap<>();
+        tokenExpiryCache = new HashMap<>();
         tokenCache = new HashMap<>();
     }
 
@@ -106,9 +107,9 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     @Override
     public Vault authorizeWithVault(VaultConfig config, List<String> policies) {
         // Upgraded instances can have these not initialized in the constructor (serialized jobs possibly)
-        if (tokenCache == null) {
+        if (tokenCache == null || tokenExpiryCache == null) {
             tokenCache = new HashMap<>();
-            tokenExpiry = new HashMap<>();
+            tokenExpiryCache = new HashMap<>();
         }
 
         String cacheKey = getCacheKey(policies);
@@ -132,7 +133,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     }
 
     protected Vault getVault(VaultConfig config) {
-        return new Vault(config);
+        return Vault.create(config);
     }
 
     private long getTokenTTL(Vault vault) throws VaultException {
@@ -150,11 +151,11 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
         }
         Calendar expiry = Calendar.getInstance();
         expiry.add(Calendar.SECOND, tokenTTL);
-        tokenExpiry.put(cacheKey, expiry);
+        tokenExpiryCache.put(cacheKey, expiry);
     }
 
     private boolean tokenExpired(String cacheKey) {
-        Calendar expiry = tokenExpiry.get(cacheKey);
+        Calendar expiry = tokenExpiryCache.get(cacheKey);
         if (expiry == null) {
             return true;
         }

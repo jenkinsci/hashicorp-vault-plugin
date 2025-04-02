@@ -1,11 +1,11 @@
 package com.datapipe.jenkins.vault.jcasc.secrets;
 
-import com.bettercloud.vault.Vault;
-import com.bettercloud.vault.VaultConfig;
-import com.bettercloud.vault.VaultException;
 import com.datapipe.jenkins.vault.AwsHelper;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.github.jopenlibs.vault.Vault;
+import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.VaultException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
