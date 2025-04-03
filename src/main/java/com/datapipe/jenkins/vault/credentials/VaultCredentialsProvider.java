@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
+import org.springframework.security.core.Authentication;
 
 /**
  * This class provides the credentials that we need to authenticate against Vault
@@ -32,58 +32,81 @@ import org.acegisecurity.Authentication;
 public class VaultCredentialsProvider extends CredentialsProvider {
 
     @Override
-    public <C extends Credentials> List<C> getCredentials(Class<C> type, ItemGroup itemGroup, Authentication authentication) {
+    @NonNull
+    public <C extends Credentials> List<C> getCredentialsInItemGroup(@NonNull Class<C> type,
+        @Nullable ItemGroup itemGroup,
+        @Nullable Authentication authentication,
+        @NonNull List<DomainRequirement> domainRequirements) {
+        CredentialsMatcher matcher = (type != VaultCredential.class ?
+            CredentialsMatchers.instanceOf(AbstractVaultBaseStandardCredentials.class) :
+            CredentialsMatchers.always());
+        List<C> creds = new ArrayList<>();
+        if (ACL.SYSTEM2.equals(authentication)) {
+            collectCredentials(type, itemGroup, domainRequirements, matcher, creds);
+        }
+        return creds;
+    }
+
+    @Deprecated
+    @NonNull
+    @Override
+    public <C extends Credentials> List<C> getCredentials(@NonNull Class<C> type, ItemGroup itemGroup, org.acegisecurity.Authentication authentication) {
         return getCredentials(type, itemGroup, authentication, Collections.emptyList());
     }
 
+    @Deprecated
     @NonNull
     @Override
     public <C extends Credentials> List<C> getCredentials(@NonNull Class<C> type,
                                                           @Nullable ItemGroup itemGroup,
-                                                          @Nullable Authentication authentication,
+                                                          @Nullable org.acegisecurity.Authentication authentication,
                                                           @NonNull List<DomainRequirement> domainRequirements) {
         CredentialsMatcher matcher = (type != VaultCredential.class ?
                                         CredentialsMatchers.instanceOf(AbstractVaultBaseStandardCredentials.class) :
                                         CredentialsMatchers.always());
-        List<C> creds = new ArrayList<C>();
+        List<C> creds = new ArrayList<>();
         if (ACL.SYSTEM.equals(authentication)) {
-            for (ItemGroup g = itemGroup; g instanceof AbstractFolder; g = (AbstractFolder.class.cast(g)).getParent()) {
-                FolderCredentialsProperty property = ((AbstractFolder<?>) g).getProperties()
-                                                                           .get(FolderCredentialsProperty.class);
-                if (property == null) {
-                    continue;
-                }
+            collectCredentials(type, itemGroup, domainRequirements, matcher, creds);
+        }
+        return creds;
+    }
 
-                List<C> folderCreds = DomainCredentials.getCredentials(
-                                                    property.getDomainCredentialsMap(),
-                                                    type,
-                                                    domainRequirements,
-                                                    matcher
-                                                );
-
-                if (type != VaultCredential.class) {
-                    for (C c : folderCreds) {
-                        ((AbstractVaultBaseStandardCredentials)c).setContext(g);
-                    }
-                }
-
-                creds.addAll(folderCreds);
+    private static <C extends Credentials> void collectCredentials(Class<C> type, ItemGroup<?> itemGroup,
+        List<DomainRequirement> domainRequirements, CredentialsMatcher matcher, List<C> creds) {
+        for (ItemGroup<?> g = itemGroup; g instanceof AbstractFolder; g = ((AbstractFolder<?>) g).getParent()) {
+            FolderCredentialsProperty property = ((AbstractFolder<?>) g).getProperties()
+                .get(FolderCredentialsProperty.class);
+            if (property == null) {
+                continue;
             }
 
-            List<C> globalCreds = DomainCredentials.getCredentials(
-                                                SystemCredentialsProvider.getInstance().getDomainCredentialsMap(),
-                                                type,
-                                                domainRequirements,
-                                                matcher
-                                            );
+            List<C> folderCreds = DomainCredentials.getCredentials(
+                property.getDomainCredentialsMap(),
+                type,
+                domainRequirements,
+                matcher
+            );
+
             if (type != VaultCredential.class) {
-                for (C c : globalCreds) {
-                    ((AbstractVaultBaseStandardCredentials)c).setContext(Jenkins.get());
+                for (C c : folderCreds) {
+                    ((AbstractVaultBaseStandardCredentials)c).setContext(g);
                 }
             }
-            creds.addAll(globalCreds);
+
+            creds.addAll(folderCreds);
         }
 
-        return creds;
+        List<C> globalCreds = DomainCredentials.getCredentials(
+            SystemCredentialsProvider.getInstance().getDomainCredentialsMap(),
+            type,
+            domainRequirements,
+            matcher
+        );
+        if (type != VaultCredential.class) {
+            for (C c : globalCreds) {
+                ((AbstractVaultBaseStandardCredentials)c).setContext(Jenkins.get());
+            }
+        }
+        creds.addAll(globalCreds);
     }
 }
