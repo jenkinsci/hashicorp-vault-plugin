@@ -65,9 +65,8 @@ public class VaultSecretSource extends SecretSource {
 
         // Parse variables
         Optional<String> vaultEngineVersionOpt = getVariable(CASC_VAULT_ENGINE_VERSION);
-        Optional<String> vaultUrl = getVariable(CASC_VAULT_AGENT_ADDR)
-            .map(Optional::of)
-            .orElseGet(() -> getVariable(CASC_VAULT_URL));
+        Optional<String> vaultUrl = getVariable(CASC_VAULT_AGENT_ADDR).or(
+            () -> getVariable(CASC_VAULT_URL));
         Optional<String> vaultNamespace = getVariable(CASC_VAULT_NAMESPACE);
         Optional<String> vaultPrefixPath = getVariable(CASC_VAULT_PREFIX_PATH);
         Optional<String[]> vaultPaths = getCommaSeparatedVariables(CASC_VAULT_PATHS);
@@ -76,7 +75,7 @@ public class VaultSecretSource extends SecretSource {
                 new Object[]{CASC_VAULT_PATH, CASC_VAULT_PATHS}));
 
         // Check mandatory variables are set
-        if (!vaultUrl.isPresent() || !vaultPaths.isPresent()) return;
+        if (vaultUrl.isEmpty() || vaultPaths.isEmpty()) return;
 
         if (getVariable(CASC_VAULT_AGENT_ADDR).isPresent()) usingVaultAgent = true;
 
@@ -186,7 +185,7 @@ public class VaultSecretSource extends SecretSource {
                 // Parse secrets
                 for (String vaultPath : vaultPathsOpt.get()) {
                     Map<String, String> nextSecrets = vault.logical().read(vaultPath).getData();
-                    Map<String, String> nextSecretsFullPath = new HashMap<String, String>();
+                    Map<String, String> nextSecretsFullPath = new HashMap<>();
                     // create item where key is full path to secret
                     for (Map.Entry<String, String> secretEntry : nextSecrets.entrySet()) {
                         nextSecretsFullPath.put(vaultPath + "/" + secretEntry.getKey(), secretEntry.getValue());

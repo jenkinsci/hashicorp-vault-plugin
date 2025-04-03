@@ -55,7 +55,7 @@ public class VaultCertificateCredentialsBinding extends
         FilePath keyStoreFile = keyStoreDir.getDirPath().child(String.format("keystore-%s", this.keyStoreVariable));
         credentials.write(keyStoreFile);
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put(this.keyStoreVariable, keyStoreFile.getRemote());
         map.put(this.passwordVariable, credentials.getPassword().getPlainText());
         return new MultiEnvironment(map);
@@ -71,7 +71,7 @@ public class VaultCertificateCredentialsBinding extends
 
     @Override
     public Set<String> variables() {
-        Set<String> variables = new HashSet<String>();
+        Set<String> variables = new HashSet<>();
         variables.add(this.keyStoreVariable);
         variables.add(this.passwordVariable);
         return variables;

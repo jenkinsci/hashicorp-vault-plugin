@@ -9,6 +9,7 @@ import hudson.model.ItemGroup;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import java.io.Serial;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -23,6 +24,7 @@ public class VaultStringCredentialImpl extends AbstractVaultBaseStandardCredenti
 
     public static final String DEFAULT_VAULT_KEY = "secret";
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String vaultKey;

@@ -25,6 +25,7 @@ import io.github.jopenlibs.vault.response.LogicalResponse;
 import io.github.jopenlibs.vault.response.VaultResponse;
 import io.github.jopenlibs.vault.rest.RestResponse;
 import java.io.PrintStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ import org.apache.commons.text.StringSubstitutor;
 
 public class VaultAccessor implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private VaultConfig config;

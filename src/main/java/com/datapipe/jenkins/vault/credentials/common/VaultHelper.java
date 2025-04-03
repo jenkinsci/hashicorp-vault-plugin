@@ -3,7 +3,6 @@ package com.datapipe.jenkins.vault.credentials.common;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUnavailableException;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.datapipe.jenkins.vault.VaultAccessor;
 import com.datapipe.jenkins.vault.configuration.VaultConfigResolver;
@@ -121,7 +120,7 @@ public class VaultHelper {
             .lookupCredentials(VaultCredential.class,
                 itemGroup,
                 ACL.SYSTEM,
-                Collections.<DomainRequirement>emptyList());
+                Collections.emptyList());
         VaultCredential credential = CredentialsMatchers
             .firstOrNull(credentials, new IdMatcher(id));
 

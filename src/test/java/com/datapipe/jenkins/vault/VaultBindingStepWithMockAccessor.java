@@ -11,10 +11,7 @@ import hudson.model.TaskListener;
 import io.github.jopenlibs.vault.VaultConfig;
 import io.github.jopenlibs.vault.response.LogicalResponse;
 import io.github.jopenlibs.vault.rest.RestResponse;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -88,9 +85,7 @@ public class VaultBindingStepWithMockAccessor extends VaultBindingStep {
 
         @Override
         public Set<? extends Class<?>> getRequiredContext() {
-            return Collections
-                .unmodifiableSet(
-                    new HashSet<>(Arrays.asList(TaskListener.class, Run.class, EnvVars.class)));
+            return Set.of(TaskListener.class, Run.class, EnvVars.class);
         }
 
         @Override

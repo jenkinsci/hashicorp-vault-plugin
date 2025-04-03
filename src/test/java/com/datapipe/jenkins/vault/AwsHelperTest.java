@@ -98,7 +98,7 @@ public class AwsHelperTest {
         final String decodedHeaders = new String(decoder.decode(headersArg.getValue()), charset);
         final JsonObject headersObject = Json.parse(decodedHeaders).asObject();
 
-        final List<String> expectedHeaderNames = new ArrayList<String>();
+        final List<String> expectedHeaderNames = new ArrayList<>();
         expectedHeaderNames.add("Host");
         expectedHeaderNames.add("Content-Type");
         expectedHeaderNames.add("Authorization");
@@ -119,8 +119,7 @@ public class AwsHelperTest {
         }
         assertThat(headersMap.get("Host"), is("sts.amazonaws.com"));
         assertThat(headersMap.get("Content-Type"), is("application/x-www-form-urlencoded; charset=utf-8"));
-        if (credentials instanceof AWSSessionCredentials) {
-            final AWSSessionCredentials sessionCreds = (AWSSessionCredentials) credentials;
+        if (credentials instanceof AWSSessionCredentials sessionCreds) {
             assertThat(headersMap.get("X-Amz-Security-Token"), is(sessionCreds.getSessionToken()));
         }
         if (StringUtils.isNotEmpty(serverId)) {

@@ -4,6 +4,7 @@ import hudson.console.ConsoleLogFilter;
 import hudson.model.Run;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatterns;
 public class MaskingConsoleLogFilter extends ConsoleLogFilter
     implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String charsetName;
