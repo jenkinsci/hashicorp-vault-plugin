@@ -9,6 +9,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVault
 
 public class VaultFileCredentialImpl extends AbstractVaultBaseStandardCredentials implements VaultFileCredential {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String fileName;

@@ -38,7 +38,7 @@ import static com.datapipe.jenkins.vault.util.VaultTestUtil.getAddress;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.runCommand;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 // Inspired by https://github.com/jopenlibs/vault-java-driver/blob/master/src/test-integration/java/io/github/jopenlibs/vault/util/VaultContainer.java

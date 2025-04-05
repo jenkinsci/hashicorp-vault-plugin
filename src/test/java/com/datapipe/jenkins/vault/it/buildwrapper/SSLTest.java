@@ -15,6 +15,7 @@ import io.github.jopenlibs.vault.VaultConfig;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -59,7 +60,7 @@ public class SSLTest implements TestConstants {
         container.setBasicSecrets();
 
         pipeline = j.createProject(WorkflowJob.class, "Pipeline");
-        String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"));
+        String pipelineText =  IOUtils.toString(TestConstants.class.getResourceAsStream("pipeline.groovy"), StandardCharsets.UTF_8);
         pipeline.setDefinition(new CpsFlowDefinition(pipelineText, true));
 
         VaultTokenCredential c = new VaultTokenCredential(CredentialsScope.GLOBAL,

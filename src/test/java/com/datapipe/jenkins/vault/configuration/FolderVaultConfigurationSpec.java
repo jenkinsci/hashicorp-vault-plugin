@@ -7,7 +7,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.ItemGroup;
 import hudson.model.Job;
 import hudson.model.Run;
-import hudson.model.TopLevelItem;
 import hudson.util.DescribableList;
 import java.util.SortedMap;
 import jenkins.model.Jenkins;
@@ -17,8 +16,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfigurationSpec.completeTestConfig;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -124,7 +123,7 @@ public class FolderVaultConfigurationSpec {
 
     private AbstractFolder generateMockFolder(final DescribableList firstFolderProperties,
         final AbstractFolder parentToReturn) {
-        return new AbstractFolder<TopLevelItem>(null, null) {
+        return new AbstractFolder<>(null, null) {
             @NonNull
             @Override
             public ItemGroup getParent() {

@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -146,8 +147,8 @@ public class VaultTestUtil implements TestConstants {
             properties.store(fos, null);
             Path roleIDPath = Paths.get(System.getProperty("java.io.tmpdir"), "role_id");
             Path secretIDPath = Paths.get(System.getProperty("java.io.tmpdir"), "secret_id");
-            writeStringToFile(roleIDPath.toFile(), roleID);
-            writeStringToFile(secretIDPath.toFile(), secretID);
+            writeStringToFile(roleIDPath.toFile(), roleID, StandardCharsets.UTF_8);
+            writeStringToFile(secretIDPath.toFile(), secretID, StandardCharsets.UTF_8);
 
             // add secrets for v1 and v2
             runCommand(container, "vault", "kv", "put", VAULT_PATH_KV1_1, "key1=123",

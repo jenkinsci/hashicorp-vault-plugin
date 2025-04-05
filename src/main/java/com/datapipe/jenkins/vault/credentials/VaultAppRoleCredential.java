@@ -9,6 +9,7 @@ import hudson.Util;
 import hudson.util.Secret;
 import io.github.jopenlibs.vault.VaultException;
 import io.github.jopenlibs.vault.api.Auth;
+import java.io.Serial;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -68,6 +69,7 @@ public class VaultAppRoleCredential extends AbstractAuthenticatingVaultTokenCred
 
     }
 
+    @Serial
     protected Object readResolve() {
         if (StringUtils.isBlank(path)) {
             path = "approle";

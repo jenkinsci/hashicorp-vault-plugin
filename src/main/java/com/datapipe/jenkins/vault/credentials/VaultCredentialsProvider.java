@@ -16,10 +16,9 @@ import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
+import org.springframework.security.core.Authentication;
 
 /**
  * This class provides the credentials that we need to authenticate against Vault
@@ -32,38 +31,33 @@ import org.acegisecurity.Authentication;
 public class VaultCredentialsProvider extends CredentialsProvider {
 
     @Override
-    public <C extends Credentials> List<C> getCredentials(Class<C> type, ItemGroup itemGroup, Authentication authentication) {
-        return getCredentials(type, itemGroup, authentication, Collections.emptyList());
-    }
-
     @NonNull
-    @Override
-    public <C extends Credentials> List<C> getCredentials(@NonNull Class<C> type,
-                                                          @Nullable ItemGroup itemGroup,
-                                                          @Nullable Authentication authentication,
-                                                          @NonNull List<DomainRequirement> domainRequirements) {
+    public <C extends Credentials> List<C> getCredentialsInItemGroup(@NonNull Class<C> type,
+        @Nullable ItemGroup itemGroup,
+        @Nullable Authentication authentication,
+        @NonNull List<DomainRequirement> domainRequirements) {
         CredentialsMatcher matcher = (type != VaultCredential.class ?
-                                        CredentialsMatchers.instanceOf(AbstractVaultBaseStandardCredentials.class) :
-                                        CredentialsMatchers.always());
-        List<C> creds = new ArrayList<C>();
-        if (ACL.SYSTEM.equals(authentication)) {
-            for (ItemGroup g = itemGroup; g instanceof AbstractFolder; g = (AbstractFolder.class.cast(g)).getParent()) {
+            CredentialsMatchers.instanceOf(AbstractVaultBaseStandardCredentials.class) :
+            CredentialsMatchers.always());
+        List<C> creds = new ArrayList<>();
+        if (ACL.SYSTEM2.equals(authentication)) {
+            for (ItemGroup<?> g = itemGroup; g instanceof AbstractFolder; g = ((AbstractFolder<?>) g).getParent()) {
                 FolderCredentialsProperty property = ((AbstractFolder<?>) g).getProperties()
-                                                                           .get(FolderCredentialsProperty.class);
+                    .get(FolderCredentialsProperty.class);
                 if (property == null) {
                     continue;
                 }
 
                 List<C> folderCreds = DomainCredentials.getCredentials(
-                                                    property.getDomainCredentialsMap(),
-                                                    type,
-                                                    domainRequirements,
-                                                    matcher
-                                                );
+                    property.getDomainCredentialsMap(),
+                    type,
+                    domainRequirements,
+                    matcher
+                );
 
                 if (type != VaultCredential.class) {
                     for (C c : folderCreds) {
-                        ((AbstractVaultBaseStandardCredentials)c).setContext(g);
+                        ((AbstractVaultBaseStandardCredentials) c).setContext(g);
                     }
                 }
 
@@ -71,19 +65,18 @@ public class VaultCredentialsProvider extends CredentialsProvider {
             }
 
             List<C> globalCreds = DomainCredentials.getCredentials(
-                                                SystemCredentialsProvider.getInstance().getDomainCredentialsMap(),
-                                                type,
-                                                domainRequirements,
-                                                matcher
-                                            );
+                SystemCredentialsProvider.getInstance().getDomainCredentialsMap(),
+                type,
+                domainRequirements,
+                matcher
+            );
             if (type != VaultCredential.class) {
                 for (C c : globalCreds) {
-                    ((AbstractVaultBaseStandardCredentials)c).setContext(Jenkins.get());
+                    ((AbstractVaultBaseStandardCredentials) c).setContext(Jenkins.get());
                 }
             }
             creds.addAll(globalCreds);
         }
-
         return creds;
     }
 }

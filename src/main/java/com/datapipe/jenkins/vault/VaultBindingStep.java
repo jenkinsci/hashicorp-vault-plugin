@@ -36,11 +36,10 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.Secret;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,6 +84,7 @@ public class VaultBindingStep extends Step {
 
     protected static class Execution extends GeneralNonBlockingStepExecution {
 
+        @Serial
         private static final long serialVersionUID = 1;
 
         private transient VaultBindingStep step;
@@ -115,8 +115,7 @@ public class VaultBindingStep extends Step {
                 .retrieveVaultSecrets(run, listener.getLogger(), envVars, vaultAccessor,
                     step.getConfiguration(), step.getVaultSecrets());
 
-            List<String> secretValues = new ArrayList<>();
-            secretValues.addAll(overrides.values());
+            List<String> secretValues = new ArrayList<>(overrides.values());
 
             getContext().newBodyInvoker()
                 .withContext(EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class),
@@ -131,9 +130,10 @@ public class VaultBindingStep extends Step {
 
     private static final class Overrider extends EnvironmentExpander {
 
+        @Serial
         private static final long serialVersionUID = 1;
 
-        private final Map<String, Secret> overrides = new HashMap<String, Secret>();
+        private final Map<String, Secret> overrides = new HashMap<>();
 
         Overrider(Map<String, String> overrides) {
             for (Map.Entry<String, String> override : overrides.entrySet()) {
@@ -167,9 +167,7 @@ public class VaultBindingStep extends Step {
 
         @Override
         public Set<? extends Class<?>> getRequiredContext() {
-            return Collections
-                .unmodifiableSet(
-                    new HashSet<>(Arrays.asList(TaskListener.class, Run.class, EnvVars.class)));
+            return Set.of(TaskListener.class, Run.class, EnvVars.class);
         }
 
         @Override
