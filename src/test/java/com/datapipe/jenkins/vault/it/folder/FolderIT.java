@@ -127,6 +127,14 @@ public class FolderIT {
         return vaultAccessor;
     }
 
+    private VaultAccessor mockVaultAccessor2() {
+        VaultAccessor vaultAccessor = mock(VaultAccessor.class);
+        LogicalResponse resp = mock(LogicalResponse.class);
+        Map<String, String> returnValue = new HashMap<>();
+        returnValue.put("key1", "some-secret");
+        return vaultAccessor;
+    }
+
     private List<VaultSecret> standardSecrets() {
         List<VaultSecret> secrets = new ArrayList<>();
         VaultSecretValue secretValue = new VaultSecretValue("envVar1", "key1");
@@ -217,7 +225,7 @@ public class FolderIT {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
-        VaultAccessor mockAccessor = mockVaultAccessor();
+        VaultAccessor mockAccessor = mockVaultAccessor2();
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
 
         VaultConfiguration vaultConfig = new VaultConfiguration();
