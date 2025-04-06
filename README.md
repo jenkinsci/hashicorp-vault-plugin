@@ -282,6 +282,7 @@ The secret source for JCasC is configured via environment variables as way to ge
 - The environment variable `CASC_VAULT_APPROLE_SECRET` must be present, if token is not used and U/P not used. (Vault AppRole Secret ID.)
 - The environment variable `CASC_VAULT_KUBERNETES_ROLE` must be present, if you want to use Kubernetes Service Account. (Vault Kubernetes Role.)
 - The environment variable `CASC_VAULT_AWS_IAM_ROLE` must be present, if you want to use AWS IAM authentiation. (Vault AWS IAM Role.)
+- The environment variable `CASC_VAULT_AWS_IAM_REGION` is optional. Use this if you need to make regional scoped calls to the `GetCallerIdentity` API when using AWS IAM authentiation. (Vault AWS IAM Region.)
 - The environment variable `CASC_VAULT_AWS_IAM_SERVER_ID` must be present when using AWS IAM authentication and the Vault auth method requires a value for the `X-Vault-AWS-IAM-Server-ID` header. (Vault AWS IAM Server ID.)
 - The environment variable `CASC_VAULT_TOKEN` must be present, if U/P is not used. (Vault token.)
 - The environment variable `CASC_VAULT_PATHS` must be present. (Comma separated vault key paths. For example, `secret/jenkins,secret/admin`.)
