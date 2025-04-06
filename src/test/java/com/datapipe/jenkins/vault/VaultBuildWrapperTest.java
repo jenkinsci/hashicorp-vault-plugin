@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import jenkins.tasks.SimpleBuildWrapper;
 import org.junit.Rule;
@@ -47,7 +46,6 @@ public class VaultBuildWrapperTest {
         PrintStream logger = new PrintStream(baos);
         SimpleBuildWrapper.Context context = null;
         Run<?, ?> build = mock(Build.class);
-        when(build.getParent()).thenReturn(null);
         EnvVars envVars = mock(EnvVars.class);
         when(envVars.expand(path)).thenReturn(path);
 
@@ -106,7 +104,6 @@ public class VaultBuildWrapperTest {
     private LogicalResponse getNotFoundResponse() {
         LogicalResponse resp = mock(LogicalResponse.class);
         RestResponse rest = mock(RestResponse.class);
-        when(resp.getData()).thenReturn(new HashMap<>());
         when(resp.getRestResponse()).thenReturn(rest);
         when(rest.getStatus()).thenReturn(404);
         return resp;
