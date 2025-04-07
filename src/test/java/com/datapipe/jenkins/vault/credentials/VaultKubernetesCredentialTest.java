@@ -1,14 +1,14 @@
 package com.datapipe.jenkins.vault.credentials;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class VaultKubernetesCredentialTest {
+class VaultKubernetesCredentialTest {
 
     @Test
-    public void shouldSetCustomMountPathIfValid() {
+    void shouldSetCustomMountPathIfValid() {
         VaultKubernetesCredential vaultKubernetesCredential = new VaultKubernetesCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -21,7 +21,7 @@ public class VaultKubernetesCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfEmptyMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfEmptyMountPathIsSpecified() {
         VaultKubernetesCredential vaultKubernetesCredential = new VaultKubernetesCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -34,7 +34,7 @@ public class VaultKubernetesCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfNullMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfNullMountPathIsSpecified() {
         VaultKubernetesCredential vaultKubernetesCredential = new VaultKubernetesCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -47,7 +47,7 @@ public class VaultKubernetesCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfWhiteSpaceMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfWhiteSpaceMountPathIsSpecified() {
         VaultKubernetesCredential vaultKubernetesCredential = new VaultKubernetesCredential(
             CredentialsScope.GLOBAL,
             "id",

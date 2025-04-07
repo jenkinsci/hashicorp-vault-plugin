@@ -23,38 +23,38 @@ import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.mockito.Mockito;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static com.datapipe.jenkins.vault.util.TestConstants.CERT_PEMFILE;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.when;
 
-public class SSLTest implements TestConstants {
+@WithJenkins
+@Testcontainers(disabledWithoutDocker = true)
+class SSLTest {
 
-    @ClassRule
-    public static VaultContainer container = VaultContainer.createVaultContainer();
+    @Container
+    private static final VaultContainer container = VaultContainer.createVaultContainer();
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
+    private static JenkinsRule j;
 
-    @Rule
-    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
-
-    @Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
+    @TempDir
+    private File testFolder;
 
     private static WorkflowJob pipeline;
     private static final String credentialsId = "vaultToken";
 
-    @BeforeClass
-    public static void setupClass() throws Exception {
+    @BeforeAll
+    static void setupClass(JenkinsRule rule) throws Exception {
+        j = rule;
         assumeTrue(hasDockerDaemon());
         container.initAndUnsealVault();
         container.setBasicSecrets();
@@ -70,7 +70,7 @@ public class SSLTest implements TestConstants {
     }
 
     @Test
-    public void SSLError() throws Exception {
+    void SSLError() throws Exception {
         GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.get();
         VaultConfiguration vaultConfiguration = new VaultConfiguration();
         vaultConfiguration.setVaultUrl(container.getAddress());
@@ -85,8 +85,8 @@ public class SSLTest implements TestConstants {
     }
 
     @Test
-    public void SSLOk() throws Exception {
-        File store = testFolder.newFile("cacerts.keystore");
+    void SSLOk() throws Exception {
+        File store = File.createTempFile("cacerts.keystore", null, testFolder);
         File certificate = new File(CERT_PEMFILE);
         createKeyStore(store, certificate);
 
@@ -115,7 +115,7 @@ public class SSLTest implements TestConstants {
     }
 
     @Test
-    public void SSLSkipVerify() throws Exception {
+    void SSLSkipVerify() throws Exception {
         GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.get();
         VaultConfiguration vaultConfiguration = new VaultConfiguration();
         vaultConfiguration.setVaultUrl(container.getAddress());

@@ -1,11 +1,11 @@
 package com.datapipe.jenkins.vault.configuration;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class VaultConfigurationSpec {
+class VaultConfigurationSpec {
 
     public static VaultConfiguration completeTestConfig(String identifier, Integer engineVersion) {
         VaultConfiguration result = new VaultConfiguration();
@@ -32,7 +32,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void childShouldCompletlyOverwriteParent() {
+    void childShouldCompletelyOverwriteParent() {
         VaultConfiguration parent = completeTestConfig("parent");
         VaultConfiguration child = completeTestConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -42,7 +42,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void childShouldPartlyOverwriteParent() {
+    void childShouldPartlyOverwriteParent() {
         VaultConfiguration parent = completeTestConfig("parent");
         VaultConfiguration child = urlOnlyConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -59,7 +59,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void emptyChildShouldBeOverriden() {
+    void emptyChildShouldBeOverridden() {
         VaultConfiguration parent = completeTestConfig("parent");
         VaultConfiguration child = new VaultConfiguration();
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -69,7 +69,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void emptyParentShouldBeIgnored() {
+    void emptyParentShouldBeIgnored() {
         VaultConfiguration parent = new VaultConfiguration();
         VaultConfiguration child = completeTestConfig("child");
         VaultConfiguration result = child.mergeWithParent(parent);
@@ -79,7 +79,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void shouldHandleNull() {
+    void shouldHandleNull() {
         VaultConfiguration dummy = completeTestConfig("dummy");
         VaultConfiguration result = dummy.mergeWithParent(null);
 
@@ -88,7 +88,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void shouldNotStoreTrailingSlashesInUrl() {
+    void shouldNotStoreTrailingSlashesInUrl() {
         VaultConfiguration parent = new VaultConfiguration();
         parent.setVaultUrl("http://vault-url.com/");
         parent.setFailIfNotFound(false);
@@ -98,7 +98,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void shouldStoreFailureHandling() {
+    void shouldStoreFailureHandling() {
         VaultConfiguration parent = new VaultConfiguration();
         parent.setVaultUrl("http://vault-url.com/");
         parent.setFailIfNotFound(false);
@@ -108,7 +108,7 @@ public class VaultConfigurationSpec {
     }
 
     @Test
-    public void shouldStorePrefixPath() {
+    void shouldStorePrefixPath() {
         VaultConfiguration parent = new VaultConfiguration();
         parent.setVaultUrl("http://vault-url.com/");
         parent.setFailIfNotFound(false);

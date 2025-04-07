@@ -3,20 +3,20 @@ package com.datapipe.jenkins.vault;
 import hudson.EnvVars;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class VaultAccessorTest {
+class VaultAccessorTest {
 
     private static final String POLICIES_STR =
         "\npol1\n\nbase_${job_base_name}\njob/${job_name}\n job_${job_name_us}\nfolder/${job_folder}\nfolder_${job_folder_us}\nnode_${node_name}\n";
 
     @Test
-    public void testGeneratePolicies() {
+    void testGeneratePolicies() {
         EnvVars envVars = mock(EnvVars.class);
         when(envVars.get("JOB_NAME")).thenReturn("job1");
         when(envVars.get("JOB_BASE_NAME")).thenReturn("job1");
@@ -29,7 +29,7 @@ public class VaultAccessorTest {
     }
 
     @Test
-    public void testGeneratePoliciesWithFolder() {
+    void testGeneratePoliciesWithFolder() {
         EnvVars envVars = mock(EnvVars.class);
         when(envVars.get("JOB_NAME")).thenReturn("folder1/folder2/job1");
         when(envVars.get("JOB_BASE_NAME")).thenReturn("job1");

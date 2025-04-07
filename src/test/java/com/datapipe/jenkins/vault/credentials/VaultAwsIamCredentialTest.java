@@ -1,14 +1,14 @@
 package com.datapipe.jenkins.vault.credentials;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class VaultAwsIamCredentialTest {
+class VaultAwsIamCredentialTest {
 
     @Test
-    public void shouldSetCustomRoleIfValid() {
+    void shouldSetCustomRoleIfValid() {
         VaultAwsIamCredential vaultAwsIamCredential = new VaultAwsIamCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -20,7 +20,7 @@ public class VaultAwsIamCredentialTest {
     }
 
     @Test
-    public void shouldSetCustomServerIdIfValid() {
+    void shouldSetCustomServerIdIfValid() {
         VaultAwsIamCredential vaultAwsIamCredential = new VaultAwsIamCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -32,7 +32,7 @@ public class VaultAwsIamCredentialTest {
     }
 
     @Test
-    public void shouldSetCustomMountPathIfValid() {
+    void shouldSetCustomMountPathIfValid() {
         VaultAwsIamCredential vaultAwsIamCredential = new VaultAwsIamCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -44,7 +44,7 @@ public class VaultAwsIamCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfEmptyMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfEmptyMountPathIsSpecified() {
         VaultAwsIamCredential vaultAwsIamCredential = new VaultAwsIamCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -56,7 +56,7 @@ public class VaultAwsIamCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfNullMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfNullMountPathIsSpecified() {
         VaultAwsIamCredential vaultAwsIamCredential = new VaultAwsIamCredential(
             CredentialsScope.GLOBAL,
             "id",
@@ -68,7 +68,7 @@ public class VaultAwsIamCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfWhiteSpaceMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfWhiteSpaceMountPathIsSpecified() {
         VaultAwsIamCredential vaultAwsIamCredential = new VaultAwsIamCredential(
             CredentialsScope.GLOBAL,
             "id",

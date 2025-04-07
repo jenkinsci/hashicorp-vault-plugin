@@ -19,9 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,35 +31,32 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
-public class AwsHelperTest {
+class AwsHelperTest {
 
     private static final String awsAccessKey = "ASIAIOSFODNN7EXAMPLE";
     private static final String awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
     private static final String sessionToken = "sometoken";
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
-    public void testGetTokenBasicDefaults() throws VaultException {
+    void testGetTokenBasicDefaults() throws VaultException {
         BasicAWSCredentials credentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
         doTestGetToken(credentials, "", "", "");
     }
 
     @Test
-    public void testGetTokenBasicCustom() throws VaultException {
+    void testGetTokenBasicCustom() throws VaultException {
         BasicAWSCredentials credentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
         doTestGetToken(credentials, "somerole", "someserverid", "somemount");
     }
 
     @Test
-    public void testGetTokenSessionDefaults() throws VaultException {
+    void testGetTokenSessionDefaults() throws VaultException {
         BasicSessionCredentials credentials = new BasicSessionCredentials(awsAccessKey, awsSecretKey, sessionToken);
         doTestGetToken(credentials, "", "", "");
     }
 
     @Test
-    public void testGetTokenSessionCustom() throws VaultException {
+    void testGetTokenSessionCustom() throws VaultException {
         BasicSessionCredentials credentials = new BasicSessionCredentials(awsAccessKey, awsSecretKey, sessionToken);
         doTestGetToken(credentials, "somerole", "someserverid", "somemount");
     }

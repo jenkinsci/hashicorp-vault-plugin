@@ -10,9 +10,9 @@ import hudson.model.Run;
 import hudson.util.DescribableList;
 import java.util.SortedMap;
 import jenkins.model.Jenkins;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfigurationSpec.completeTestConfig;
 import static org.hamcrest.Matchers.nullValue;
@@ -21,8 +21,8 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class FolderVaultConfigurationSpec {
+@ExtendWith(MockitoExtension.class)
+class FolderVaultConfigurationSpec {
 
     private FolderVaultConfiguration completeTestConfigFolder(String identifier) {
         return new FolderVaultConfiguration(completeTestConfig(identifier));
@@ -34,7 +34,7 @@ public class FolderVaultConfigurationSpec {
     }
 
     @Test
-    public void resolverShouldNotFailIfNotInFolder() {
+    void resolverShouldNotFailIfNotInFolder() {
         VaultConfigResolver folderResolver = new FolderVaultConfiguration.ForJob();
         Job job = mock(Job.class);
         when(job.getParent()).thenReturn(mock(Jenkins.class));
@@ -45,7 +45,7 @@ public class FolderVaultConfigurationSpec {
     }
 
     @Test
-    public void resolverShouldCorrectlyMerge() {
+    void resolverShouldCorrectlyMerge() {
         final DescribableList firstFolderProperties = mock(DescribableList.class);
         when(firstFolderProperties.get(FolderVaultConfiguration.class))
             .thenReturn(completeTestConfigFolder("firstParent", null));
@@ -72,8 +72,7 @@ public class FolderVaultConfigurationSpec {
 
 
     @Test
-    public void resolverShouldHandleAbsentConfigurationOnFolders() {
-
+    void resolverShouldHandleAbsentConfigurationOnFolders() {
         final DescribableList firstFolderProperties = mock(DescribableList.class);
         when(firstFolderProperties.get(FolderVaultConfiguration.class))
             .thenReturn(completeTestConfigFolder("firstParent"));
