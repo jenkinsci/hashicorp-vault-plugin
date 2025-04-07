@@ -30,7 +30,7 @@ public class VaultBindingStepWithMockAccessor extends VaultBindingStep {
     }
 
     @Override
-    public StepExecution start(StepContext context) throws Exception {
+    public StepExecution start(StepContext context) {
         Execution execution = new Execution(this, context);
         execution.setVaultAccessor(new VaultAccessor() {
 

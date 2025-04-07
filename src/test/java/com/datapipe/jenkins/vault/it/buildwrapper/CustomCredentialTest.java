@@ -10,34 +10,30 @@ import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public class CustomCredentialTest implements TestConstants {
-    @ClassRule
-    public static VaultContainer container = VaultContainer.createVaultContainer();
+@WithJenkins
+@Testcontainers(disabledWithoutDocker = true)
+class CustomCredentialTest {
+    @Container
+    private static final VaultContainer container = VaultContainer.createVaultContainer();
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
-
-    @Rule
-    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
-
-    @Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
+    private static JenkinsRule j;
 
     private static WorkflowJob pipeline;
 
-    @BeforeClass
-    public static void setupClass() throws Exception {
+    @BeforeAll
+    static void setupClass(JenkinsRule rule) throws Exception {
+        j = rule;
+
         assumeTrue(hasDockerDaemon());
         container.initAndUnsealVault();
         container.setBasicSecrets();
@@ -49,7 +45,7 @@ public class CustomCredentialTest implements TestConstants {
     }
 
     @Test
-    public void CustomCredentialTestOK() throws Exception {
+    void CustomCredentialTestOK() throws Exception {
         GlobalVaultConfiguration globalVaultConfiguration = GlobalVaultConfiguration.get();
         VaultConfiguration vaultConfiguration = new VaultConfiguration();
         vaultConfiguration.setVaultUrl(container.getAddress());
