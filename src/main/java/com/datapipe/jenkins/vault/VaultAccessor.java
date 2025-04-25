@@ -47,6 +47,7 @@ public class VaultAccessor implements Serializable {
     private VaultConfig config;
     private VaultCredential credential;
     private List<String> policies;
+    private String role;
     private int maxRetries = 0;
     private int retryIntervalMilliseconds = 1000;
 
@@ -68,7 +69,7 @@ public class VaultAccessor implements Serializable {
             if (credential == null) {
                 vault = Vault.create(config);
             } else {
-                vault = credential.authorizeWithVault(config, policies);
+                vault = credential.authorizeWithVault(config, policies, role);
             }
 
             vault.withRetries(maxRetries, retryIntervalMilliseconds);
@@ -100,6 +101,14 @@ public class VaultAccessor implements Serializable {
 
     public void setPolicies(List<String> policies) {
         this.policies = policies;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public int getMaxRetries() {
