@@ -209,6 +209,7 @@ public class VaultAccessor implements Serializable {
         vaultAccessor.setConfig(vaultConfig);
         vaultAccessor.setCredential(credential);
         vaultAccessor.setPolicies(generatePolicies(config.getPolicies(), envVars));
+        vaultAccessor.setRole(config.getRole());
         vaultAccessor.setMaxRetries(config.getMaxRetries());
         vaultAccessor.setRetryIntervalMilliseconds(config.getRetryIntervalMilliseconds());
         vaultAccessor.init();
