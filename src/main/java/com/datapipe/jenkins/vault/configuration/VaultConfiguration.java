@@ -260,7 +260,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
             // This is needed for folders: credentials bound to a folder are
             // realized through domain requirements
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(uri).build();
-            return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item,
+            return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM2, item,
                 VaultCredential.class, domainRequirements);
         }
 

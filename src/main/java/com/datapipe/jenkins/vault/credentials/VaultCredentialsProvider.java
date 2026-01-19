@@ -64,18 +64,22 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                 creds.addAll(folderCreds);
             }
 
-            List<C> globalCreds = DomainCredentials.getCredentials(
-                SystemCredentialsProvider.getInstance().getDomainCredentialsMap(),
-                type,
-                domainRequirements,
-                matcher
-            );
-            if (type != VaultCredential.class) {
-                for (C c : globalCreds) {
-                    ((AbstractVaultBaseStandardCredentials) c).setContext(Jenkins.get());
+            // Only return System-scoped credentials when the context is the global Jenkins instance
+            // This prevents exposure of System-scoped credentials to item/folder contexts
+            if (itemGroup == null || itemGroup == Jenkins.get()) {
+                List<C> globalCreds = DomainCredentials.getCredentials(
+                    SystemCredentialsProvider.getInstance().getDomainCredentialsMap(),
+                    type,
+                    domainRequirements,
+                    matcher
+                );
+                if (type != VaultCredential.class) {
+                    for (C c : globalCreds) {
+                        ((AbstractVaultBaseStandardCredentials) c).setContext(Jenkins.get());
+                    }
                 }
+                creds.addAll(globalCreds);
             }
-            creds.addAll(globalCreds);
         }
         return creds;
     }

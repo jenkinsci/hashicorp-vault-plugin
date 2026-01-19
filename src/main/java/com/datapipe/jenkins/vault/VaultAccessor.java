@@ -248,7 +248,7 @@ public class VaultAccessor implements Serializable {
                     "The credential id was not configured - please specify the credentials to use.");
             }
             List<VaultCredential> credentials = CredentialsProvider
-                .lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM,
+                .lookupCredentialsInItem(VaultCredential.class, build.getParent(), ACL.SYSTEM2,
                     Collections.emptyList());
             VaultCredential credential = CredentialsMatchers
                 .firstOrNull(credentials, new IdMatcher(id));
