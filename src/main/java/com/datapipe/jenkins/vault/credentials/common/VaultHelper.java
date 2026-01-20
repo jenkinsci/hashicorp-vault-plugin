@@ -117,9 +117,9 @@ public class VaultHelper {
             LOGGER.log(Level.INFO, "Retrieving vault credential ID : " + id);
         }
         List<VaultCredential> credentials = CredentialsProvider
-            .lookupCredentials(VaultCredential.class,
+            .lookupCredentialsInItemGroup(VaultCredential.class,
                 itemGroup,
-                ACL.SYSTEM,
+                ACL.SYSTEM2,
                 Collections.emptyList());
         VaultCredential credential = CredentialsMatchers
             .firstOrNull(credentials, new IdMatcher(id));
