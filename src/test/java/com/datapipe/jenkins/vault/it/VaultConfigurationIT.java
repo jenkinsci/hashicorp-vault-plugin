@@ -26,7 +26,6 @@ import io.github.jopenlibs.vault.Vault;
 import io.github.jopenlibs.vault.VaultConfig;
 import io.github.jopenlibs.vault.response.LogicalResponse;
 import io.github.jopenlibs.vault.rest.RestResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,11 +40,16 @@ import org.jenkinsci.plugins.workflow.graphanalysis.DepthFirstScanner;
 import org.jenkinsci.plugins.workflow.graphanalysis.NodeStepTypePredicate;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+import static com.datapipe.jenkins.vault.util.TestConstants.GLOBAL_CREDENTIALS_ID_1;
+import static com.datapipe.jenkins.vault.util.TestConstants.GLOBAL_CREDENTIALS_ID_2;
+import static com.datapipe.jenkins.vault.util.TestConstants.GLOBAL_ENGINE_VERSION_2;
+import static com.datapipe.jenkins.vault.util.TestConstants.JENKINSFILE_URL;
+import static com.datapipe.jenkins.vault.util.TestConstants.TIMEOUT;
 import static hudson.Functions.isWindows;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -64,26 +68,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
+@WithJenkins
 public class VaultConfigurationIT {
 
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
-
-    public static final String GLOBAL_CREDENTIALS_ID_1 = "global-1";
-    public static final String GLOBAL_CREDENTIALS_ID_2 = "global-2";
-    public static final Integer GLOBAL_ENGINE_VERSION_2 = 2;
+    private JenkinsRule jenkins;
 
     private Credentials GLOBAL_CREDENTIAL_1;
     private Credentials GLOBAL_CREDENTIAL_2;
 
-    private static final Integer TIMEOUT = 2;
-
-    public static final String JENKINSFILE_URL = "http://jenkinsfile-vault-url.com";
-
     private FreeStyleProject project;
 
-    @Before
-    public void setupJenkins() throws IOException {
+    @BeforeEach
+    void setupJenkins(JenkinsRule rule) throws Exception {
+        jenkins = rule;
         GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();
@@ -185,7 +182,7 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldUseGlobalConfiguration() throws Exception {
+    void shouldUseGlobalConfiguration() throws Exception {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
@@ -216,7 +213,7 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldUseJobConfiguration() throws Exception {
+    void shouldUseJobConfiguration() throws Exception {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
@@ -256,27 +253,27 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldUseJobConfigurationWithoutDisableOverrides() throws Exception {
+    void shouldUseJobConfigurationWithoutDisableOverrides() throws Exception {
         assertOverridePolicies(false, false, "job-policies");
     }
 
     @Test
-    public void shouldUseFolderConfigurationWithDisableOverrides() throws Exception {
+    void shouldUseFolderConfigurationWithDisableOverrides() throws Exception {
         assertOverridePolicies(false, true, "folder-policies");
     }
 
     @Test
-    public void shouldUseGlobalConfigurationWithDisableOverrides() throws Exception {
+    void shouldUseGlobalConfigurationWithDisableOverrides() throws Exception {
         assertOverridePolicies(true, false, "global-policies");
     }
 
     @Test
-    public void shouldUseEmptyGlobalConfigurationWithDisableOverrides() throws Exception {
+    void shouldUseEmptyGlobalConfigurationWithDisableOverrides() throws Exception {
         assertOverridePolicies(null, true, true, null);
     }
 
     @Test
-    public void shouldDealWithTokenBasedCredential() throws Exception {
+    void shouldDealWithTokenBasedCredential() throws Exception {
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(standardSecrets());
         VaultAccessor mockAccessor = mockVaultAccessor(GLOBAL_ENGINE_VERSION_2);
         vaultBuildWrapper.setVaultAccessor(mockAccessor);
@@ -315,7 +312,7 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldUseJenkinsfileConfiguration() throws Exception {
+    void shouldUseJenkinsfileConfiguration() throws Exception {
         WorkflowJob pipeline = jenkins.createProject(WorkflowJob.class, "Pipeline");
         pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
             "    withVaultMock(\n" +
@@ -344,7 +341,7 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldFailIfCredentialsNotConfigured() throws Exception {
+    void shouldFailIfCredentialsNotConfigured() throws Exception {
         GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();
@@ -379,7 +376,7 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldFailIfUrlNotConfigured() throws Exception {
+    void shouldFailIfUrlNotConfigured() throws Exception {
         GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();
@@ -414,7 +411,7 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldFailIfNoConfigurationExists() throws Exception {
+    void shouldFailIfNoConfigurationExists() throws Exception {
         GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         globalConfig.setConfiguration(null);
@@ -442,7 +439,7 @@ public class VaultConfigurationIT {
     }
 
     @Test
-    public void shouldFailIfCredentialsDoNotExist() throws Exception {
+    void shouldFailIfCredentialsDoNotExist() throws Exception {
         GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
         assertThat(globalConfig, is(notNullValue()));
         VaultConfiguration vaultConfig = new VaultConfiguration();

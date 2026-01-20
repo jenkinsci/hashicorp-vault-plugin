@@ -5,16 +5,16 @@ import io.github.jopenlibs.vault.Vault;
 import io.github.jopenlibs.vault.VaultException;
 import io.github.jopenlibs.vault.api.Auth;
 import io.github.jopenlibs.vault.response.AuthResponse;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class VaultGithubTokenCredentialTest {
+class VaultGithubTokenCredentialTest {
 
     @Test
-    public void shouldSetCustomMountPathIfSpecifiedValueIsValid() {
+    void shouldSetCustomMountPathIfSpecifiedValueIsValid() {
 
         VaultGithubTokenCredential vaultGithubTokenCredential = new VaultGithubTokenCredential(
             CredentialsScope.GLOBAL,
@@ -27,7 +27,7 @@ public class VaultGithubTokenCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfEmptyMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfEmptyMountPathIsSpecified() {
 
         VaultGithubTokenCredential vaultGithubTokenCredential = new VaultGithubTokenCredential(
             CredentialsScope.GLOBAL,
@@ -40,7 +40,7 @@ public class VaultGithubTokenCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfNullMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfNullMountPathIsSpecified() {
 
         VaultGithubTokenCredential vaultGithubTokenCredential = new VaultGithubTokenCredential(
             CredentialsScope.GLOBAL,
@@ -53,7 +53,7 @@ public class VaultGithubTokenCredentialTest {
     }
 
     @Test
-    public void shouldSetDefaultMountPathIfWhiteSpaceMountPathIsSpecified() {
+    void shouldSetDefaultMountPathIfWhiteSpaceMountPathIsSpecified() {
 
         VaultGithubTokenCredential vaultGithubTokenCredential = new VaultGithubTokenCredential(
             CredentialsScope.GLOBAL,
@@ -66,7 +66,7 @@ public class VaultGithubTokenCredentialTest {
     }
 
     @Test
-    public void shouldUseCustomMountPathIfSpecified() throws VaultException {
+    void shouldUseCustomMountPathIfSpecified() throws VaultException {
 
         VaultGithubTokenCredential vaultGithubTokenCredential = new VaultGithubTokenCredential(
             CredentialsScope.GLOBAL,

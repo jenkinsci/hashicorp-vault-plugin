@@ -6,10 +6,10 @@ import io.github.jopenlibs.vault.Vault;
 import io.github.jopenlibs.vault.VaultException;
 import io.github.jopenlibs.vault.api.Auth;
 import io.github.jopenlibs.vault.response.AuthResponse;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -17,14 +17,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AbstractAuthenticatingVaultTokenCredentialTest {
+class AbstractAuthenticatingVaultTokenCredentialTest {
 
     private Vault vault;
     private Auth auth;
     private AuthResponse authResponse;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         vault = mock(Vault.class);
         auth = mock(Auth.class);
         authResponse = mock(AuthResponse.class);
@@ -35,7 +35,7 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
     }
 
     @Test
-    public void nonRootNamespaceFromGetVaultAuth() {
+    void nonRootNamespaceFromGetVaultAuth() {
         ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
         cred.setNamespace("foo");
         Auth authRet = cred.getVaultAuth(vault);
@@ -43,7 +43,7 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
     }
 
     @Test
-    public void nonRootNamespace() {
+    void nonRootNamespace() {
         ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
         cred.setNamespace("foo");
         assertEquals("12345", cred.getToken(vault));
@@ -51,7 +51,7 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
     }
 
     @Test
-    public void rootNamespace() {
+    void rootNamespace() {
         ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
         cred.setNamespace("/");
         assertEquals("12345", cred.getToken(vault));
@@ -59,7 +59,7 @@ public class AbstractAuthenticatingVaultTokenCredentialTest {
     }
 
     @Test
-    public void nullNamespace() {
+    void nullNamespace() {
         ExampleVaultTokenCredential cred = new ExampleVaultTokenCredential();
         assertEquals("12345", cred.getToken(vault));
         verify(auth, never()).withNameSpace(any());

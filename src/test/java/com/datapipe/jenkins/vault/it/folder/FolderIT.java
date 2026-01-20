@@ -29,17 +29,17 @@ import java.util.Map;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_1;
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.GLOBAL_CREDENTIALS_ID_2;
-import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.JENKINSFILE_URL;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.createTokenCredential;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.echoSecret;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
+import static com.datapipe.jenkins.vault.util.TestConstants.GLOBAL_CREDENTIALS_ID_1;
+import static com.datapipe.jenkins.vault.util.TestConstants.GLOBAL_CREDENTIALS_ID_2;
+import static com.datapipe.jenkins.vault.util.TestConstants.JENKINSFILE_URL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +50,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class FolderIT {
+@WithJenkins
+class FolderIT {
     // check that you cannot access another credentials folder
     // check that folder configuration takes precedence over global config
     // check that jenkinsfile config takes precedence over folder config (we could actually take a pipeline here - see config-file-provider-plugin
@@ -65,16 +66,16 @@ public class FolderIT {
     private Credentials FOLDER_1_CREDENTIAL;
     private Credentials FOLDER_2_CREDENTIAL;
 
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
+    private JenkinsRule jenkins;
 
     private FreeStyleProject projectInFolder1;
     private FreeStyleProject projectInFolder2;
     private Folder folder1;
     private Folder folder2;
 
-    @Before
-    public void setupJenkins() throws IOException {
+    @BeforeEach
+    void setupJenkins(JenkinsRule rule) throws IOException {
+        jenkins = rule;
         GlobalVaultConfiguration globalConfig = GlobalVaultConfiguration.get();
 
         VaultConfiguration vaultConfig = new VaultConfiguration();
@@ -139,7 +140,7 @@ public class FolderIT {
     }
 
     @Test
-    public void folderShouldOverwriteGlobal() throws Exception {
+    void folderShouldOverwriteGlobal() throws Exception {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
@@ -175,7 +176,7 @@ public class FolderIT {
     }
 
     @Test
-    public void jobInFolderShouldBeAbleToAccessCredentialsScopedToTheFolder() throws Exception {
+    void jobInFolderShouldBeAbleToAccessCredentialsScopedToTheFolder() throws Exception {
         List<VaultSecret> secrets = standardSecrets();
 
         VaultBuildWrapper vaultBuildWrapper = new VaultBuildWrapper(secrets);
@@ -212,7 +213,7 @@ public class FolderIT {
     }
 
     @Test
-    public void jobInFolderShouldNotBeAbleToAccessCredentialsScopedToAnotherFolder()
+    void jobInFolderShouldNotBeAbleToAccessCredentialsScopedToAnotherFolder()
         throws Exception {
         List<VaultSecret> secrets = standardSecrets();
 
@@ -248,7 +249,7 @@ public class FolderIT {
     }
 
     @Test
-    public void jenkinsfileShouldOverrideFolderConfig() throws Exception {
+    void jenkinsfileShouldOverrideFolderConfig() throws Exception {
         WorkflowJob pipeline = folder1.createProject(WorkflowJob.class, "Pipeline");
         pipeline.setDefinition(new CpsFlowDefinition("node {\n" +
             "    withVaultMock(\n" +

@@ -12,8 +12,8 @@ import io.github.jopenlibs.vault.response.LookupResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AbstractVaultTokenCredentialWithExpirationTest {
+class AbstractVaultTokenCredentialWithExpirationTest {
 
     private Vault vault;
     private VaultConfig vaultConfig;
@@ -33,8 +33,8 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     private ExampleVaultTokenCredentialWithExpiration vaultTokenCredentialWithExpiration;
     private List<String> policies;
 
-    @Before
-    public void setUp() throws VaultException {
+    @BeforeEach
+    void setUp() throws VaultException {
         policies = Arrays.asList("pol1", "pol2");
         vault = mock(Vault.class);
         vaultConfig = mock(VaultConfig.class);
@@ -52,7 +52,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     }
 
     @Test
-    public void shouldBeAbleToFetchTokenOnInit() throws VaultException {
+    void shouldBeAbleToFetchTokenOnInit() throws VaultException {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(5L);
 
@@ -62,7 +62,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     }
 
     @Test
-    public void shouldFetchNewTokenForDifferentPolicies() throws VaultException {
+    void shouldFetchNewTokenForDifferentPolicies() throws VaultException {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(5L);
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
@@ -75,7 +75,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     }
 
     @Test
-    public void shouldNotFetchChildTokenIfEmptyPoliciesSpecified() throws VaultException {
+    void shouldNotFetchChildTokenIfEmptyPoliciesSpecified() throws VaultException {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken");
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(0L);
@@ -86,7 +86,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     }
 
     @Test
-    public void shouldFetchChildTokenIfPoliciesSpecified() throws VaultException {
+    void shouldFetchChildTokenIfPoliciesSpecified() throws VaultException {
         when(auth.createToken(argThat((TokenRequest tr) ->
             tr.getPolices() == policies && tr.getTtl().equals("30s")
         ))).thenReturn(childAuthResponse);
@@ -102,7 +102,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     }
 
     @Test
-    public void shouldReuseTheExistingTokenIfNotExpired() throws VaultException {
+    void shouldReuseTheExistingTokenIfNotExpired() throws VaultException {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(childAuthResponse.getAuthClientToken()).thenReturn("childToken1", "childToken2");
         when(auth.lookupSelf()).thenReturn(lookupResponse);
@@ -119,7 +119,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     }
 
     @Test
-    public void shouldFetchNewTokenIfExpired() throws VaultException {
+    void shouldFetchNewTokenIfExpired() throws VaultException {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(childAuthResponse.getAuthClientToken()).thenReturn("childToken1", "childToken2");
         when(auth.lookupSelf()).thenReturn(lookupResponse);
@@ -139,7 +139,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
     }
 
     @Test
-    public void shouldExpireTokenImmediatelyIfExceptionFetchingTTL() throws VaultException {
+    void shouldExpireTokenImmediatelyIfExceptionFetchingTTL() throws VaultException {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(auth.lookupSelf()).thenThrow(new VaultException("Fail for testing"));
 

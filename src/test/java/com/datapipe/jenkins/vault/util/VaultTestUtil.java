@@ -21,20 +21,33 @@ import org.testcontainers.utility.PathUtils;
 import org.testcontainers.utility.TestEnvironment;
 import org.testcontainers.vault.VaultContainer;
 
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_AGENT_FILE;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_APPROLE_FILE;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_DOCKER_IMAGE;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_KV1_1;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_KV1_2;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_KV2_1;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_KV2_2;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_KV2_3;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_KV2_AUTH_TEST;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_LONG_KV2_1;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_LONG_KV2_2;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PW;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_ROOT_TOKEN;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_USER;
 import static com.github.dockerjava.api.model.Capability.IPC_LOCK;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.testcontainers.utility.MountableFile.forHostPath;
 
 @SuppressWarnings("WeakerAccess")
-public class VaultTestUtil implements TestConstants {
+public class VaultTestUtil {
 
-    private final static Logger LOGGER = Logger.getLogger(VaultTestUtil.class.getName());
-
+    private static final Logger LOGGER = Logger.getLogger(VaultTestUtil.class.getName());
 
     private static boolean configured = false;
     private static Network network = Network.newNetwork();
 
-    public static void runCommand(VaultContainer container, final String... command)
+    public static void runCommand(VaultContainer<?> container, final String... command)
         throws IOException, InterruptedException {
         LOGGER.log(Level.FINE, String.join(" ", command));
         container.execInContainer(command);
@@ -48,13 +61,13 @@ public class VaultTestUtil implements TestConstants {
         }
     }
 
-    public static VaultContainer createVaultContainer() {
+    public static VaultContainer<?> createVaultContainer() {
         if (!hasDockerDaemon()) {
             return null;
         }
         String path = getTestPath("vaultTest_adminPolicy.hcl");
-        return new VaultContainer<>(VaultTestUtil.VAULT_DOCKER_IMAGE)
-            .withVaultToken(VaultTestUtil.VAULT_ROOT_TOKEN)
+        return new VaultContainer<>(VAULT_DOCKER_IMAGE)
+            .withVaultToken(VAULT_ROOT_TOKEN)
             .withNetwork(network)
             .withNetworkAliases("vault")
             .withCopyFileToContainer(forHostPath(
@@ -79,7 +92,7 @@ public class VaultTestUtil implements TestConstants {
         return result;
     }
 
-    public static VaultContainer createVaultAgentContainer(
+    public static VaultContainer<?> createVaultAgentContainer(
         Path roleIDPath,
         Path secretIDPath) {
         return new VaultContainer<>("vault:1.2.1")
@@ -97,11 +110,11 @@ public class VaultTestUtil implements TestConstants {
             .waitingFor(Wait.forLogMessage(".*renewed auth token.*", 1));
     }
 
-    public static String getAddress(VaultContainer container) {
-        return String.format("http://%s:%d", container.getContainerIpAddress(), container.getMappedPort(8200));
+    public static String getAddress(VaultContainer<?> container) {
+        return String.format("http://%s:%d", container.getHost(), container.getMappedPort(8200));
     }
 
-    public static void configureVaultContainer(VaultContainer container) {
+    public static void configureVaultContainer(VaultContainer<?> container) {
         if (configured) {
             return;
         }
@@ -163,7 +176,7 @@ public class VaultTestUtil implements TestConstants {
             runCommand(container, "vault", "kv", "put", VAULT_PATH_LONG_KV2_1, "key1=123",
                 "key2=456");
             runCommand(container, "vault", "kv", "put", VAULT_PATH_LONG_KV2_2, "key3=789");
-            VaultContainer vaultAgentContainer = createVaultAgentContainer(roleIDPath,
+            VaultContainer<?> vaultAgentContainer = createVaultAgentContainer(roleIDPath,
                 secretIDPath);
             assert vaultAgentContainer != null;
             vaultAgentContainer.start();

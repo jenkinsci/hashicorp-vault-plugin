@@ -18,6 +18,18 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import static com.datapipe.jenkins.vault.util.TestConstants.CERT_PEMFILE;
+import static com.datapipe.jenkins.vault.util.TestConstants.CONTAINER_CERT_PEMFILE;
+import static com.datapipe.jenkins.vault.util.TestConstants.CONTAINER_CONFIG_FILE;
+import static com.datapipe.jenkins.vault.util.TestConstants.CONTAINER_NETWORK;
+import static com.datapipe.jenkins.vault.util.TestConstants.CONTAINER_OPENSSL_CONFIG_FILE;
+import static com.datapipe.jenkins.vault.util.TestConstants.CONTAINER_SSL_DIRECTORY;
+import static com.datapipe.jenkins.vault.util.TestConstants.CONTAINER_STARTUP_SCRIPT;
+import static com.datapipe.jenkins.vault.util.TestConstants.DEFAULT_IMAGE_AND_TAG;
+import static com.datapipe.jenkins.vault.util.TestConstants.MAX_RETRIES;
+import static com.datapipe.jenkins.vault.util.TestConstants.RETRY_MILLIS;
+import static com.datapipe.jenkins.vault.util.TestConstants.SSL_DIRECTORY;
+import static com.datapipe.jenkins.vault.util.TestConstants.VAULT_PATH_KV1_1;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.getTestPath;
 import static com.datapipe.jenkins.vault.util.VaultTestUtil.hasDockerDaemon;
 import static org.testcontainers.utility.MountableFile.forHostPath;
@@ -25,11 +37,9 @@ import static org.testcontainers.utility.MountableFile.forHostPath;
 /**
  * Sets up and exposes utilities for dealing with a Docker-hosted instance of Vault, for integration tests.
  */
-public class VaultContainer extends GenericContainer<VaultContainer> implements TestConstants {
+public class VaultContainer extends GenericContainer<VaultContainer> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VaultContainer.class);
-
-    public static final String DEFAULT_IMAGE_AND_TAG = "vault:1.1.3";
 
     private String rootToken;
     private String unsealKey;
@@ -136,7 +146,7 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
     }
 
     /**
-     * To be called by a test class method annotated with {@link org.junit.BeforeClass}.
+     * To be called by a test class method annotated with {@link org.junit.jupiter.api.BeforeAll}.
      * This logic doesn't work when placed inside of the constructor, presumably
      * because the Docker container spawned by TestContainers is not ready to accept commands until after those
      * methods complete.
@@ -296,7 +306,7 @@ public class VaultContainer extends GenericContainer<VaultContainer> implements 
      * @return The URL of the Vault instance
      */
     public String getAddress() {
-        return String.format("https://%s:%d", getContainerIpAddress(), getMappedPort(8200));
+        return String.format("https://%s:%d", getHost(), getMappedPort(8200));
     }
 
     /**

@@ -13,34 +13,34 @@ import jenkins.model.Jenkins;
 import jenkins.util.JenkinsJVM;
 import org.jenkinsci.plugins.credentialsbinding.masking.LiteralSecretPatternFactory;
 import org.jenkinsci.plugins.credentialsbinding.masking.SecretPatternFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 
-@RunWith(MockitoJUnitRunner.class)
-public class MaskingConsoleLogFilterSpec {
+@ExtendWith(MockitoExtension.class)
+class MaskingConsoleLogFilterSpec {
 
     private @Mock(answer = Answers.CALLS_REAL_METHODS) MockedStatic<SecretPatternFactory> secretPatternFactoryMockedStatic;
 
     private @Mock MockedStatic<JenkinsJVM> jenkinsJvmMockedStatic;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         ExtensionList<SecretPatternFactory> factories = ExtensionList.create((Jenkins) null, SecretPatternFactory.class);
         factories.add(new LiteralSecretPatternFactory());
         secretPatternFactoryMockedStatic.when(SecretPatternFactory::all).thenReturn(factories);
     }
 
     @Test
-    public void shouldCorrectlyMask() throws IOException, InterruptedException {
+    void shouldCorrectlyMask() throws IOException, InterruptedException {
         MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
             Collections.singletonList("secret"));
         ByteArrayOutputStream resultingLog = new ByteArrayOutputStream();
@@ -57,7 +57,7 @@ public class MaskingConsoleLogFilterSpec {
     }
 
     @Test
-    public void shouldCorrectlyMaskOverlappingSecrets() throws IOException, InterruptedException {
+    void shouldCorrectlyMaskOverlappingSecrets() throws IOException, InterruptedException {
         MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
             Arrays.asList("secret", "veryverysecret"));
         ByteArrayOutputStream resultingLog = new ByteArrayOutputStream();
@@ -76,7 +76,7 @@ public class MaskingConsoleLogFilterSpec {
     }
 
     @Test
-    public void shouldCorrectlyHandleEmptyList() throws Exception {
+    void shouldCorrectlyHandleEmptyList() throws Exception {
         MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
             Collections.emptyList());
         ByteArrayOutputStream resultingLog = new ByteArrayOutputStream();
@@ -93,7 +93,7 @@ public class MaskingConsoleLogFilterSpec {
     }
 
     @Test
-    public void shouldFilterNullSecrets() throws Exception {
+    void shouldFilterNullSecrets() throws Exception {
         List<String> secrets = Arrays.asList("secret", null, "another", null, "test");
         MaskingConsoleLogFilter filter = new MaskingConsoleLogFilter(StandardCharsets.UTF_8.name(),
             secrets);

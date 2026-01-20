@@ -11,9 +11,9 @@ import java.io.ByteArrayInputStream;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getShellString;
 import static com.datapipe.jenkins.vault.it.VaultConfigurationIT.getVariable;
@@ -21,13 +21,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class VaultFileCredentialIT {
-
-    @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
+@WithJenkins
+class VaultFileCredentialIT {
 
     @Test
-    public void shouldRetrieveCorrectCredentialsFromVault() throws Exception {
+    void shouldRetrieveCorrectCredentialsFromVault(JenkinsRule jenkins) throws Exception {
         final String credentialsId = "cid1";
         final String fileName = "S3CR3T";
         final String jobId = "testJob";
@@ -58,7 +56,7 @@ public class VaultFileCredentialIT {
     }
 
     @Test
-    public void shouldFailIfMissingCredentials() throws Exception {
+    void shouldFailIfMissingCredentials(JenkinsRule jenkins) throws Exception {
         final String credentialsId = "cid1";
         VaultFileCredentialImpl c = new VaultFileCredentialImpl(
             null, credentialsId, "Test Credentials");

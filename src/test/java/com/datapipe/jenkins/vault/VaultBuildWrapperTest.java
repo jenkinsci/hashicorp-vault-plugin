@@ -10,16 +10,13 @@ import hudson.model.Run;
 import io.github.jopenlibs.vault.response.LogicalResponse;
 import io.github.jopenlibs.vault.rest.RestResponse;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import jenkins.tasks.SimpleBuildWrapper;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -30,13 +27,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class VaultBuildWrapperTest {
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
+class VaultBuildWrapperTest {
 
     @Test
-    public void testWithNonExistingPath() throws IOException, InterruptedException {
+    void testWithNonExistingPath() {
         String path = "not/existing";
         VaultAccessor mockAccessor = mock(VaultAccessor.class);
         doReturn(mockAccessor).when(mockAccessor).init();
@@ -67,7 +61,7 @@ public class VaultBuildWrapperTest {
     }
 
     @Test
-    public void testWithAccessDeniedPath() throws IOException, InterruptedException {
+    void testWithAccessDeniedPath() {
         String path = "not/allowed";
         VaultAccessor mockAccessor = mock(VaultAccessor.class);
         doReturn(mockAccessor).when(mockAccessor).init();
@@ -121,7 +115,7 @@ public class VaultBuildWrapperTest {
         return resp;
     }
 
-    class TestWrapper extends VaultBuildWrapper {
+    static class TestWrapper extends VaultBuildWrapper {
 
         VaultConfiguration vaultConfig = new VaultConfiguration();
 

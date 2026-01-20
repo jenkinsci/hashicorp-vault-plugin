@@ -5,6 +5,15 @@ import org.testcontainers.containers.Network;
 
 public interface TestConstants {
 
+    String DEFAULT_IMAGE_AND_TAG = "vault:1.1.3";
+
+    Integer TIMEOUT = 2;
+    String JENKINSFILE_URL = "http://jenkinsfile-vault-url.com";
+
+    String GLOBAL_CREDENTIALS_ID_1 = "global-1";
+    String GLOBAL_CREDENTIALS_ID_2 = "global-2";
+    Integer GLOBAL_ENGINE_VERSION_2 = 2;
+
     String APP_ID = "fake_app";
     String USER_ID = "fake_user";
     String PASSWORD = "fake_password";

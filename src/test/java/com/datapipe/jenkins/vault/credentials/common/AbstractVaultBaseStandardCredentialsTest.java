@@ -9,19 +9,18 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.w3c.dom.Document;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-public class AbstractVaultBaseStandardCredentialsTest {
+class AbstractVaultBaseStandardCredentialsTest {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    @TempDir
+    private File folder;
 
     /**
      * Verify {@link AbstractVaultBaseStandardCredentials} does not attempt to serialize ItemGroup
@@ -29,14 +28,14 @@ public class AbstractVaultBaseStandardCredentialsTest {
      */
     @Test
     @Issue("https://github.com/jenkinsci/hashicorp-vault-plugin/issues/264")
-    public void itemGroupContextNotSerialized() throws Exception {
+    void itemGroupContextNotSerialized() throws Exception {
         ItemGroup ig = mock(ItemGroup.class);
         VaultUsernamePasswordCredentialImpl cred = new VaultUsernamePasswordCredentialImpl(
             CredentialsScope.GLOBAL, "foo", "foo credential");
         cred.setContext(ig);
 
         // serialize object using xstream
-        File out = folder.newFile();
+        File out = File.createTempFile("junit", null, folder);
         new XmlFile(out).write(cred);
 
         // verify document does not include include context field
