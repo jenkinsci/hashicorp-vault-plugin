@@ -325,9 +325,16 @@ public class VaultAccessor implements Serializable {
         if (StringUtils.isBlank(path)) {
             return path;
         }
+
         // remove any leading slashes
-        String cleaned = path.replaceFirst("^/+", "");
-        // collapse duplicate separators inside the path
+        String cleaned = StringUtils.stripStart(path, "/");
+        
+        // fast-path: nothing to do in the common case
+        if (!cleaned.contains("//")) {
+            return cleaned;
+        }
+
+        // collapse duplicate separators
         return cleaned.replaceAll("/{2,}", "/");
     }
 }
