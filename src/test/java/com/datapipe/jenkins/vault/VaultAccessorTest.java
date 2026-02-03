@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,12 @@ public class VaultAccessorTest {
 
     private static final String POLICIES_STR =
         "\npol1\n\nbase_${job_base_name}\njob/${job_name}\n job_${job_name_us}\nfolder/${job_folder}\nfolder_${job_folder_us}\nnode_${node_name}\n";
+
+    @Test
+    public void normalizePathStripsLeadingAndDuplicateSlashes() {
+        assertEquals("github/token/foo", VaultAccessor.normalizePath("/github//token/foo"));
+        assertEquals("prefix/bar/baz", VaultAccessor.normalizePath("///prefix//bar//baz"));
+    }
 
     @Test
     public void testGeneratePolicies() {

@@ -125,12 +125,14 @@ public class VaultAccessor implements Serializable {
     }
 
     public LogicalResponse read(String path, Integer engineVersion) {
+        String normalizedPath = normalizePath(path);
         try {
             this.config.engineVersion(engineVersion);
-            return vault.logical().read(path);
+            return vault.logical().read(normalizedPath);
         } catch (VaultException e) {
             throw new VaultPluginException(
-                "could not read from vault: " + e.getMessage() + " at path: " + path, e);
+                "could not read from vault: " + e.getMessage() + " at path: "
+                    + normalizedPath, e);
         }
     }
 
@@ -315,5 +317,26 @@ public class VaultAccessor implements Serializable {
         configuration.fixDefaults();
 
         return configuration;
+    }
+
+    /**
+     * Normalize user-supplied Vault paths so we don't send leading or duplicate slashes to Vault.
+     * Leading slashes cause requests like "/v1//path" which Vault replies to with HTTP 301 for KV v1.
+     */
+    static String normalizePath(String path) {
+        if (StringUtils.isBlank(path)) {
+            return path;
+        }
+
+        // remove any leading slashes
+        String cleaned = StringUtils.stripStart(path, "/");
+
+        // fast-path: nothing to do in the common case
+        if (!cleaned.contains("//")) {
+            return cleaned;
+        }
+
+        // collapse duplicate separators
+        return cleaned.replaceAll("/{2,}", "/");
     }
 }
