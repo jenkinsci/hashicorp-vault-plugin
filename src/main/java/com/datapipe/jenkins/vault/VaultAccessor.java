@@ -42,7 +42,6 @@ import org.apache.commons.text.StringSubstitutor;
 public class VaultAccessor implements Serializable {
 
     @Serial
-
     private static final long serialVersionUID = 1L;
 
     private VaultConfig config;
@@ -126,14 +125,14 @@ public class VaultAccessor implements Serializable {
     }
 
     public LogicalResponse read(String path, Integer engineVersion) {
+        String normalizedPath = normalizePath(path);
         try {
-            String normalizedPath = normalizePath(path);
             this.config.engineVersion(engineVersion);
             return vault.logical().read(normalizedPath);
         } catch (VaultException e) {
             throw new VaultPluginException(
                 "could not read from vault: " + e.getMessage() + " at path: "
-                    + normalizePath(path), e);
+                    + normalizedPath, e);
         }
     }
 
