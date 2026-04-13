@@ -71,9 +71,10 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
      * policies and a list of requested policies is provided.
      * @param vault the vault instance
      * @param policies the policies list
+     * @param role a possible token role to use
      * @return the new token or null if it cannot be provisioned
      */
-    protected String getChildToken(Vault vault, List<String> policies) {
+    protected String getChildToken(Vault vault, List<String> policies, String role) {
         if (usePolicies == null || !usePolicies || policies == null || policies.isEmpty()) {
             return null;
         }
@@ -84,6 +85,11 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
                 .polices(policies)
                 // Set the TTL to the parent token TTL
                 .ttl(ttl);
+            if (role != null) {
+                tokenRequest.role(role);
+                LOGGER.log(Level.FINE, "Requesting child token with policies {0}, TTL {1} and role {2}",
+                    new Object[] {policies, ttl, role});
+            }
             LOGGER.log(Level.FINE, "Requesting child token with policies {0} and TTL {1}",
                 new Object[] {policies, ttl});
             return auth.createToken(tokenRequest).getAuthClientToken();
@@ -105,7 +111,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
     }
 
     @Override
-    public Vault authorizeWithVault(VaultConfig config, List<String> policies) {
+    public Vault authorizeWithVault(VaultConfig config, List<String> policies, String role) {
         // Upgraded instances can have these not initialized in the constructor (serialized jobs possibly)
         if (tokenCache == null || tokenExpiryCache == null) {
             tokenCache = new HashMap<>();
@@ -119,7 +125,7 @@ public abstract class AbstractVaultTokenCredentialWithExpiration
             config.token(tokenCache.get(cacheKey));
 
             // After current token is configured, try to retrieve a new child token with limited policies
-            String childToken = getChildToken(vault, policies);
+            String childToken = getChildToken(vault, policies, role);
             if (childToken != null) {
                 // A new token was generated, put it in the cache and configure vault
                 tokenCache.put(cacheKey, childToken);

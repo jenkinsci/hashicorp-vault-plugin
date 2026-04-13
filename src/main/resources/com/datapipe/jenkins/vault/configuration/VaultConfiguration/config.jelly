@@ -17,6 +17,9 @@
     <f:entry field="engineVersion" title="K/V Engine Version">
       <f:select/>
     </f:entry>
+    <f:entry title="(Optional) Token Role" field="role">
+      <f:textbox/>
+    </f:entry>
     <f:entry title="(Optional) Job Policies" field="policies">
       <f:textarea/>
     </f:entry>

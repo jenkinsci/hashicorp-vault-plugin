@@ -56,7 +56,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(5L);
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
 
         verify(vaultConfig).token("fakeToken");
     }
@@ -68,9 +68,9 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(childAuthResponse.getAuthClientToken()).thenReturn("childToken1", "childToken2");
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
         verify(vaultConfig).token("fakeToken1");
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies, null);
         verify(vaultConfig).token("childToken1");
     }
 
@@ -79,7 +79,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken");
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(0L);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, new ArrayList<>());
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, new ArrayList<>(), null);
 
         verify(vaultConfig, times(1)).token(anyString());
         verify(vaultConfig).token("fakeToken");
@@ -94,7 +94,7 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         // First response is for parent, second is for child
         when(lookupResponse.getTTL()).thenReturn(30L, 0L);
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies, null);
 
         verify(vaultConfig, times(2)).token(anyString());
         verify(vaultConfig).token("fakeToken");
@@ -108,13 +108,13 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(30L);
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
         verify(vaultConfig, times(2)).token("fakeToken1");
 
         // Different policies results in a new token
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies, null);
         verify(vaultConfig, times(2)).token("childToken1");
     }
 
@@ -125,15 +125,15 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(auth.lookupSelf()).thenReturn(lookupResponse);
         when(lookupResponse.getTTL()).thenReturn(0L);
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
         verify(vaultConfig, times(2)).token(anyString());
         verify(vaultConfig).token("fakeToken1");
         verify(vaultConfig).token("fakeToken2");
 
         // Different policies results in a new token
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, policies, null);
         verify(vaultConfig).token("childToken1");
         verify(vaultConfig).token("childToken2");
     }
@@ -143,8 +143,8 @@ public class AbstractVaultTokenCredentialWithExpirationTest {
         when(authResponse.getAuthClientToken()).thenReturn("fakeToken1", "fakeToken2");
         when(auth.lookupSelf()).thenThrow(new VaultException("Fail for testing"));
 
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
-        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
+        vaultTokenCredentialWithExpiration.authorizeWithVault(vaultConfig, null, null);
 
         verify(vaultConfig, times(2)).token(anyString());
         verify(vaultConfig).token("fakeToken1");

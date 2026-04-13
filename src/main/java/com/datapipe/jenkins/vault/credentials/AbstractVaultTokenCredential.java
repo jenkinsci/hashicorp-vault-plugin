@@ -16,7 +16,7 @@ public abstract class AbstractVaultTokenCredential
     protected abstract String getToken(Vault vault);
 
     @Override
-    public Vault authorizeWithVault(VaultConfig config, List<String> policies) {
+    public Vault authorizeWithVault(VaultConfig config, List<String> policies, String role) {
         Vault vault = Vault.create(config);
         return Vault.create(config.token(getToken(vault)));
     }
