@@ -26,13 +26,13 @@ import org.kohsuke.stapler.DataBoundSetter;
  * Pipeline step that fetches a single value from a Vault KV secret and returns it as a String.
  * Designed for use inside Declarative Pipeline {@code environment {}} blocks.
  *
- * <p>The first argument combines the KV path and field name: the last segment after the final
- * {@code /} is used as the field key, and everything before it is the secret path.
+ * <p>The {@code path} parameter combines the KV path and field name: the last segment after the
+ * final {@code /} is used as the field key, and everything before it is the secret path.
  *
  * <pre>
  * environment {
- *     DB_HOST = vaultCredentials('secret/myapp/db/host', 'vault-approle')
- *     DB_PASS = vaultCredentials('secret/myapp/db/password', 'vault-approle',
+ *     DB_HOST = vaultCredentials(path: 'secret/myapp/db/host', credentialsId: 'vault-approle')
+ *     DB_PASS = vaultCredentials(path: 'secret/myapp/db/password', credentialsId: 'vault-approle',
  *                   vaultUrl: 'https://vault:8200', vaultNamespace: 'prod')
  * }
  * </pre>
@@ -42,15 +42,15 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class VaultCredentialsStep extends Step {
 
-    private final String pathAndKey;
+    private final String path;
     private final String credentialsId;
     private String vaultUrl;
     private String vaultNamespace;
     private boolean maskSecret = true;
 
     @DataBoundConstructor
-    public VaultCredentialsStep(@NonNull String pathAndKey, @NonNull String credentialsId) {
-        this.pathAndKey = pathAndKey;
+    public VaultCredentialsStep(@NonNull String path, @NonNull String credentialsId) {
+        this.path = path;
         this.credentialsId = credentialsId;
     }
 
@@ -69,8 +69,8 @@ public class VaultCredentialsStep extends Step {
         this.maskSecret = maskSecret;
     }
 
-    public String getPathAndKey() {
-        return pathAndKey;
+    public String getPath() {
+        return path;
     }
 
     public String getCredentialsId() {
@@ -162,14 +162,13 @@ public class VaultCredentialsStep extends Step {
 
         @Override
         protected String run() throws Exception {
-            String pathAndKey = step.pathAndKey;
-            int lastSlash = pathAndKey.lastIndexOf('/');
-            if (lastSlash <= 0 || lastSlash == pathAndKey.length() - 1) {
+            int lastSlash = step.path.lastIndexOf('/');
+            if (lastSlash <= 0 || lastSlash == step.path.length() - 1) {
                 throw new VaultPluginException(
-                    "pathAndKey must be in 'path/to/secret/keyName' format, got: " + pathAndKey);
+                    "path must be in 'path/to/secret/keyName' format, got: " + step.path);
             }
-            String path = pathAndKey.substring(0, lastSlash);
-            String key = pathAndKey.substring(lastSlash + 1);
+            String path = step.path.substring(0, lastSlash);
+            String key = step.path.substring(lastSlash + 1);
 
             Run<?, ?> run = getContext().get(Run.class);
             TaskListener listener = getContext().get(TaskListener.class);
@@ -178,9 +177,11 @@ public class VaultCredentialsStep extends Step {
 
             if (step.maskSecret && StringUtils.isNotBlank(value)) {
                 VaultMaskedValuesAction action = run.getAction(VaultMaskedValuesAction.class);
-                if (action != null) {
-                    action.add(value);
+                if (action == null) {
+                    action = new VaultMaskedValuesAction();
+                    run.addOrReplaceAction(action);
                 }
+                action.add(value);
             }
 
             return value;

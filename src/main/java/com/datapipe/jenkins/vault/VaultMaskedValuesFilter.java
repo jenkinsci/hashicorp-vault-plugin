@@ -1,36 +1,49 @@
 package com.datapipe.jenkins.vault;
 
 import com.datapipe.jenkins.vault.log.MaskingConsoleLogFilter;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
-import hudson.console.ConsoleLogFilter;
+import hudson.model.Queue;
 import hudson.model.Run;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serial;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.log.TaskListenerDecorator;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
- * Global console log filter that registers a {@link VaultMaskedValuesAction} on every build and
- * wraps the console output with a {@link MaskingConsoleLogFilter} backed by that action's mutable
- * value list.
+ * Pipeline-compatible console log decorator that masks secret values registered by
+ * {@link VaultCredentialsStep} in subsequent console output.
  *
- * <p>Because {@link MaskingConsoleLogFilter} evaluates the pattern lazily, values added later by
- * {@link VaultCredentialsStep} are automatically masked in subsequent console output.
+ * <p>As a {@link TaskListenerDecorator.Factory}, this is invoked once per Pipeline build to
+ * produce a decorator applied to every step's output stream. It ensures a
+ * {@link VaultMaskedValuesAction} is present on the run so that values added later by
+ * {@link VaultCredentialsStep} are lazily picked up by {@link MaskingConsoleLogFilter}.
  */
 @Restricted(NoExternalUse.class)
 @Extension
-public final class VaultMaskedValuesFilter extends ConsoleLogFilter {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+public final class VaultMaskedValuesFilter implements TaskListenerDecorator.Factory {
 
     @Override
-    public OutputStream decorateLogger(Run run, OutputStream logger)
-            throws IOException, InterruptedException {
-        VaultMaskedValuesAction action = new VaultMaskedValuesAction();
-        run.addOrReplaceAction(action);
-        return new MaskingConsoleLogFilter(run.getCharset().name(), action.getValues())
-            .decorateLogger(run, logger);
+    public @CheckForNull TaskListenerDecorator of(@NonNull FlowExecutionOwner owner) {
+        Queue.Executable executable;
+        try {
+            executable = owner.getExecutable();
+        } catch (IOException e) {
+            return null;
+        }
+        if (!(executable instanceof Run)) {
+            return null;
+        }
+        Run<?, ?> run = (Run<?, ?>) executable;
+        VaultMaskedValuesAction action = run.getAction(VaultMaskedValuesAction.class);
+        if (action == null) {
+            action = new VaultMaskedValuesAction();
+            run.addOrReplaceAction(action);
+        }
+        return TaskListenerDecorator.fromConsoleLogFilter(
+            new MaskingConsoleLogFilter(run.getCharset().name(), action.getValues())
+        );
     }
 }

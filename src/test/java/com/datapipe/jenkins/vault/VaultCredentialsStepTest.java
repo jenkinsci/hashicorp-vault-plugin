@@ -242,8 +242,8 @@ public class VaultCredentialsStepTest {
         String capturedVaultUrl;
         String capturedVaultNamespace;
 
-        TestStep(String pathAndKey, String credentialsId) {
-            super(pathAndKey, credentialsId);
+        TestStep(String path, String credentialsId) {
+            super(path, credentialsId);
             config.setVaultUrl("https://vault.test");
             config.setVaultCredentialId(credentialsId);
             config.setFailIfNotFound(true);
