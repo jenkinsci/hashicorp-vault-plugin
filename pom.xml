@@ -121,7 +121,7 @@
     <dependency>
       <groupId>io.github.jopenlibs</groupId>
       <artifactId>vault-java-driver</artifactId>
-      <version>6.2.0</version>
+      <version>6.2.2</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
