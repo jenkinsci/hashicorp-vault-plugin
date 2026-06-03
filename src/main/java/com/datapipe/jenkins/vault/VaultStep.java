@@ -26,32 +26,59 @@ import org.kohsuke.stapler.DataBoundSetter;
  * Pipeline step that fetches a single value from a Vault KV secret and returns it as a String.
  * Designed for use inside Declarative Pipeline {@code environment {}} blocks.
  *
- * <p>The {@code path} parameter combines the KV path and field name: the last segment after the
- * final {@code /} is used as the field key, and everything before it is the secret path.
+ * <p>The field to read can be given two ways:
+ * <ul>
+ *     <li>explicitly via the {@code key} parameter (in which case {@code path} is used verbatim), or</li>
+ *     <li>folded into {@code path}, where the last segment after the final {@code /} is the field key
+ *     and everything before it is the secret path. This applies only when {@code key} is absent.</li>
+ * </ul>
  *
  * <pre>
  * environment {
- *     DB_HOST = vaultCredentials(path: 'secret/myapp/db/host', credentialsId: 'vault-approle')
- *     DB_PASS = vaultCredentials(path: 'secret/myapp/db/password', credentialsId: 'vault-approle',
+ *     // explicit key (drop-in compatible with the hashicorp-vault-pipeline-plugin `vault` step)
+ *     DB_USER = vault path: 'secret/myapp/db', key: 'username', engineVersion: '2'
+ *
+ *     // key folded into path
+ *     DB_HOST = vault(path: 'secret/myapp/db/host', credentialsId: 'vault-approle')
+ *     DB_PASS = vault(path: 'secret/myapp/db/password', credentialsId: 'vault-approle',
  *                   vaultUrl: 'https://vault:8200', vaultNamespace: 'prod')
  * }
  * </pre>
  *
+ * <p><b>Breaking change:</b> this step is registered under the function name {@code vault}. It
+ * supersedes the {@code vaultCredentials} step name shipped in release {@code 381.v4277b_9fa_a_380}
+ * (#367); that name is no longer registered. Pipelines that adopted {@code vaultCredentials(...)}
+ * must switch to {@code vault(...)}. Aligning on the {@code vault} name is what makes migrating off
+ * the abandoned hashicorp-vault-pipeline-plugin a drop-in (see #369).
+ *
+ * <p>When {@code credentialsId} is omitted the global Vault configuration's credential is used.
+ *
  * <p>When {@code maskSecret} is {@code true} (the default), the resolved value is registered with
  * {@link VaultMaskedValuesFilter} so it is automatically redacted from subsequent console output.
  */
-public class VaultCredentialsStep extends Step {
+public class VaultStep extends Step {
 
     private final String path;
-    private final String credentialsId;
+    private String key;
+    private String credentialsId;
     private String vaultUrl;
     private String vaultNamespace;
+    private String engineVersion;
     private boolean maskSecret = true;
 
     @DataBoundConstructor
-    public VaultCredentialsStep(@NonNull String path, @NonNull String credentialsId) {
+    public VaultStep(@NonNull String path) {
         this.path = path;
-        this.credentialsId = credentialsId;
+    }
+
+    @DataBoundSetter
+    public void setKey(@CheckForNull String key) {
+        this.key = StringUtils.trimToNull(key);
+    }
+
+    @DataBoundSetter
+    public void setCredentialsId(@CheckForNull String credentialsId) {
+        this.credentialsId = StringUtils.trimToNull(credentialsId);
     }
 
     @DataBoundSetter
@@ -64,6 +91,16 @@ public class VaultCredentialsStep extends Step {
         this.vaultNamespace = StringUtils.trimToNull(vaultNamespace);
     }
 
+    /**
+     * Per-call KV engine version override. Declared as a String (e.g. {@code '1'} or {@code '2'}) to
+     * match the old {@code vault path: '...', engineVersion: '2'} syntax exactly, so existing
+     * pipelines bind as-is. Quote the value, as the old step required.
+     */
+    @DataBoundSetter
+    public void setEngineVersion(@CheckForNull String engineVersion) {
+        this.engineVersion = StringUtils.trimToNull(engineVersion);
+    }
+
     @DataBoundSetter
     public void setMaskSecret(boolean maskSecret) {
         this.maskSecret = maskSecret;
@@ -73,6 +110,12 @@ public class VaultCredentialsStep extends Step {
         return path;
     }
 
+    @CheckForNull
+    public String getKey() {
+        return key;
+    }
+
+    @CheckForNull
     public String getCredentialsId() {
         return credentialsId;
     }
@@ -85,6 +128,11 @@ public class VaultCredentialsStep extends Step {
     @CheckForNull
     public String getVaultNamespace() {
         return vaultNamespace;
+    }
+
+    @CheckForNull
+    public String getEngineVersion() {
+        return engineVersion;
     }
 
     public boolean isMaskSecret() {
@@ -103,6 +151,14 @@ public class VaultCredentialsStep extends Step {
         }
         if (vaultNamespace != null) {
             localConfig.setVaultNamespace(vaultNamespace);
+        }
+        if (engineVersion != null) {
+            try {
+                localConfig.setEngineVersion(Integer.valueOf(engineVersion));
+            } catch (NumberFormatException e) {
+                throw new VaultPluginException(
+                    "engineVersion must be an integer, got: " + engineVersion);
+            }
         }
         if (StringUtils.isNotBlank(credentialsId)) {
             localConfig.setVaultCredentialId(credentialsId);
@@ -153,22 +209,32 @@ public class VaultCredentialsStep extends Step {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        private final transient VaultCredentialsStep step;
+        private final transient VaultStep step;
 
-        Execution(VaultCredentialsStep step, StepContext context) {
+        Execution(VaultStep step, StepContext context) {
             super(context);
             this.step = step;
         }
 
         @Override
         protected String run() throws Exception {
-            int lastSlash = step.path.lastIndexOf('/');
-            if (lastSlash <= 0 || lastSlash == step.path.length() - 1) {
-                throw new VaultPluginException(
-                    "path must be in 'path/to/secret/keyName' format, got: " + step.path);
+            String path;
+            String key;
+            if (StringUtils.isNotBlank(step.key)) {
+                // Explicit key: path is used verbatim (compatible with the old `vault` step).
+                path = step.path;
+                key = step.key;
+            } else {
+                // No explicit key: the last path segment is the field name.
+                int lastSlash = step.path.lastIndexOf('/');
+                if (lastSlash <= 0 || lastSlash == step.path.length() - 1) {
+                    throw new VaultPluginException(
+                        "path must be in 'path/to/secret/keyName' format (or supply a separate 'key'), got: "
+                            + step.path);
+                }
+                path = step.path.substring(0, lastSlash);
+                key = step.path.substring(lastSlash + 1);
             }
-            String path = step.path.substring(0, lastSlash);
-            String key = step.path.substring(lastSlash + 1);
 
             Run<?, ?> run = getContext().get(Run.class);
             TaskListener listener = getContext().get(TaskListener.class);
@@ -203,7 +269,7 @@ public class VaultCredentialsStep extends Step {
 
         @Override
         public String getFunctionName() {
-            return "vaultCredentials";
+            return "vault";
         }
 
         @NonNull

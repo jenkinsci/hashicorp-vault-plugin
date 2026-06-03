@@ -20,12 +20,13 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class VaultCredentialsStepTest {
+public class VaultStepTest {
 
     private static final String SECRET_PATH = "secret/myapp/db";
     private static final String SECRET_KEY = "password";
@@ -123,6 +124,60 @@ public class VaultCredentialsStepTest {
     }
 
     @Test
+    public void engineVersionOverride_appliedToRead() {
+        // Mixed KV v1/v2: a per-call engineVersion overrides the global default.
+        TestStep step = new TestStep(PATH_AND_KEY, CREDENTIALS_ID);
+        step.setEngineVersion("1");
+        Map<String, String> data = new HashMap<>();
+        data.put(SECRET_KEY, SECRET_VALUE);
+        LogicalResponse response = mock(LogicalResponse.class);
+        when(response.getData()).thenReturn(data);
+        when(response.getRestResponse()).thenReturn(null);
+        doReturn(response).when(mockAccessor).read(SECRET_PATH, 1);
+
+        String result = step.fetchValue(SECRET_PATH, SECRET_KEY, run, listener);
+
+        assertThat(result, equalTo(SECRET_VALUE));
+        assertThat(step.capturedEngineVersion, equalTo(1));
+    }
+
+    @Test
+    public void engineVersionDefault_usesGlobalWhenUnset() {
+        TestStep step = stepWithValue(SECRET_VALUE);
+
+        step.fetchValue(SECRET_PATH, SECRET_KEY, run, listener);
+
+        assertThat(step.getEngineVersion(), is(nullValue()));
+        assertThat(step.capturedEngineVersion, equalTo(2));
+    }
+
+    @Test
+    public void engineVersionNonNumeric_throws() {
+        TestStep step = new TestStep(PATH_AND_KEY, CREDENTIALS_ID);
+        step.setEngineVersion("two");
+
+        assertThrows(VaultPluginException.class,
+            () -> step.fetchValue(SECRET_PATH, SECRET_KEY, run, listener));
+    }
+
+    @Test
+    public void credentialsIdOptional_blankStillResolves() {
+        // The old `vault` step falls back to the global credential when none is given.
+        TestStep step = new TestStep(PATH_AND_KEY, null);
+        Map<String, String> data = new HashMap<>();
+        data.put(SECRET_KEY, SECRET_VALUE);
+        LogicalResponse response = mock(LogicalResponse.class);
+        when(response.getData()).thenReturn(data);
+        when(response.getRestResponse()).thenReturn(null);
+        doReturn(response).when(mockAccessor).read(SECRET_PATH, 2);
+
+        String result = step.fetchValue(SECRET_PATH, SECRET_KEY, run, listener);
+
+        assertThat(step.getCredentialsId(), is(nullValue()));
+        assertThat(result, equalTo(SECRET_VALUE));
+    }
+
+    @Test
     public void maskingEnabled_addsValueToAction() throws Exception {
         VaultMaskedValuesAction action = new VaultMaskedValuesAction();
         when(run.getAction(VaultMaskedValuesAction.class)).thenReturn(action);
@@ -134,7 +189,7 @@ public class VaultCredentialsStepTest {
         TestStep step = stepWithValue(SECRET_VALUE);
         step.setMaskSecret(true);
 
-        VaultCredentialsStep.Execution exec = new VaultCredentialsStep.Execution(step, context);
+        VaultStep.Execution exec = new VaultStep.Execution(step, context);
         String result = exec.run();
 
         assertThat(result, equalTo(SECRET_VALUE));
@@ -153,7 +208,7 @@ public class VaultCredentialsStepTest {
         TestStep step = stepWithValue(SECRET_VALUE);
         step.setMaskSecret(false);
 
-        new VaultCredentialsStep.Execution(step, context).run();
+        new VaultStep.Execution(step, context).run();
 
         assertThat(action.getValues(), is(empty()));
     }
@@ -166,10 +221,45 @@ public class VaultCredentialsStepTest {
 
         TestStep step = stepWithValue(SECRET_VALUE);
 
-        new VaultCredentialsStep.Execution(step, context).run();
+        new VaultStep.Execution(step, context).run();
 
         assertThat(step.capturedPath, equalTo(SECRET_PATH));
         assertThat(step.capturedKey, equalTo(SECRET_KEY));
+    }
+
+    @Test
+    public void explicitKey_pathUsedVerbatim() throws Exception {
+        StepContext context = mock(StepContext.class);
+        when(context.get(Run.class)).thenReturn(run);
+        when(context.get(TaskListener.class)).thenReturn(listener);
+
+        // path is NOT split when an explicit key is supplied.
+        TestStep step = new TestStep(SECRET_PATH, CREDENTIALS_ID);
+        step.setKey(SECRET_KEY);
+        stubRead(SECRET_PATH, SECRET_KEY, SECRET_VALUE);
+
+        new VaultStep.Execution(step, context).run();
+
+        assertThat(step.capturedPath, equalTo(SECRET_PATH));
+        assertThat(step.capturedKey, equalTo(SECRET_KEY));
+    }
+
+    @Test
+    public void explicitKey_singleSegmentPathDoesNotThrow() throws Exception {
+        StepContext context = mock(StepContext.class);
+        when(context.get(Run.class)).thenReturn(run);
+        when(context.get(TaskListener.class)).thenReturn(listener);
+
+        // Old-style single-segment path (e.g. `vault path: 'secrets', key: 'username'`).
+        TestStep step = new TestStep("secrets", CREDENTIALS_ID);
+        step.setKey("username");
+        stubRead("secrets", "username", SECRET_VALUE);
+
+        String result = new VaultStep.Execution(step, context).run();
+
+        assertThat(step.capturedPath, equalTo("secrets"));
+        assertThat(step.capturedKey, equalTo("username"));
+        assertThat(result, equalTo(SECRET_VALUE));
     }
 
     @Test
@@ -181,7 +271,7 @@ public class VaultCredentialsStepTest {
         TestStep step = new TestStep("noslash", CREDENTIALS_ID);
 
         assertThrows(VaultPluginException.class,
-            () -> new VaultCredentialsStep.Execution(step, context).run());
+            () -> new VaultStep.Execution(step, context).run());
     }
 
     @Test
@@ -193,27 +283,33 @@ public class VaultCredentialsStepTest {
         TestStep step = new TestStep("path/to/secret/", CREDENTIALS_ID);
 
         assertThrows(VaultPluginException.class,
-            () -> new VaultCredentialsStep.Execution(step, context).run());
+            () -> new VaultStep.Execution(step, context).run());
     }
 
     // --- helpers ---
 
     private TestStep stepWithValue(String value) {
         TestStep step = new TestStep(PATH_AND_KEY, CREDENTIALS_ID);
+        LogicalResponse response = mock(LogicalResponse.class);
         if (value != null) {
             Map<String, String> data = new HashMap<>();
             data.put(SECRET_KEY, value);
-            LogicalResponse response = mock(LogicalResponse.class);
             when(response.getData()).thenReturn(data);
-            when(response.getRestResponse()).thenReturn(null);
-            doReturn(response).when(mockAccessor).read(SECRET_PATH, 2);
         } else {
-            LogicalResponse response = mock(LogicalResponse.class);
             when(response.getData()).thenReturn(Collections.emptyMap());
-            when(response.getRestResponse()).thenReturn(null);
-            doReturn(response).when(mockAccessor).read(SECRET_PATH, 2);
         }
+        when(response.getRestResponse()).thenReturn(null);
+        doReturn(response).when(mockAccessor).read(SECRET_PATH, 2);
         return step;
+    }
+
+    private void stubRead(String path, String key, String value) {
+        Map<String, String> data = new HashMap<>();
+        data.put(key, value);
+        LogicalResponse response = mock(LogicalResponse.class);
+        when(response.getData()).thenReturn(data);
+        when(response.getRestResponse()).thenReturn(null);
+        doReturn(response).when(mockAccessor).read(path, 2);
     }
 
     private LogicalResponse notFoundResponse() {
@@ -234,16 +330,18 @@ public class VaultCredentialsStepTest {
         return resp;
     }
 
-    class TestStep extends VaultCredentialsStep {
+    class TestStep extends VaultStep {
 
         final VaultConfiguration config = new VaultConfiguration();
         String capturedPath;
         String capturedKey;
         String capturedVaultUrl;
         String capturedVaultNamespace;
+        Integer capturedEngineVersion;
 
         TestStep(String path, String credentialsId) {
-            super(path, credentialsId);
+            super(path);
+            setCredentialsId(credentialsId);
             config.setVaultUrl("https://vault.test");
             config.setVaultCredentialId(credentialsId);
             config.setFailIfNotFound(true);
@@ -257,6 +355,17 @@ public class VaultCredentialsStepTest {
             capturedKey = key;
             capturedVaultUrl = getVaultUrl();
             capturedVaultNamespace = getVaultNamespace();
+
+            // Mirror the real per-call engineVersion override against the local config.
+            if (getEngineVersion() != null) {
+                try {
+                    config.setEngineVersion(Integer.valueOf(getEngineVersion()));
+                } catch (NumberFormatException e) {
+                    throw new VaultPluginException(
+                        "engineVersion must be an integer, got: " + getEngineVersion());
+                }
+            }
+            capturedEngineVersion = config.getEngineVersion();
 
             if (config.getVaultUrl() == null || config.getVaultUrl().isBlank()) {
                 throw new VaultPluginException("vaultUrl is not configured");

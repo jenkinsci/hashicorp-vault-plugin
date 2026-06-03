@@ -14,12 +14,12 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
  * Pipeline-compatible console log decorator that masks secret values registered by
- * {@link VaultCredentialsStep} in subsequent console output.
+ * {@link VaultStep} in subsequent console output.
  *
  * <p>As a {@link TaskListenerDecorator.Factory}, this is invoked once per Pipeline build to
  * produce a decorator applied to every step's output stream. It ensures a
  * {@link VaultMaskedValuesAction} is present on the run so that values added later by
- * {@link VaultCredentialsStep} are lazily picked up by {@link MaskingConsoleLogFilter}.
+ * {@link VaultStep} are lazily picked up by {@link MaskingConsoleLogFilter}.
  */
 @Restricted(NoExternalUse.class)
 @Extension

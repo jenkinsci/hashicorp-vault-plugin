@@ -7,7 +7,7 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
- * Per-build action that accumulates secret values registered by {@link VaultCredentialsStep}
+ * Per-build action that accumulates secret values registered by {@link VaultStep}
  * for console log masking. Values are appended as each step call resolves them, and are picked up
  * lazily by {@link VaultMaskedValuesFilter} which holds a reference to the same list.
  */
