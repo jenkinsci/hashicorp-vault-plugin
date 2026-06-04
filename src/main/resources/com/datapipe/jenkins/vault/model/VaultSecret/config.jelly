@@ -19,6 +19,12 @@
     <f:entry field="engineVersion" title="K/V Engine Version">
       <f:select/>
     </f:entry>
+    <f:entry field="vaultCredentialId" title="Credential (override job-level)">
+      <f:select/>
+    </f:entry>
+    <f:entry field="vaultNamespace" title="Namespace (override job-level)">
+      <f:textbox/>
+    </f:entry>
   </f:advanced>
 
 </j:jelly>

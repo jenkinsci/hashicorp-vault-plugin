@@ -56,6 +56,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private Integer timeout = DEFAULT_TIMEOUT;
 
+    private Boolean verboseLogging;
+
     @DataBoundConstructor
     public VaultConfiguration() {
         // no args constructor
@@ -80,6 +82,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.policies = toCopy.policies;
         this.disableChildPoliciesOverride = toCopy.disableChildPoliciesOverride;
         this.timeout = toCopy.timeout;
+        this.verboseLogging = toCopy.verboseLogging;
     }
 
     public VaultConfiguration mergeWithParent(VaultConfiguration parent) {
@@ -117,6 +120,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         }
         if (result.skipSslVerification == null) {
             result.setSkipSslVerification(parent.skipSslVerification);
+        }
+        if (result.verboseLogging == null) {
+            result.setVerboseLogging(parent.getVerboseLogging());
         }
         return result;
     }
@@ -220,6 +226,15 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.timeout = timeout;
     }
 
+    public Boolean getVerboseLogging() {
+        return verboseLogging;
+    }
+
+    @DataBoundSetter
+    public void setVerboseLogging(Boolean verboseLogging) {
+        this.verboseLogging = verboseLogging;
+    }
+
     /**
      * Number of retries when reading a secret from vault
      *
@@ -302,6 +317,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         }
         if (getFailIfNotFound() == null) {
             setFailIfNotFound(DescriptorImpl.DEFAULT_FAIL_NOT_FOUND);
+        }
+        if (getVerboseLogging() == null) {
+            setVerboseLogging(false);
         }
         return this;
     }

@@ -375,7 +375,7 @@ public class VaultConfigurationIT {
         verify(mockAccessor, times(0)).init();
         verify(mockAccessor, times(0)).read(anyString(), anyInt());
         jenkins.assertLogContains(
-            "The credential id was not configured - please specify the credentials to use.", build);
+            "No credential configured for secret 'secret/path1'. Set a job-level credential or a per-secret credential override.", build);
     }
 
     @Test

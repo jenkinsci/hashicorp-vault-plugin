@@ -15,6 +15,7 @@ import hudson.ExtensionList;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.security.ACL;
+import io.github.jopenlibs.vault.SslConfig;
 import io.github.jopenlibs.vault.Vault;
 import io.github.jopenlibs.vault.VaultConfig;
 import io.github.jopenlibs.vault.VaultException;
@@ -187,10 +188,13 @@ public class VaultAccessor implements Serializable {
         }
 
         VaultConfig vaultConfig = config.getVaultConfig();
-        VaultCredential credential = config.getVaultCredential();
-        if (credential == null) {
-            credential = retrieveVaultCredentials(run, config);
+        boolean verbose = Boolean.TRUE.equals(config.getVerboseLogging());
+        if (verbose) {
+            logger.printf("Vault: url=%s engineVersion=%s skipSslVerification=%s prefixPath=%s namespace=%s%n",
+                config.getVaultUrl(), config.getEngineVersion(), config.getSkipSslVerification(),
+                StringUtils.defaultString(config.getPrefixPath(), ""), StringUtils.defaultString(config.getVaultNamespace(), ""));
         }
+        VaultCredential jobLevelCredential = config.getVaultCredential();
 
         String prefixPath = StringUtils.isBlank(config.getPrefixPath())
             ? ""
@@ -199,20 +203,106 @@ public class VaultAccessor implements Serializable {
         if (vaultAccessor == null) {
             vaultAccessor = new VaultAccessor();
         }
-        vaultAccessor.setConfig(vaultConfig);
-        vaultAccessor.setCredential(credential);
+        // Initialize a shared accessor using job-level settings when applicable; tests may inject a mock accessor
         vaultAccessor.setPolicies(generatePolicies(config.getPolicies(), envVars));
         vaultAccessor.setMaxRetries(config.getMaxRetries());
         vaultAccessor.setRetryIntervalMilliseconds(config.getRetryIntervalMilliseconds());
-        vaultAccessor.init();
+        boolean shouldInitSharedAccessor = (jobLevelCredential != null) || StringUtils.isNotBlank(config.getVaultCredentialId());
+        if (shouldInitSharedAccessor) {
+            // Resolve job-level credential by id if object is not already present
+            VaultCredential resolvedJobCred = jobLevelCredential != null
+                ? jobLevelCredential
+                : retrieveVaultCredentials(run, config);
+            vaultAccessor.setConfig(vaultConfig);
+            vaultAccessor.setCredential(resolvedJobCred);
+            // Allow injected mock to intercept init()
+            vaultAccessor.init();
+        }
 
         for (VaultSecret vaultSecret : vaultSecrets) {
+            // Determine which credential and namespace to use for this secret
+            VaultAccessor accessorToUse = vaultAccessor;
+            String overrideCredId = null;
+            String overrideNamespace = null;
+            try {
+                // Reflective-safe access to optional field; direct call is fine as we depend on same module
+                overrideCredId = vaultSecret.getVaultCredentialId();
+                overrideNamespace = vaultSecret.getVaultNamespace();
+            } catch (NoSuchMethodError e) {
+                // older configurations won't have this method/field
+                overrideCredId = null;
+                overrideNamespace = null;
+            }
+            // If there is no per-secret credential, no job-level credential object, and no job-level credential id, fail fast
+            if (StringUtils.isBlank(overrideCredId) && jobLevelCredential == null && StringUtils.isBlank(config.getVaultCredentialId())) {
+                String secretPathInfo = prefixPath + envVars.expand(vaultSecret.getPath());
+                throw new VaultPluginException(
+                    String.format("No credential configured for secret '%s'. Set a job-level credential or a per-secret credential override.",
+                        secretPathInfo));
+            }
+            // Build per-secret config if namespace is overridden, else reuse existing
+            VaultConfig perSecretConfig;
+            if (StringUtils.isNotBlank(overrideNamespace)) {
+                try {
+                    perSecretConfig = new VaultConfig();
+                    perSecretConfig.address(config.getVaultUrl());
+                    perSecretConfig.engineVersion(config.getEngineVersion());
+                    if (config.getSkipSslVerification()) {
+                        perSecretConfig.sslConfig(new SslConfig().verify(false).build());
+                    }
+                    perSecretConfig.nameSpace(overrideNamespace);
+                    if (StringUtils.isNotEmpty(config.getPrefixPath())) {
+                        perSecretConfig.prefixPath(config.getPrefixPath());
+                    }
+                } catch (VaultException e) {
+                    throw new VaultPluginException("Could not set up per-secret VaultConfig.", e);
+                }
+            } else {
+                perSecretConfig = vaultConfig;
+            }
+
+            // Resolve credential to use for this secret
+            VaultCredential credToUse = null;
+            if (StringUtils.isNotBlank(overrideCredId)) {
+                credToUse = retrieveVaultCredentialById(run, overrideCredId);
+            } else {
+                // Use already-initialized shared accessor when no per-secret override
+                credToUse = jobLevelCredential;
+            }
+
+            if (verbose && (StringUtils.isNotBlank(overrideCredId) || StringUtils.isNotBlank(overrideNamespace))) {
+                logger.printf("Using per-secret overrides: credentialId=%s namespace=%s%n",
+                    StringUtils.defaultString(overrideCredId, "(job-level)"),
+                    StringUtils.defaultString(overrideNamespace, "(job-level)"));
+            }
+
+            if (StringUtils.isNotBlank(overrideCredId) || StringUtils.isNotBlank(overrideNamespace)) {
+                // Create and init a per-secret accessor only when overrides are provided
+                VaultAccessor perSecretAccessor = new VaultAccessor();
+                perSecretAccessor.setConfig(perSecretConfig);
+                perSecretAccessor.setCredential(credToUse);
+                perSecretAccessor.setPolicies(vaultAccessor.getPolicies());
+                perSecretAccessor.setMaxRetries(vaultAccessor.getMaxRetries());
+                perSecretAccessor.setRetryIntervalMilliseconds(vaultAccessor.getRetryIntervalMilliseconds());
+                try {
+                    perSecretAccessor.init();
+                } catch (VaultPluginException ex) {
+                    // Provide more context on failures during login/authorization
+                    throw new VaultPluginException(
+                        String.format("Failed to connect/login to Vault for secret (credentialId=%s, namespace=%s)",
+                            StringUtils.defaultString(overrideCredId, StringUtils.defaultString(config.getVaultCredentialId(), "(custom-object)")),
+                            StringUtils.defaultString(overrideNamespace, StringUtils.defaultString(config.getVaultNamespace(), "(default)"))), ex);
+                }
+                accessorToUse = perSecretAccessor;
+            }
             String path = prefixPath + envVars.expand(vaultSecret.getPath());
-            logger.printf("Retrieving secret: %s%n", path);
+            if (verbose) {
+                logger.printf("Retrieving secret: %s%n", path);
+            }
             Integer engineVersion = Optional.ofNullable(vaultSecret.getEngineVersion())
                 .orElse(config.getEngineVersion());
             try {
-                LogicalResponse response = vaultAccessor.read(path, engineVersion);
+                LogicalResponse response = accessorToUse.read(path, engineVersion);
                 if (responseHasErrors(config, logger, path, response)) {
                     continue;
                 }
@@ -240,6 +330,31 @@ public class VaultAccessor implements Serializable {
         }
 
         return overrides;
+    }
+
+    /**
+     * Resolve a VaultCredential by ID scoped to the job's parent item.
+     */
+    public static VaultCredential retrieveVaultCredentialById(Run build, String id) {
+        if (Jenkins.getInstanceOrNull() != null) {
+            if (StringUtils.isBlank(id)) {
+                throw new VaultPluginException(
+                    "The credential id was blank - please specify the credentials to use.");
+            }
+            List<VaultCredential> credentials = CredentialsProvider
+                .lookupCredentials(VaultCredential.class, build.getParent(), ACL.SYSTEM,
+                    Collections.emptyList());
+            VaultCredential credential = CredentialsMatchers
+                .firstOrNull(credentials, new IdMatcher(id));
+
+            if (credential == null) {
+                throw new CredentialsUnavailableException(id);
+            }
+
+            return credential;
+        }
+
+        return null;
     }
 
     public static VaultCredential retrieveVaultCredentials(Run build, VaultConfiguration config) {
