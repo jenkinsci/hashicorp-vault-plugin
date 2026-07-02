@@ -1,10 +1,12 @@
 package com.datapipe.jenkins.vault;
 
 import com.amazonaws.DefaultRequest;
+import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.http.HttpMethodName;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.util.RuntimeHttpUtils;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -33,8 +35,8 @@ public class AwsHelper {
 
     @NonNull
     public static String getToken(@NonNull Auth auth, @CheckForNull AWSCredentials credentials,
-                                  @CheckForNull String role, @CheckForNull String serverIdValue,
-                                  @CheckForNull String mountPath) throws VaultPluginException {
+        @CheckForNull String role, @CheckForNull String serverIdValue,
+        @CheckForNull String mountPath) throws VaultPluginException {
         final EncodedIdentityRequest request;
         try {
             request = new EncodedIdentityRequest(credentials, serverIdValue);
@@ -47,7 +49,7 @@ public class AwsHelper {
         final String requestMountPath = Util.fixEmptyAndTrim(mountPath);
         try {
             return auth.loginByAwsIam(requestRole, request.encodedUrl, request.encodedBody,
-                                      request.encodedHeaders, requestMountPath)
+                    request.encodedHeaders, requestMountPath)
                 .getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
@@ -66,18 +68,28 @@ public class AwsHelper {
         public final String encodedUrl;
 
         private static final String data = "Action=GetCallerIdentity&Version=2011-06-15";
-        private static final String endpoint = "https://sts.amazonaws.com";
 
-        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String serverIdValue) throws IOException, URISyntaxException {
+        private static final DefaultAwsRegionProviderChain REGION_PROVIDER = new DefaultAwsRegionProviderChain();
+
+        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String serverIdValue) throws IOException, URISyntaxException, VaultPluginException {
             LOGGER.fine("Creating GetCallerIdentity request");
             final DefaultRequest request = new DefaultRequest("sts");
             request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
             if (StringUtils.isNotEmpty(serverIdValue)) {
                 request.addHeader("X-Vault-AWS-IAM-Server-ID", serverIdValue);
             }
-            request.setContent(new ByteArrayInputStream(this.data.getBytes(StandardCharsets.UTF_8)));
+            request.setContent(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
             request.setHttpMethod(HttpMethodName.POST);
-            request.setEndpoint(new URI(this.endpoint));
+            final String region;
+            try {
+                region = REGION_PROVIDER.getRegion();
+                LOGGER.fine("Resolved AWS region: " + region);
+            } catch (SdkClientException e) {
+                throw new VaultPluginException("Could not resolve AWS region. " +
+                    "Set AWS_REGION, AWS_DEFAULT_REGION, or ensure the EC2 instance metadata is accessible.", e);
+            }
+            String stsEndpoint = "https://sts." + region + ".amazonaws.com";
+            request.setEndpoint(new URI(stsEndpoint));
 
             if (credentials == null) {
                 LOGGER.fine("Acquiring AWS credentials");
@@ -88,6 +100,7 @@ public class AwsHelper {
             LOGGER.fine("Signing GetCallerIdentity request");
             final AWS4Signer aws4Signer = new AWS4Signer();
             aws4Signer.setServiceName(request.getServiceName());
+            aws4Signer.setRegionName(region);
             aws4Signer.sign(request, credentials);
 
             final Base64.Encoder encoder = Base64.getEncoder();
