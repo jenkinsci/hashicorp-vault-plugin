@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import static org.apache.commons.lang.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 public class VaultKubernetesCredential extends AbstractAuthenticatingVaultTokenCredential {
 

@@ -20,7 +20,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
 import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVaultSecretKey;
-import static org.apache.commons.lang.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 @SuppressWarnings("ALL")
 public class VaultSSHUserPrivateKeyImpl extends AbstractVaultBaseStandardCredentials implements

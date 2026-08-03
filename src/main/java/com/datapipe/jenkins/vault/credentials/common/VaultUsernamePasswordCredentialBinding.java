@@ -20,7 +20,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import static com.datapipe.jenkins.vault.configuration.VaultConfiguration.engineVersions;
-import static org.apache.commons.lang.StringUtils.defaultIfBlank;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 public class VaultUsernamePasswordCredentialBinding extends
     MultiBinding<VaultUsernamePasswordCredential> {

@@ -18,7 +18,7 @@ import io.github.jopenlibs.vault.VaultConfig;
 import io.github.jopenlibs.vault.VaultException;
 import java.io.Serializable;
 import java.util.List;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
