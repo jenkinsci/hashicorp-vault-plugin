@@ -1,0 +1,9 @@
+<div>
+  Specify token <strong>role</strong> name to use when creating new tokens (see <a href="https://developer.hashicorp.com/vault/api-docs/auth/token#create-update-token-role">Create / update token role</a>).
+  Roles enforce specific behavior when creating tokens that allow token functionality
+  that is otherwise not available or would require <strong>sudo/root</strong> privileges to access.
+  Role parameters, when set, override any provided options to the create endpoints.
+  The role name is also included in the token path, allowing all tokens created against a role
+  to be revoked using the <strong>/sys/leases/revoke-prefix</strong> endpoint.
+  Token roles are different from AppRole roles and also need to exist in order to use them.
+</div>

@@ -52,6 +52,8 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
 
     private String policies;
 
+    private String role;
+
     private Boolean disableChildPoliciesOverride;
 
     private Integer timeout = DEFAULT_TIMEOUT;
@@ -78,6 +80,7 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         this.vaultNamespace = toCopy.vaultNamespace;
         this.prefixPath = toCopy.prefixPath;
         this.policies = toCopy.policies;
+        this.role = toCopy.role;
         this.disableChildPoliciesOverride = toCopy.disableChildPoliciesOverride;
         this.timeout = toCopy.timeout;
     }
@@ -108,6 +111,9 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         if (StringUtils.isBlank(result.getPolicies()) ||
                 (parent.getDisableChildPoliciesOverride() != null && parent.getDisableChildPoliciesOverride())) {
             result.setPolicies(parent.getPolicies());
+        }
+        if (result.role == null) {
+            result.setRole(parent.getRole());
         }
         if (result.timeout == null) {
             result.setTimeout(parent.getTimeout());
@@ -197,9 +203,18 @@ public class VaultConfiguration extends AbstractDescribableImpl<VaultConfigurati
         return policies;
     }
 
+    public String getRole() {
+        return role;
+    }
+
     @DataBoundSetter
     public void setPolicies(String policies) {
         this.policies = fixEmptyAndTrim(policies);
+    }
+
+    @DataBoundSetter
+    public void setRole(String role) {
+        this.role = fixEmptyAndTrim(role);
     }
 
     public Boolean getDisableChildPoliciesOverride() {
