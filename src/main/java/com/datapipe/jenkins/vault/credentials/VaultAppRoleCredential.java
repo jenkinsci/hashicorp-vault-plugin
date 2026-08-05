@@ -10,7 +10,7 @@ import hudson.util.Secret;
 import io.github.jopenlibs.vault.VaultException;
 import io.github.jopenlibs.vault.api.Auth;
 import java.io.Serial;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class VaultAppRoleCredential extends AbstractAuthenticatingVaultTokenCredential {

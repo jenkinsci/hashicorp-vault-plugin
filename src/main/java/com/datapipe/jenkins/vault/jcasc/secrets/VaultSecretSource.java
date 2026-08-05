@@ -14,7 +14,7 @@ import java.util.Properties;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Requires either CASC_VAULT_USER and CASC_VAULT_PW, or CASC_VAULT_TOKEN, or CASC_VAULT_APPROLE and
