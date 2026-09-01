@@ -319,9 +319,18 @@ public class VaultAccessor implements Serializable {
         return configuration;
     }
 
+    // Characters java.net.URI rejects in a path (space, quotes, brackets, etc.) or misparses
+    // ('#' and '?' start the fragment/query and would silently truncate the path). '%' is
+    // deliberately absent so paths that are already percent-encoded keep working; a literal
+    // '%' in a secret name must be written as '%25'.
+    private static final String URI_ILLEGAL_PATH_CHARS = " \"<>[]{}|\\^`#?";
+
     /**
-     * Normalize user-supplied Vault paths so we don't send leading or duplicate slashes to Vault.
-     * Leading slashes cause requests like "/v1//path" which Vault replies to with HTTP 301 for KV v1.
+     * Normalize user-supplied Vault paths so we don't send leading or duplicate slashes to Vault,
+     * and percent-encode characters java.net.URI cannot parse in a path (Vault decodes them
+     * server-side). Leading slashes cause requests like "/v1//path" which Vault replies to with
+     * HTTP 301 for KV v1; a literal space (or quote, bracket, etc.) makes java.net.URI throw
+     * URISyntaxException.
      */
     static String normalizePath(String path) {
         if (StringUtils.isBlank(path)) {
@@ -331,12 +340,21 @@ public class VaultAccessor implements Serializable {
         // remove any leading slashes
         String cleaned = StringUtils.stripStart(path, "/");
 
-        // fast-path: nothing to do in the common case
-        if (!cleaned.contains("//")) {
-            return cleaned;
+        // collapse duplicate separators
+        if (cleaned.contains("//")) {
+            cleaned = cleaned.replaceAll("/{2,}", "/");
         }
 
-        // collapse duplicate separators
-        return cleaned.replaceAll("/{2,}", "/");
+        // percent-encode what java.net.URI cannot parse; Vault decodes it back
+        StringBuilder sb = new StringBuilder(cleaned.length());
+        for (int i = 0; i < cleaned.length(); i++) {
+            char c = cleaned.charAt(i);
+            if (c < 0x20 || c == 0x7F || URI_ILLEGAL_PATH_CHARS.indexOf(c) >= 0) {
+                sb.append(String.format("%%%02X", (int) c));
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 }
