@@ -23,6 +23,18 @@ public class VaultAccessorTest {
     }
 
     @Test
+    public void normalizePathEscapesUriIllegalCharacters() {
+        assertEquals("team/My%20Secret%20Name", VaultAccessor.normalizePath("team/My Secret Name"));
+        // characters java.net.URI rejects in a path
+        assertEquals("a%22b%3Cc%3Ed%5Be%5Df%7Bg%7Dh%7Ci%5Cj%5Ek%60l",
+            VaultAccessor.normalizePath("a\"b<c>d[e]f{g}h|i\\j^k`l"));
+        // '#' and '?' would silently truncate the path as fragment/query markers
+        assertEquals("team/a%23b%3Fc", VaultAccessor.normalizePath("team/a#b?c"));
+        // already percent-encoded paths are left untouched
+        assertEquals("team/My%20Secret%20Name", VaultAccessor.normalizePath("team/My%20Secret%20Name"));
+    }
+
+    @Test
     public void testGeneratePolicies() {
         EnvVars envVars = mock(EnvVars.class);
         when(envVars.get("JOB_NAME")).thenReturn("job1");
