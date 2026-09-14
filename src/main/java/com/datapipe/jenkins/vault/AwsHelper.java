@@ -1,10 +1,12 @@
 package com.datapipe.jenkins.vault;
 
 import com.amazonaws.DefaultRequest;
+import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.http.HttpMethodName;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.util.RuntimeHttpUtils;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -31,10 +33,16 @@ public class AwsHelper {
 
     private final static Logger LOGGER = Logger.getLogger(AwsHelper.class.getName());
 
+    // AWS China partition regions use a different STS domain suffix than the standard
+    // (aws) and GovCloud (aws-us-gov) partitions.
+    private static final String CHINA_REGION_PREFIX = "cn-";
+    private static final String STANDARD_DOMAIN = "amazonaws.com";
+    private static final String CHINA_DOMAIN = "amazonaws.com.cn";
+
     @NonNull
     public static String getToken(@NonNull Auth auth, @CheckForNull AWSCredentials credentials,
-                                  @CheckForNull String role, @CheckForNull String serverIdValue,
-                                  @CheckForNull String mountPath) throws VaultPluginException {
+        @CheckForNull String role, @CheckForNull String serverIdValue,
+        @CheckForNull String mountPath) throws VaultPluginException {
         final EncodedIdentityRequest request;
         try {
             request = new EncodedIdentityRequest(credentials, serverIdValue);
@@ -47,11 +55,28 @@ public class AwsHelper {
         final String requestMountPath = Util.fixEmptyAndTrim(mountPath);
         try {
             return auth.loginByAwsIam(requestRole, request.encodedUrl, request.encodedBody,
-                                      request.encodedHeaders, requestMountPath)
+                    request.encodedHeaders, requestMountPath)
                 .getAuthClientToken();
         } catch (VaultException e) {
             throw new VaultPluginException("could not log in into vault", e);
         }
+    }
+
+    /**
+     * Masks an AWS Access Key ID for logging, keeping only enough of it to correlate log
+     * entries with an account/role without exposing the full identifier. Access Key IDs are
+     * not secret in the same way a Secret Access Key is, but they are still an identifier
+     * that shouldn't be written to logs in full.
+     */
+    private static String maskAccessKeyId(String accessKeyId) {
+        if (accessKeyId == null) {
+            return null;
+        }
+        int visible = 4;
+        if (accessKeyId.length() <= visible) {
+            return "*".repeat(accessKeyId.length());
+        }
+        return accessKeyId.substring(0, visible) + "*".repeat(accessKeyId.length() - visible);
     }
 
     private static class EncodedIdentityRequest {
@@ -66,28 +91,46 @@ public class AwsHelper {
         public final String encodedUrl;
 
         private static final String data = "Action=GetCallerIdentity&Version=2011-06-15";
-        private static final String endpoint = "https://sts.amazonaws.com";
 
-        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String serverIdValue) throws IOException, URISyntaxException {
+        private static final DefaultAwsRegionProviderChain REGION_PROVIDER = new DefaultAwsRegionProviderChain();
+
+        EncodedIdentityRequest(@CheckForNull AWSCredentials credentials, @CheckForNull String serverIdValue) throws IOException, URISyntaxException, VaultPluginException {
             LOGGER.fine("Creating GetCallerIdentity request");
-            final DefaultRequest request = new DefaultRequest("sts");
+            final DefaultRequest<?> request = new DefaultRequest<>("sts");
             request.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
             if (StringUtils.isNotEmpty(serverIdValue)) {
                 request.addHeader("X-Vault-AWS-IAM-Server-ID", serverIdValue);
             }
-            request.setContent(new ByteArrayInputStream(this.data.getBytes(StandardCharsets.UTF_8)));
+            request.setContent(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
             request.setHttpMethod(HttpMethodName.POST);
-            request.setEndpoint(new URI(this.endpoint));
+            final String region;
+            try {
+                region = REGION_PROVIDER.getRegion();
+                LOGGER.fine("Resolved AWS region: " + region);
+            } catch (SdkClientException e) {
+                throw new VaultPluginException("Could not resolve AWS region. " +
+                    "Set AWS_REGION, AWS_DEFAULT_REGION, or ensure the EC2 instance metadata is accessible.", e);
+            }
+            String stsEndpoint = "https://sts." + region + "." + domainForRegion(region);
+            request.setEndpoint(new URI(stsEndpoint));
 
             if (credentials == null) {
                 LOGGER.fine("Acquiring AWS credentials");
-                credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
-                LOGGER.log(Level.FINER, "AWS Access Key ID: {0}", credentials.getAWSAccessKeyId());
+                try {
+                    credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
+                } catch (SdkClientException e) {
+                    throw new VaultPluginException("Could not resolve AWS credentials. " +
+                        "Set credentials via environment variables, a credentials file, an instance profile, " +
+                        "or the EC2/ECS metadata service.", e);
+                }
+                LOGGER.log(Level.FINER, "AWS Access Key ID: {0}",
+                    maskAccessKeyId(credentials.getAWSAccessKeyId()));
             }
 
             LOGGER.fine("Signing GetCallerIdentity request");
             final AWS4Signer aws4Signer = new AWS4Signer();
             aws4Signer.setServiceName(request.getServiceName());
+            aws4Signer.setRegionName(region);
             aws4Signer.sign(request, credentials);
 
             final Base64.Encoder encoder = Base64.getEncoder();
@@ -110,9 +153,19 @@ public class AwsHelper {
 
         // DefaultRequest.getHeaders() really returns a Map<String,String>, but for some reason it
         // comes back as a bare Map
-        @SuppressWarnings("unchecked")
-        private static Map<String, String> getHeadersMap(DefaultRequest request) {
+        private static Map<String, String> getHeadersMap(DefaultRequest<?> request) {
             return request.getHeaders();
+        }
+
+        /**
+         * Returns the domain suffix ("amazonaws.com" or "amazonaws.com.cn") to use for the STS
+         * endpoint of the given region. The AWS China partition (cn-north-1, cn-northwest-1)
+         * is served under a separate domain from the standard and GovCloud partitions.
+         */
+        private static String domainForRegion(String region) {
+            return region != null && region.startsWith(CHINA_REGION_PREFIX)
+                ? CHINA_DOMAIN
+                : STANDARD_DOMAIN;
         }
     }
 }

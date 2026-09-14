@@ -19,9 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Rule;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,8 +39,15 @@ public class AwsHelperTest {
     private static final String awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
     private static final String sessionToken = "sometoken";
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
+    @Before
+    public void setUpRegion() {
+        System.setProperty("aws.region", "us-east-1");
+    }
+
+    @After
+    public void tearDownRegion() {
+        System.clearProperty("aws.region");
+    }
 
     @Test
     public void testGetTokenBasicDefaults() throws VaultException {
@@ -90,7 +97,7 @@ public class AwsHelperTest {
         final Base64.Decoder decoder = Base64.getDecoder();
 
         final String decodedUrl = new String(decoder.decode(urlArg.getValue()), charset);
-        assertThat(decodedUrl, is("https://sts.amazonaws.com/"));
+        assertThat(decodedUrl, is("https://sts.us-east-1.amazonaws.com/"));
 
         final String decodedBody = new String(decoder.decode(bodyArg.getValue()), charset);
         assertThat(decodedBody, is("Action=GetCallerIdentity&Version=2011-06-15"));
@@ -111,13 +118,13 @@ public class AwsHelperTest {
         }
         assertThat(headersObject.names(), containsInAnyOrder(expectedHeaderNames.toArray()));
 
-        final Map headersMap = new HashMap<String, String>();
+        final Map<String, String> headersMap = new HashMap<>();
         for (JsonObject.Member member : headersObject) {
             final JsonArray valuesArray = member.getValue().asArray();
             assertThat(valuesArray.size(), is(1));
             headersMap.put(member.getName(), valuesArray.get(0).asString());
         }
-        assertThat(headersMap.get("Host"), is("sts.amazonaws.com"));
+        assertThat(headersMap.get("Host"), is("sts.us-east-1.amazonaws.com"));
         assertThat(headersMap.get("Content-Type"), is("application/x-www-form-urlencoded; charset=utf-8"));
         if (credentials instanceof AWSSessionCredentials sessionCreds) {
             assertThat(headersMap.get("X-Amz-Security-Token"), is(sessionCreds.getSessionToken()));

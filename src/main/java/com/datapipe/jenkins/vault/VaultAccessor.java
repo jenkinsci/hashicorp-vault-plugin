@@ -140,8 +140,10 @@ public class VaultAccessor implements Serializable {
         try {
             return vault.leases().revoke(leaseId);
         } catch (VaultException e) {
+            // Preserve the original VaultException as the cause instead of discarding it,
+            // so the real stack trace (and HTTP status) survive in the Jenkins build log.
             throw new VaultPluginException(
-                "could not revoke vault lease (" + leaseId + "):" + e.getMessage());
+                "could not revoke vault lease (" + leaseId + "): " + e.getMessage(), e);
         }
     }
 
@@ -217,6 +219,13 @@ public class VaultAccessor implements Serializable {
                     continue;
                 }
                 Map<String, String> values = response.getData();
+                if (values == null) {
+                    // Vault returned 200 with no data payload (e.g. a KV v2 secret version
+                    // that is "deleted" but not "destroyed"). Treat it the same way as the
+                    // 404 case below rather than letting values.get() throw an NPE.
+                    logger.printf("Vault returned no data for '%s'%n", path);
+                    continue;
+                }
                 for (VaultSecretValue value : vaultSecret.getSecretValues()) {
                     String vaultKey = value.getVaultKey();
                     String secret = values.get(vaultKey);
@@ -228,8 +237,10 @@ public class VaultAccessor implements Serializable {
                     overrides.put(value.getEnvVar(), secret);
                 }
             } catch (VaultPluginException ex) {
-                VaultException e = (VaultException) ex.getCause();
-                if (e != null) {
+                // Only unwrap and rethrow with the HTTP status when the cause is really a
+                // VaultException; a blind cast here would throw ClassCastException and mask
+                // whatever the original error actually was.
+                if (ex.getCause() instanceof VaultException e) {
                     throw new VaultPluginException(String
                         .format("Vault response returned %d for secret path %s",
                             e.getHttpStatusCode(), path),
@@ -284,12 +295,18 @@ public class VaultAccessor implements Serializable {
                 return true;
             }
         } else if (status >= 400) {
-            String errors = Optional
-                .of(Json.parse(new String(restResponse.getBody(), StandardCharsets.UTF_8))).map(
-                    JsonValue::asObject)
-                .map(j -> j.get("errors")).map(JsonValue::asArray).map(JsonArray::values)
-                .map(j -> j.stream().map(JsonValue::asString).collect(Collectors.joining("\n")))
-                .orElse("");
+            byte[] body = restResponse.getBody();
+            // A 4xx/5xx from Vault (or from a load balancer / gateway in front of it) can
+            // arrive with an empty or null body; parsing that would throw an NPE instead of
+            // reporting the status code we already have.
+            String errors = (body == null || body.length == 0)
+                ? ""
+                : Optional
+                    .of(Json.parse(new String(body, StandardCharsets.UTF_8))).map(
+                        JsonValue::asObject)
+                    .map(j -> j.get("errors")).map(JsonValue::asArray).map(JsonArray::values)
+                    .map(j -> j.stream().map(JsonValue::asString).collect(Collectors.joining("\n")))
+                    .orElse("");
             logger.printf("Vault responded with %d error code.%n", status);
             if (StringUtils.isNotBlank(errors)) {
                 logger.printf("Vault responded with errors: %s%n", errors);
