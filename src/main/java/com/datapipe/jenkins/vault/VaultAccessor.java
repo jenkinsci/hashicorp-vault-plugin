@@ -259,7 +259,9 @@ public class VaultAccessor implements Serializable {
                 throw new CredentialsUnavailableException(id);
             }
 
-            return credential;
+            // Record the usage so it shows on the credential's "Usage" page and is
+            // reported by credentials-usage tooling, as withCredentials does.
+            return CredentialsProvider.track(build, credential);
         }
 
         return null;
