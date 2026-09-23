@@ -11,6 +11,7 @@ import com.datapipe.jenkins.vault.configuration.VaultConfiguration;
 import com.datapipe.jenkins.vault.credentials.VaultCredential;
 import com.datapipe.jenkins.vault.credentials.VaultTokenCredential;
 import com.datapipe.jenkins.vault.exception.VaultPluginException;
+import hudson.model.Fingerprint;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.security.ACL;
@@ -24,6 +25,7 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -262,5 +264,26 @@ public class SystemScopedCredentialsSecurityIT {
 
         assertThat("Global context should have System-scoped credentials",
             systemScopedCount, is(1L));
+    }
+
+    /**
+     * Retrieving a credential for a build should record the usage, so it appears on the
+     * credential's "Usage" page and is reported by credentials-usage tooling. Without
+     * this the credential always looks unused, and can be deleted as dead configuration.
+     */
+    @Test
+    public void retrievingCredentialTracksUsageAgainstTheBuild() throws Exception {
+        VaultConfiguration config = new VaultConfiguration();
+        config.setVaultCredentialId(GLOBAL_SCOPED_CREDENTIAL_ID);
+
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+
+        VaultCredential credential = VaultAccessor.retrieveVaultCredentials(build, config);
+        assertThat(credential, is(notNullValue()));
+
+        Fingerprint fingerprint = CredentialsProvider.getFingerprintOf(credential);
+        assertThat("Credential usage should be fingerprinted", fingerprint, is(notNullValue()));
+        assertThat("Usage should be attributed to the job that used it",
+            fingerprint.getJobs(), hasItem(project.getFullName()));
     }
 }
