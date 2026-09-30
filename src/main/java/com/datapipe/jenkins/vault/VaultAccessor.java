@@ -148,6 +148,11 @@ public class VaultAccessor implements Serializable {
     public LogicalResponse write(String path, Map<String, Object> data) {
         String normalizedPath = normalizePath(path);
         try {
+            // Force engine version 1 so the vault-java-driver does NOT insert "/data/"
+            // into the path.  PKI (and other non-KV engines) use their own path layout;
+            // the KV v2 transformation would turn "pki/issue/role" into
+            // "pki/data/issue/role" which Vault rejects with "unsupported path".
+            this.config.engineVersion(1);
             return vault.logical().write(normalizedPath, data);
         } catch (VaultException e) {
             throw new VaultPluginException(
