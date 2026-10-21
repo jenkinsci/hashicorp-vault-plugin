@@ -10,7 +10,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.datapipe.jenkins.vault.credentials.common.AbstractVaultBaseStandardCredentials;
+import com.datapipe.jenkins.vault.credentials.common.VaultContextualCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
@@ -40,7 +40,7 @@ public class VaultCredentialsProvider extends CredentialsProvider {
         @Nullable Authentication authentication,
         @NonNull List<DomainRequirement> domainRequirements) {
         CredentialsMatcher matcher = (type != VaultCredential.class ?
-            CredentialsMatchers.instanceOf(AbstractVaultBaseStandardCredentials.class) :
+            CredentialsMatchers.instanceOf(VaultContextualCredentials.class) :
             CredentialsMatchers.always());
         List<C> creds = new ArrayList<>();
         if (ACL.SYSTEM2.equals(authentication)) {
@@ -60,7 +60,7 @@ public class VaultCredentialsProvider extends CredentialsProvider {
 
                 if (type != VaultCredential.class) {
                     for (C c : folderCreds) {
-                        ((AbstractVaultBaseStandardCredentials) c).setContext(g);
+                        ((VaultContextualCredentials) c).setContext(g);
                     }
                 }
 
@@ -82,7 +82,7 @@ public class VaultCredentialsProvider extends CredentialsProvider {
                     continue;
                 }
                 if (type != VaultCredential.class) {
-                    ((AbstractVaultBaseStandardCredentials) c).setContext(Jenkins.get());
+                    ((VaultContextualCredentials) c).setContext(Jenkins.get());
                 }
                 creds.add(c);
             }

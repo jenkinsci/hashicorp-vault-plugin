@@ -136,6 +136,31 @@ public class VaultAccessor implements Serializable {
         }
     }
 
+    /**
+     * Perform an authenticated HTTP POST to a Vault path (e.g. PKI issue endpoint).
+     * Unlike {@link #read(String, Integer)} this method does not apply any KV engine-version
+     * path transformation – the caller supplies the fully-qualified mount path.
+     *
+     * @param path  Vault path, e.g. {@code pki/issue/jenkins-role}
+     * @param data  request payload
+     * @return the logical response from Vault
+     */
+    public LogicalResponse write(String path, Map<String, Object> data) {
+        String normalizedPath = normalizePath(path);
+        try {
+            // Force engine version 1 so the vault-java-driver does NOT insert "/data/"
+            // into the path.  PKI (and other non-KV engines) use their own path layout;
+            // the KV v2 transformation would turn "pki/issue/role" into
+            // "pki/data/issue/role" which Vault rejects with "unsupported path".
+            this.config.engineVersion(1);
+            return vault.logical().write(normalizedPath, data);
+        } catch (VaultException e) {
+            throw new VaultPluginException(
+                "could not write to vault: " + e.getMessage() + " at path: "
+                    + normalizedPath, e);
+        }
+    }
+
     public VaultResponse revoke(String leaseId) {
         try {
             return vault.leases().revoke(leaseId);

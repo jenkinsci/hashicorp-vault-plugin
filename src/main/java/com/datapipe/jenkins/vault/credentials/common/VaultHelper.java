@@ -16,6 +16,7 @@ import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
 import io.github.jopenlibs.vault.VaultConfig;
+import io.github.jopenlibs.vault.response.LogicalResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +86,68 @@ public class VaultHelper {
             throw new RuntimeException(e);
         }
 
+    }
+
+    /**
+     * Write (POST) to a Vault path and return the response. Used for secrets engines that issue
+     * credentials on demand (e.g. the PKI secrets engine {@code /issue} endpoint).
+     *
+     * <p>No KV engine-version path transformation is applied – the {@code secretPath} must be the
+     * fully-qualified mount path (e.g. {@code pki/issue/jenkins-role}).</p>
+     *
+     * @param secretPath  fully-qualified Vault path
+     * @param params      request payload
+     * @param namespace   optional Vault Enterprise namespace
+     * @param context     Jenkins item context used to resolve the Vault configuration
+     * @return the {@link LogicalResponse} from Vault
+     */
+    static LogicalResponse writeVaultSecret(@NonNull String secretPath,
+                                             @NonNull Map<String, Object> params,
+                                             @CheckForNull String namespace,
+                                             @CheckForNull ItemGroup<Item> context) {
+        VaultConfiguration configuration = null;
+        for (VaultConfigResolver resolver : ExtensionList.lookup(VaultConfigResolver.class)) {
+            if (configuration != null) {
+                configuration = configuration.mergeWithParent(resolver.getVaultConfig(context));
+            } else {
+                configuration = resolver.getVaultConfig(context);
+            }
+        }
+
+        if (configuration == null) {
+            throw new IllegalStateException("Vault plugin has not been configured.");
+        }
+
+        configuration.fixDefaults();
+
+        String msg = String.format("Issuing vault secret via write path=%s", secretPath);
+        LOGGER.info(msg);
+
+        try {
+            VaultConfig vaultConfig = configuration.getVaultConfig();
+
+            if (namespace != null && !namespace.isEmpty()) {
+                vaultConfig.nameSpace(namespace);
+            }
+
+            VaultCredential vaultCredential = configuration.getVaultCredential();
+            if (vaultCredential == null) {
+                vaultCredential = retrieveVaultCredentials(
+                    configuration.getVaultCredentialId(), context);
+            }
+
+            VaultAccessor vaultAccessor = new VaultAccessor(vaultConfig, vaultCredential);
+            vaultAccessor.setMaxRetries(configuration.getMaxRetries());
+            vaultAccessor.setRetryIntervalMilliseconds(
+                configuration.getRetryIntervalMilliseconds());
+            vaultAccessor.init();
+
+            return vaultAccessor.write(secretPath, params);
+        } catch (VaultPluginException vpe) {
+            throw vpe;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     static String getVaultSecretKey(@NonNull String secretPath,

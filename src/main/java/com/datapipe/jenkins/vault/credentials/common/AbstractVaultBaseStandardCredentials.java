@@ -17,7 +17,8 @@ import static com.datapipe.jenkins.vault.credentials.common.VaultHelper.getVault
  * Base Vault credentials that contain a {@code path}, {@code prefixPath}, {@code namespace},
  * and {@code engineVersion}.
  */
-public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardCredentials {
+public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardCredentials
+    implements VaultContextualCredentials {
 
     private String path;
     private String prefixPath;
@@ -69,10 +70,12 @@ public abstract class AbstractVaultBaseStandardCredentials extends BaseStandardC
         this.engineVersion = engineVersion;
     }
 
+    @Override
     public void setContext(@NonNull ItemGroup context) {
         this.context = context;
     }
 
+    @Override
     public ItemGroup getContext() {
         return this.context;
     }
